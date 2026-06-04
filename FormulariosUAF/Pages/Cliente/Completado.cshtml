@@ -1,0 +1,24 @@
+@page
+@model FormulariosUAF.Pages.Cliente.CompletadoModel
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Declaración Enviada";
+}
+
+<div class="card border-0 shadow text-center">
+    <div class="card-body p-5">
+        <i class="fa-solid fa-circle-check text-success" style="font-size:4rem"></i>
+        <h2 class="mt-3 fw-bold text-success">¡Declaración Enviada!</h2>
+        <p class="text-muted mt-2">
+            Su declaración ha sido recibida correctamente y está en proceso de revisión por el área de cumplimiento.
+        </p>
+        <div class="alert alert-light border d-inline-block mt-3 text-start">
+            <i class="fa-solid fa-clock me-1 text-muted"></i>
+            Recibirá una notificación cuando su declaración sea procesada. Si tiene dudas, contacte a su ejecutivo.
+        </div>
+        <div class="mt-4 text-muted small">
+            <i class="fa-solid fa-lock me-1"></i>
+            La información declarada será mantenida en forma confidencial conforme a la normativa interna y regulatoria aplicable.
+        </div>
+    </div>
+</div>

@@ -1,0 +1,142 @@
+@page
+@model FormulariosUAF.Pages.Cliente.Paso4Model
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Declaración PEP";
+    ViewData["CurrentStep"] = 4;
+}
+
+<div class="card border-0 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-id-card me-2"></i>Paso 4: Declaración de Vínculo con Personas Expuestas Políticamente (PEP)
+    </div>
+    <div class="card-body p-4">
+
+        <div class="alert alert-secondary small">
+            <strong>¿Qué es una PEP?</strong><br />
+            Se entenderá como PEP a chilenos o extranjeros que desempeñen o hayan desempeñado funciones públicas destacadas, incluyendo jefes de Estado o de gobierno, políticos de alta jerarquía, funcionarios gubernamentales, judiciales o militares, altos ejecutivos de empresas estatales, así como cónyuge, conviviente civil, parientes hasta segundo grado de consanguinidad o afinidad y personas naturales con pacto de actuación conjunta.
+        </div>
+
+        <form method="post">
+            <h6 class="fw-bold text-primary mb-3">I. Datos del Declarante</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Input.DeclarantName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclarantName" class="form-control" />
+                    <span asp-validation-for="Input.DeclarantName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Input.IdNumber" class="form-label">RUT / N° ID <span class="text-danger">*</span></label>
+                    <input asp-for="Input.IdNumber" class="form-control" />
+                    <span asp-validation-for="Input.IdNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Input.Nationality" class="form-label">Nacionalidad <span class="text-danger">*</span></label>
+                    <input asp-for="Input.Nationality" class="form-control" />
+                    <span asp-validation-for="Input.Nationality" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-primary mb-3">II. Declaración</h6>
+            <div class="mb-3">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="Input.DeclaresPEP" id="pepNo" value="false"
+                           @(Model.Input.DeclaresPEP == false ? "checked" : "") />
+                    <label class="form-check-label" for="pepNo">
+                        <strong>NO</strong> soy ni tengo vínculo con Persona Expuesta Políticamente
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="Input.DeclaresPEP" id="pepSi" value="true"
+                           @(Model.Input.DeclaresPEP == true ? "checked" : "") />
+                    <label class="form-check-label" for="pepSi">
+                        <strong>SÍ</strong> soy o tengo vínculo con Persona Expuesta Políticamente
+                    </label>
+                </div>
+            </div>
+
+            <div id="pepDetails" style="display:@(Model.Input.DeclaresPEP ? "block" : "none")">
+                <div class="card border-warning mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold">Detalle PEP</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Input.PepName" class="form-label">Nombre PEP</label>
+                                <input asp-for="Input.PepName" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Input.Institution" class="form-label">Institución</label>
+                                <input asp-for="Input.Institution" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Input.PepReasonType" class="form-label">Motivo</label>
+                                <select asp-for="Input.PepReasonType" class="form-select">
+                                    <option value="">Seleccione...</option>
+                                    @foreach (var r in Enum.GetValues<FormulariosUAF.Models.Enums.PepReason>())
+                                    {
+                                        <option value="@((int)r)">@r.ToDisplayString()</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label asp-for="Input.VinculoType" class="form-label">Tipo de Vínculo</label>
+                                <input asp-for="Input.VinculoType" class="form-control" placeholder="Ej: Cónyuge, Socio, Parentesco..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-primary mb-3">III. Firma Electrónica Simple</h6>
+            <div class="alert alert-light border small">
+                <i class="fa-solid fa-pen-to-square me-1"></i>
+                Declaro bajo juramento que la información proporcionada es veraz y fidedigna.
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Input.SignatureFullName" class="form-label">Nombre completo (firma) <span class="text-danger">*</span></label>
+                    <input asp-for="Input.SignatureFullName" class="form-control" />
+                    <span asp-validation-for="Input.SignatureFullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Input.SignatureIdNumber" class="form-label">RUT (firma) <span class="text-danger">*</span></label>
+                    <input asp-for="Input.SignatureIdNumber" class="form-control" />
+                    <span asp-validation-for="Input.SignatureIdNumber" class="text-danger small"></span>
+                </div>
+            </div>
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" asp-for="Input.AcceptsUnderOath" required />
+                <label class="form-check-label" asp-for="Input.AcceptsUnderOath">
+                    Acepto y declaro bajo juramento que la información ingresada es correcta y verídica. <span class="text-danger">*</span>
+                </label>
+                <span asp-validation-for="Input.AcceptsUnderOath" class="text-danger small d-block"></span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger small">@Model.ErrorMessage</div>
+            }
+
+            <div class="d-flex justify-content-between">
+                <a href="/Cliente/Paso3" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Anterior
+                </a>
+                <button type="submit" class="btn btn-primary px-4">
+                    Guardar y Continuar <i class="fa-solid fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+document.querySelectorAll('input[name="Input.DeclaresPEP"]').forEach(r => {
+    r.addEventListener('change', () => {
+        document.getElementById('pepDetails').style.display =
+            document.getElementById('pepSi').checked ? 'block' : 'none';
+    });
+});
+</script>
+}

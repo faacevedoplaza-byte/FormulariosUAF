@@ -1,0 +1,126 @@
+@page
+@model FormulariosUAF.Pages.Cliente.Paso7Model
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Revisión y Envío";
+    ViewData["CurrentStep"] = 7;
+    var req = Model.Request;
+}
+
+<div class="card border-0 shadow">
+    <div class="card-header bg-success text-white">
+        <i class="fa-solid fa-clipboard-check me-2"></i>Paso 7: Revisión Final y Envío
+    </div>
+    <div class="card-body p-4">
+
+        @if (!Model.IsComplete)
+        {
+            <div class="alert alert-danger">
+                <strong><i class="fa-solid fa-exclamation-triangle me-1"></i>Atención:</strong> Falta información obligatoria:
+                <ul class="mb-0 mt-1">
+                    @foreach (var err in Model.ValidationErrors) { <li>@err</li> }
+                </ul>
+            </div>
+        }
+
+        <!-- Empresa -->
+        @if (req?.LegalEntityDeclaration is { } led)
+        {
+            <div class="card border-0 bg-light mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between">
+                        <strong><i class="fa-solid fa-building me-1 text-primary"></i>Empresa</strong>
+                        <a href="/Cliente/Paso1" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-pencil"></i> Editar
+                        </a>
+                    </div>
+                    <div class="small mt-1">
+                        <strong>@led.BusinessName</strong> — RUT: @led.RUT — @led.EntityType.ToDisplayString()
+                    </div>
+                    <div class="small text-muted">Rep. Legal: @led.LegalRepresentativeName (@led.LegalRepresentativeIdNumber)</div>
+                </div>
+            </div>
+        }
+
+        <!-- Beneficiarios -->
+        @if (req?.BeneficialOwners.Any() == true)
+        {
+            <div class="card border-0 bg-light mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between">
+                        <strong><i class="fa-solid fa-users me-1 text-primary"></i>Beneficiarios (@req.BeneficialOwners.Count)</strong>
+                        <a href="/Cliente/Paso2" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pencil"></i></a>
+                    </div>
+                    @foreach (var bo in req.BeneficialOwners.Take(3))
+                    {
+                        <div class="small">@bo.FullName — @bo.ParticipationPercentage.ToString("F1")%
+                            @if (bo.IsPEP) { <span class="badge bg-danger">PEP</span> }
+                        </div>
+                    }
+                    @if (req.BeneficialOwners.Count > 3) { <small class="text-muted">+ @(req.BeneficialOwners.Count - 3) más</small> }
+                </div>
+            </div>
+        }
+
+        <!-- PEP -->
+        @if (req?.PepDeclaration is { } pep)
+        {
+            <div class="card border-0 @(pep.DeclaresPEP ? "bg-danger bg-opacity-10" : "bg-light") mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between">
+                        <strong><i class="fa-solid fa-id-card me-1 text-primary"></i>Declaración PEP</strong>
+                        <a href="/Cliente/Paso4" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pencil"></i></a>
+                    </div>
+                    <div class="small">
+                        @pep.DeclarantName —
+                        @if (pep.DeclaresPEP) { <span class="text-danger fw-bold">DECLARA SER PEP</span> }
+                        else { <span class="text-success">No es PEP</span> }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Documentos -->
+        <div class="card border-0 bg-light mb-4">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between">
+                    <strong><i class="fa-solid fa-folder me-1 text-primary"></i>Documentos (@(req?.Documents.Count(d => d.IsActive) ?? 0))</strong>
+                    <a href="/Cliente/Paso6" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pencil"></i></a>
+                </div>
+                @if (req?.Documents.Any(d => d.IsActive) == true)
+                {
+                    @foreach (var doc in req.Documents.Where(d => d.IsActive))
+                    {
+                        <div class="small"><i class="fa-solid fa-file me-1 text-muted"></i>@doc.DocumentType.ToDisplayString(): @doc.OriginalFileName</div>
+                    }
+                }
+                else
+                {
+                    <small class="text-danger">Sin documentos adjuntos</small>
+                }
+            </div>
+        </div>
+
+        <!-- Confirmación final -->
+        <div class="alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            <strong>Al enviar esta declaración:</strong>
+            <ul class="mb-0 small mt-1">
+                <li>La información quedará registrada con su IP y fecha/hora.</li>
+                <li>No podrá modificar los datos sin solicitar corrección al área de cumplimiento.</li>
+                <li>La información será utilizada para procesos de debida diligencia conforme a la normativa vigente.</li>
+            </ul>
+        </div>
+
+        <form method="post">
+            <div class="d-flex justify-content-between">
+                <a href="/Cliente/Paso6" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Anterior
+                </a>
+                <button type="submit" class="btn btn-success btn-lg px-5" @(!Model.IsComplete ? "disabled" : "")>
+                    <i class="fa-solid fa-paper-plane me-2"></i>Enviar Declaración
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

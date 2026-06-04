@@ -1,0 +1,112 @@
+/* ================================================
+   FormulariosUAF — Estilos principales
+   ================================================ */
+
+html { font-size: 14px; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8f9fa; }
+
+/* ---- SIDEBAR ---- */
+.sidebar-nav {
+    width: 260px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #1a3a5c 0%, #0d2137 100%);
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
+.sidebar-nav .nav-link {
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    transition: background 0.15s;
+    font-size: 0.9rem;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-link.active {
+    background-color: rgba(255,255,255,0.15);
+}
+
+#page-content-wrapper {
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* ---- CARDS ---- */
+.card { border-radius: 12px; }
+.card-header { border-radius: 12px 12px 0 0 !important; }
+
+/* ---- BADGES ---- */
+.badge { font-size: 0.78rem; font-weight: 500; border-radius: 6px; padding: 0.35em 0.65em; }
+
+/* ---- WIZARD ---- */
+.progress { border-radius: 10px; }
+.progress-bar { border-radius: 10px; transition: width 0.4s ease; }
+
+/* ---- TABLES ---- */
+.table > :not(caption) > * > * { padding: 0.6rem 0.75rem; }
+.table-hover > tbody > tr:hover > * { background-color: rgba(13, 110, 253, 0.04); }
+
+/* ---- FORMS ---- */
+.form-control, .form-select {
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border-color: #dee2e6;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+}
+
+/* ---- BUTTONS ---- */
+.btn { border-radius: 8px; font-size: 0.9rem; }
+.btn-primary { background-color: #1a3a5c; border-color: #1a3a5c; }
+.btn-primary:hover { background-color: #0d2137; border-color: #0d2137; }
+
+/* ---- TOAST ---- */
+#toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+}
+
+.toast-msg {
+    min-width: 280px;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* ---- BENEF ROW ---- */
+.benef-row, .control-row {
+    background: #fff;
+    border-radius: 10px;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 767.98px) {
+    .sidebar-nav {
+        width: 100%;
+        min-height: auto;
+        position: relative;
+    }
+    #wrapper { flex-direction: column; }
+
+    .table-responsive { font-size: 0.82rem; }
+}
+
+@media (min-width: 768px) {
+    html { font-size: 14px; }
+}
+
+/* ---- SIDEBAR TOGGLE ---- */
+#wrapper.sidebar-hidden .sidebar-nav { display: none !important; }

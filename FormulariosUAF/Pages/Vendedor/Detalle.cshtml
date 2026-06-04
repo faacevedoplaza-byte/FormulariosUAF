@@ -1,0 +1,183 @@
+@page "{id:guid}"
+@model FormulariosUAF.Pages.Vendedor.DetalleModel
+@{
+    ViewData["Title"] = $"Solicitud {Model.Request?.RequestNumber}";
+    var req = Model.Request;
+    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+    var link = req != null ? $"{baseUrl}/Cliente/Inicio?token={req.ClientToken}" : "";
+}
+
+@if (req is null)
+{
+    <div class="alert alert-danger">Solicitud no encontrada.</div>
+    return;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row mb-3">
+    <div class="col">
+        <a href="/Vendedor" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Info principal -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">@req.RequestNumber</span>
+                <span class="badge @req.Status.ToBadgeClass() fs-6">@req.Status.ToDisplayString()</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">RUT Cliente</small>
+                        <strong>@req.Client.RUT</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Razón Social</small>
+                        <strong>@req.Client.BusinessName</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Tipo</small>
+                        @req.RequestType.ToDisplayString()
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Vendedor</small>
+                        @req.VendorUser?.FullName
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Creada</small>
+                        @req.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Vencimiento</small>
+                        @(req.DueDate?.ToString("dd/MM/yyyy") ?? "—")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enlace cliente -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header fw-bold">
+                <i class="fa-solid fa-link me-2 text-primary"></i>Enlace para el Cliente
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control font-monospace small" value="@link" id="clientLink" readonly />
+                    <button class="btn btn-outline-primary" onclick="copyLink()">
+                        <i class="fa-solid fa-copy me-1"></i>Copiar
+                    </button>
+                </div>
+                <div class="form-text">
+                    Token válido hasta: <strong>@req.TokenExpiry.ToString("dd/MM/yyyy HH:mm")</strong>
+                    @if (req.TokenExpiry < DateTime.UtcNow)
+                    {
+                        <span class="badge bg-danger ms-2">Vencido</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentos -->
+        @if (req.Documents.Any())
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header fw-bold">
+                    <i class="fa-solid fa-folder-open me-2 text-warning"></i>Documentos Adjuntos
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Tipo</th><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in req.Documents.Where(d => d.IsActive))
+                            {
+                                <tr>
+                                    <td><small>@doc.DocumentType.ToDisplayString()</small></td>
+                                    <td><small class="font-monospace">@doc.OriginalFileName</small></td>
+                                    <td><small>@doc.UploadedAt.ToString("dd/MM/yyyy")</small></td>
+                                    <td><small>@(doc.FileSizeBytes / 1024) KB</small></td>
+                                    <td>
+                                        <a href="/Vendedor/DescargarDoc/@doc.Id" class="btn btn-xs btn-outline-secondary btn-sm">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Panel lateral -->
+    <div class="col-lg-4">
+        <!-- Acciones -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header fw-bold">Acciones</div>
+            <div class="card-body d-grid gap-2">
+                @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Borrador)
+                {
+                    <form method="post" asp-page-handler="Enviar">
+                        <input type="hidden" name="id" value="@req.Id" />
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fa-solid fa-paper-plane me-1"></i>Enviar al Cliente
+                        </button>
+                    </form>
+                }
+                @if (req.Status is FormulariosUAF.Models.Enums.RequestStatus.Aprobada)
+                {
+                    <a href="/Vendedor/DescargarPdf/@req.Id" class="btn btn-primary">
+                        <i class="fa-solid fa-file-pdf me-1"></i>Descargar PDF
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header fw-bold">
+                <i class="fa-solid fa-clock-rotate-left me-2"></i>Historial
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var h in req.StatusHistory.OrderByDescending(x => x.ChangedAt).Take(10))
+                    {
+                        <li class="list-group-item py-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="badge @h.NewStatus.ToBadgeClass()">@h.NewStatus.ToDisplayString()</span>
+                                <small class="text-muted">@h.ChangedAt.ToString("dd/MM HH:mm")</small>
+                            </div>
+                            @if (!string.IsNullOrEmpty(h.Notes))
+                            {
+                                <small class="text-muted d-block mt-1">@h.Notes</small>
+                            }
+                            <small class="text-muted">@h.ChangedBy</small>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function copyLink() {
+    navigator.clipboard.writeText(document.getElementById('clientLink').value)
+        .then(() => showToast('Enlace copiado', 'success'));
+}
+</script>
+}

@@ -1,0 +1,82 @@
+@page
+@model FormulariosUAF.Pages.Vendedor.CrearModel
+@{
+    ViewData["Title"] = "Nueva Solicitud";
+}
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fa-solid fa-plus-circle me-2"></i>Crear Nueva Solicitud
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
+                        <input asp-for="Input.RutCliente" class="form-control" placeholder="76.123.456-7" />
+                        <span asp-validation-for="Input.RutCliente" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.RazonSocial" class="form-label">Razón Social <span class="text-danger">*</span></label>
+                        <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre de la empresa" />
+                        <span asp-validation-for="Input.RazonSocial" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.TipoSolicitud" class="form-label">Tipo de Solicitud <span class="text-danger">*</span></label>
+                        <select asp-for="Input.TipoSolicitud" class="form-select">
+                            @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
+                            {
+                                <option value="@((int)t)">@t.ToDisplayString()</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.TipoSolicitud" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="Input.DiasVigencia" class="form-label">Días de vigencia del enlace</label>
+                        <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" />
+                        <div class="form-text">El cliente tendrá este número de días para completar la declaración.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Observaciones" class="form-label">Observaciones internas</label>
+                        <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger small">@Model.ErrorMessage</div>
+                    }
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>Crear Solicitud
+                        </button>
+                        <a href="/Vendedor" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 bg-light">
+            <div class="card-body">
+                <h6 class="fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>¿Cómo funciona?</h6>
+                <ol class="small text-muted ps-3">
+                    <li class="mb-1">Crea la solicitud con los datos básicos del cliente.</li>
+                    <li class="mb-1">El sistema genera un enlace único y seguro.</li>
+                    <li class="mb-1">Copia y envía el enlace al cliente por correo o WhatsApp.</li>
+                    <li class="mb-1">El cliente completa los formularios paso a paso.</li>
+                    <li class="mb-1">El área de cumplimiento revisa y aprueba.</li>
+                </ol>
+                <div class="alert alert-warning small mb-0">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

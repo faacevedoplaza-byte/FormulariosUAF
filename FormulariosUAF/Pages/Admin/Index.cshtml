@@ -1,0 +1,116 @@
+@page
+@model FormulariosUAF.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Administración";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-gears me-2 text-primary"></i>Panel de Administración</h4>
+</div>
+
+<!-- Estadísticas globales -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-2 fw-bold text-primary">@Model.Stats.TotalSolicitudes</div>
+                <small class="text-muted">Total Solicitudes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-2 fw-bold text-success">@Model.Stats.Aprobadas</div>
+                <small class="text-muted">Aprobadas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-2 fw-bold text-warning">@Model.Stats.Pendientes</div>
+                <small class="text-muted">En Proceso</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-2 fw-bold text-danger">@Model.Stats.Vencidas</div>
+                <small class="text-muted">Vencidas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Gestión de usuarios -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header fw-bold">
+                <i class="fa-solid fa-users-cog me-2"></i>Usuarios del Sistema
+                <a href="/Admin/Usuarios/Crear" class="btn btn-sm btn-primary float-end">
+                    <i class="fa-solid fa-plus me-1"></i>Nuevo
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model.Users)
+                        {
+                            <tr>
+                                <td>@u.FullName</td>
+                                <td><small>@u.Email</small></td>
+                                <td>
+                                    @foreach (var r in u.Roles)
+                                    {
+                                        <span class="badge bg-secondary me-1">@r</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (u.IsActive)
+                                    { <i class="fa-solid fa-circle-check text-success"></i> }
+                                    else
+                                    { <i class="fa-solid fa-circle-xmark text-danger"></i> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit log reciente -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header fw-bold">
+                <i class="fa-solid fa-scroll me-2"></i>Auditoría Reciente
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Acción</th><th>Usuario</th><th>IP</th><th>Fecha</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.RecentLogs)
+                            {
+                                <tr>
+                                    <td><small class="font-monospace">@log.Action</small></td>
+                                    <td><small>@(log.UserName ?? "cliente")</small></td>
+                                    <td><small class="text-muted">@log.IpAddress</small></td>
+                                    <td><small class="text-muted">@log.CreatedAt.ToString("dd/MM HH:mm")</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,94 @@
+@page
+@model FormulariosUAF.Pages.Cliente.Paso1Model
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Datos de la Empresa";
+    ViewData["CurrentStep"] = 1;
+}
+
+<div class="card border-0 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-building me-2"></i>Paso 1: Antecedentes de la Persona Jurídica
+    </div>
+    <div class="card-body p-4">
+        <form method="post">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Input.RUT" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
+                    <input asp-for="Input.RUT" class="form-control" placeholder="76.123.456-7" />
+                    <span asp-validation-for="Input.RUT" class="text-danger small"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Input.BusinessName" class="form-label">Razón Social <span class="text-danger">*</span></label>
+                    <input asp-for="Input.BusinessName" class="form-control" placeholder="Nombre oficial de la empresa" />
+                    <span asp-validation-for="Input.BusinessName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Input.Address" class="form-label">Domicilio <span class="text-danger">*</span></label>
+                    <input asp-for="Input.Address" class="form-control" placeholder="Calle, número, comuna" />
+                    <span asp-validation-for="Input.Address" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.City" class="form-label">Ciudad <span class="text-danger">*</span></label>
+                    <input asp-for="Input.City" class="form-control" placeholder="Ciudad" />
+                    <span asp-validation-for="Input.City" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.CountryOfIncorporation" class="form-label">País de Constitución <span class="text-danger">*</span></label>
+                    <input asp-for="Input.CountryOfIncorporation" class="form-control" />
+                    <span asp-validation-for="Input.CountryOfIncorporation" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.Phone" class="form-label">Teléfono</label>
+                    <input asp-for="Input.Phone" class="form-control" placeholder="+56 2 XXXX XXXX" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.EntityType" class="form-label">Tipo de Entidad <span class="text-danger">*</span></label>
+                    <select asp-for="Input.EntityType" class="form-select" id="entityTypeSelect">
+                        @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.EntityType>())
+                        {
+                            <option value="@((int)t)">@t.ToDisplayString()</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-8" id="entityTypeOtherDiv" style="display:none">
+                    <label asp-for="Input.EntityTypeOther" class="form-label">Especifique tipo de entidad</label>
+                    <input asp-for="Input.EntityTypeOther" class="form-control" />
+                </div>
+                <div class="col-12"><hr class="my-1" /><h6 class="text-primary">Representante Legal</h6></div>
+                <div class="col-md-4">
+                    <label asp-for="Input.LegalRepresentativeIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
+                    <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control" placeholder="12.345.678-9" />
+                    <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Input.LegalRepresentativeName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                    <input asp-for="Input.LegalRepresentativeName" class="form-control" placeholder="Nombre Apellido" />
+                    <span asp-validation-for="Input.LegalRepresentativeName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger small mt-3">@Model.ErrorMessage</div>
+            }
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary px-4">
+                    Guardar y Continuar <i class="fa-solid fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+const sel = document.getElementById('entityTypeSelect');
+const otherDiv = document.getElementById('entityTypeOtherDiv');
+function toggleOther() { otherDiv.style.display = sel.value == '5' ? 'block' : 'none'; }
+sel.addEventListener('change', toggleOther);
+toggleOther();
+</script>
+}

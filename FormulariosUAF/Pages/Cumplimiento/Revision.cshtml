@@ -1,0 +1,212 @@
+@page "{id:guid}"
+@model FormulariosUAF.Pages.Cumplimiento.RevisionModel
+@{
+    ViewData["Title"] = $"Revisión {Model.Request?.RequestNumber}";
+    var req = Model.Request;
+}
+
+@if (req is null)
+{
+    <div class="alert alert-danger">Solicitud no encontrada.</div>
+    return;
+}
+
+<div class="mb-3">
+    <a href="/Cumplimiento" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+
+        <!-- Empresa -->
+        @if (req.LegalEntityDeclaration is { } led)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header fw-bold bg-light">
+                    <i class="fa-solid fa-building me-2"></i>Persona Jurídica
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 small">
+                        <div class="col-md-6"><strong>RUT:</strong> @led.RUT</div>
+                        <div class="col-md-6"><strong>Razón Social:</strong> @led.BusinessName</div>
+                        <div class="col-md-6"><strong>Domicilio:</strong> @led.Address</div>
+                        <div class="col-md-6"><strong>Ciudad:</strong> @led.City</div>
+                        <div class="col-md-6"><strong>País:</strong> @led.CountryOfIncorporation</div>
+                        <div class="col-md-6"><strong>Tipo Entidad:</strong> @led.EntityType.ToDisplayString()</div>
+                        <div class="col-md-6"><strong>Representante Legal:</strong> @led.LegalRepresentativeName</div>
+                        <div class="col-md-6"><strong>RUT Rep. Legal:</strong> @led.LegalRepresentativeIdNumber</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Beneficiarios -->
+        @if (req.BeneficialOwners.Any())
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header fw-bold bg-light">
+                    <i class="fa-solid fa-users me-2"></i>Beneficiarios Finales
+                    @if (req.BeneficialOwners.Any(b => b.IsPEP))
+                    {
+                        <span class="badge bg-danger ms-2">Incluye PEP</span>
+                    }
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Nombre</th><th>RUT/ID</th><th>% Participación</th><th>PEP</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bo in req.BeneficialOwners.OrderBy(b => b.SortOrder))
+                            {
+                                <tr class="@(bo.IsPEP ? "table-danger" : "")">
+                                    <td>@bo.FullName</td>
+                                    <td>@bo.IdNumber</td>
+                                    <td>@bo.ParticipationPercentage.ToString("F2")%</td>
+                                    <td>
+                                        @if (bo.IsPEP)
+                                        {
+                                            <span class="badge bg-danger">Sí</span>
+                                            if (!string.IsNullOrEmpty(bo.PepDetail))
+                                            {
+                                                <small class="d-block text-muted">@bo.PepDetail</small>
+                                            }
+                                        }
+                                        else { <span class="text-muted">No</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- PEP -->
+        @if (req.PepDeclaration is { } pep)
+        {
+            <div class="card border-0 shadow-sm mb-3 @(pep.DeclaresPEP ? "border-danger" : "")">
+                <div class="card-header fw-bold bg-light">
+                    <i class="fa-solid fa-id-card me-2"></i>Declaración PEP
+                    @if (pep.DeclaresPEP)
+                    {
+                        <span class="badge bg-danger ms-2">Declara ser PEP</span>
+                    }
+                </div>
+                <div class="card-body small">
+                    <div class="row g-2">
+                        <div class="col-md-6"><strong>Declarante:</strong> @pep.DeclarantName</div>
+                        <div class="col-md-6"><strong>RUT:</strong> @pep.IdNumber</div>
+                        <div class="col-md-6"><strong>Declara PEP:</strong>
+                            @if (pep.DeclaresPEP) { <span class="text-danger fw-bold">SÍ</span> } else { <span class="text-success">NO</span> }
+                        </div>
+                        @if (pep.DeclaresPEP)
+                        {
+                            <div class="col-md-6"><strong>Nombre PEP:</strong> @pep.PepName</div>
+                            <div class="col-md-6"><strong>Institución:</strong> @pep.Institution</div>
+                            <div class="col-md-6"><strong>Motivo:</strong> @pep.PepReasonType?.ToDisplayString()</div>
+                        }
+                        <div class="col-md-6"><strong>Firma:</strong> @pep.SignatureFullName</div>
+                        <div class="col-md-6"><strong>Fecha firma:</strong> @pep.SignatureDateTime.ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="col-md-6"><strong>IP:</strong> @pep.SignatureIpAddress</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Documentos -->
+        @if (req.Documents.Any())
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header fw-bold bg-light">
+                    <i class="fa-solid fa-folder-open me-2"></i>Documentos
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Tipo</th><th>Archivo</th><th>Fecha</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in req.Documents.Where(d => d.IsActive))
+                            {
+                                <tr>
+                                    <td><small>@doc.DocumentType.ToDisplayString()</small></td>
+                                    <td><small class="font-monospace">@doc.OriginalFileName</small></td>
+                                    <td><small>@doc.UploadedAt.ToString("dd/MM/yyyy")</small></td>
+                                    <td>
+                                        <a href="/Cumplimiento/DescargarDoc/@doc.Id" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Panel acciones -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4 sticky-top" style="top:1rem">
+            <div class="card-header fw-bold">
+                <i class="fa-solid fa-gavel me-2"></i>Decisión
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge @req.Status.ToBadgeClass() fs-6 mb-2">@req.Status.ToDisplayString()</span>
+                </div>
+
+                <form method="post">
+                    <input type="hidden" name="RequestId" value="@req.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Observación / Motivo</label>
+                        <textarea name="Observacion" class="form-control" rows="3" placeholder="Comentario para el cliente o registro interno..."></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" asp-page-handler="Aprobar" class="btn btn-success">
+                            <i class="fa-solid fa-check me-1"></i>Aprobar
+                        </button>
+                        <button type="submit" asp-page-handler="Observar" class="btn btn-warning">
+                            <i class="fa-solid fa-comment-dots me-1"></i>Observar / Solicitar Corrección
+                        </button>
+                        <button type="submit" asp-page-handler="Rechazar" class="btn btn-danger">
+                            <i class="fa-solid fa-xmark me-1"></i>Rechazar
+                        </button>
+                    </div>
+                </form>
+
+                @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Aprobada)
+                {
+                    <hr />
+                    <a href="/Cumplimiento/DescargarPdf/@req.Id" class="btn btn-outline-primary w-100">
+                        <i class="fa-solid fa-file-pdf me-1"></i>Descargar PDF
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header fw-bold"><i class="fa-solid fa-clock-rotate-left me-2"></i>Historial</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var h in req.StatusHistory.OrderByDescending(x => x.ChangedAt).Take(8))
+                    {
+                        <li class="list-group-item py-2 small">
+                            <div class="d-flex justify-content-between">
+                                <span class="badge @h.NewStatus.ToBadgeClass()">@h.NewStatus.ToDisplayString()</span>
+                                <span class="text-muted">@h.ChangedAt.ToString("dd/MM HH:mm")</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(h.Notes))
+                            { <div class="text-muted mt-1">@h.Notes</div> }
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

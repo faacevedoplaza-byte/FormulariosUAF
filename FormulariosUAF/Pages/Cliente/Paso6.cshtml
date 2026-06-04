@@ -1,0 +1,130 @@
+@page
+@model FormulariosUAF.Pages.Cliente.Paso6Model
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Carga de Documentos";
+    ViewData["CurrentStep"] = 6;
+}
+
+<div class="card border-0 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-folder-open me-2"></i>Paso 6: Carga de Documentos
+    </div>
+    <div class="card-body p-4">
+        <div class="alert alert-info small">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            Formatos aceptados: <strong>PDF, JPG, PNG, DOCX, XLSX</strong>. Tamaño máximo: <strong>20 MB</strong> por archivo.
+            La Carpeta Tributaria es <strong>obligatoria</strong>.
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">@Model.ErrorMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success">@Model.SuccessMessage</div>
+        }
+
+        <!-- Documentos existentes -->
+        @if (Model.ExistingDocs.Any())
+        {
+            <div class="mb-4">
+                <h6 class="fw-bold">Documentos cargados</h6>
+                <table class="table table-sm">
+                    <thead class="table-light"><tr><th>Tipo</th><th>Archivo</th><th>Fecha</th><th>Tamaño</th></tr></thead>
+                    <tbody>
+                        @foreach (var doc in Model.ExistingDocs)
+                        {
+                            <tr>
+                                <td><small>@doc.DocumentType.ToDisplayString()</small></td>
+                                <td><small class="font-monospace">@doc.OriginalFileName</small></td>
+                                <td><small>@doc.UploadedAt.ToString("dd/MM/yyyy HH:mm")</small></td>
+                                <td><small>@(doc.FileSizeBytes / 1024) KB</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Formulario de carga -->
+        <form method="post" enctype="multipart/form-data">
+            <div class="row g-4">
+                <!-- Carpeta Tributaria -->
+                <div class="col-12">
+                    <div class="card border @(Model.HasCarpetaTributaria ? "border-success" : "border-danger") h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold">
+                                @if (Model.HasCarpetaTributaria)
+                                {
+                                    <i class="fa-solid fa-check-circle text-success me-1"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-solid fa-exclamation-circle text-danger me-1"></i>
+                                }
+                                Carpeta Tributaria <span class="badge bg-danger">Obligatoria</span>
+                            </h6>
+                            <input type="file" name="CarpetaTributaria" class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" />
+                            <div class="form-text">Carpeta tributaria actualizada del SII (últimos 3 meses).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cédula Rep. Legal -->
+                <div class="col-md-6">
+                    <div class="card border h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold">
+                                <i class="fa-solid fa-id-card text-primary me-1"></i>
+                                Cédula de Identidad — Representante Legal
+                            </h6>
+                            <input type="file" name="CedulaRepresentante" class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escrituras -->
+                <div class="col-md-6">
+                    <div class="card border h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold">
+                                <i class="fa-solid fa-file-contract text-secondary me-1"></i>
+                                Escrituras o Poderes <span class="badge bg-secondary">Opcional</span>
+                            </h6>
+                            <input type="file" name="Escrituras" class="form-control"
+                                   accept=".pdf,.docx" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Otros documentos -->
+                <div class="col-12">
+                    <div class="card border h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold">
+                                <i class="fa-solid fa-paperclip text-secondary me-1"></i>
+                                Otros Documentos de Respaldo <span class="badge bg-secondary">Opcional</span>
+                            </h6>
+                            <input type="file" name="OtrosDocumentos" multiple class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" />
+                            <div class="form-text">Puede adjuntar múltiples archivos.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="/Cliente/Paso5" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Anterior
+                </a>
+                <button type="submit" class="btn btn-primary px-4">
+                    Guardar y Continuar <i class="fa-solid fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

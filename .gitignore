@@ -1,0 +1,38 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.swp
+*~
+
+## Logs
+logs/
+*.log
+
+## Repository de archivos (datos sensibles)
+FormulariosUAF/Repository/
+
+## Secretos y configuración local
+appsettings.Production.json
+appsettings.local.json
+secrets.json
+*.pfx
+*.p12
+
+## Publicación
+publish/
+artifacts/
+
+## Base de datos LocalDB
+*.mdf
+*.ldf
+*.ndf
+
+## NuGet
+*.nupkg
+packages/
+```
+

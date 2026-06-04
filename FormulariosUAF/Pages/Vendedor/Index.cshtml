@@ -1,0 +1,144 @@
+@page
+@model FormulariosUAF.Pages.Vendedor.IndexModel
+@{
+    ViewData["Title"] = "Mis Solicitudes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-briefcase me-2 text-primary"></i>Solicitudes</h4>
+    <a href="/Vendedor/Crear" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-1"></i> Nueva Solicitud
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input name="rut" value="@Model.FilterRut" class="form-control form-control-sm" placeholder="RUT cliente" />
+            </div>
+            <div class="col-md-3">
+                <input name="razon" value="@Model.FilterRazon" class="form-control form-control-sm" placeholder="Razón social" />
+            </div>
+            <div class="col-md-2">
+                <select name="estado" class="form-select form-select-sm">
+                    <option value="">Todos los estados</option>
+                    @foreach (var s in Enum.GetValues<FormulariosUAF.Models.Enums.RequestStatus>())
+                    {
+                        <option value="@((int)s)" selected="@(Model.FilterEstado == (int)s)">@s.ToDisplayString()</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary btn-sm w-100">
+                    <i class="fa-solid fa-filter me-1"></i>Filtrar
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="/Vendedor" class="btn btn-outline-secondary btn-sm w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Folio</th>
+                        <th>RUT</th>
+                        <th>Razón Social</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Envío</th>
+                        <th>Vencimiento</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Requests.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-inbox me-2"></i>No hay solicitudes
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var req in Model.Requests)
+                    {
+                        <tr>
+                            <td><span class="font-monospace small">@req.RequestNumber</span></td>
+                            <td>@req.Client.RUT</td>
+                            <td>@req.Client.BusinessName</td>
+                            <td><small>@req.RequestType.ToDisplayString()</small></td>
+                            <td>
+                                <span class="badge @req.Status.ToBadgeClass()">@req.Status.ToDisplayString()</span>
+                            </td>
+                            <td><small class="text-muted">@(req.SentAt?.ToString("dd/MM/yyyy") ?? "—")</small></td>
+                            <td>
+                                @if (req.DueDate.HasValue)
+                                {
+                                    var vencido = req.DueDate < DateTime.Now;
+                                    <small class="@(vencido ? "text-danger fw-bold" : "text-muted")">
+                                        @req.DueDate.Value.ToString("dd/MM/yyyy")
+                                    </small>
+                                }
+                                else { <small class="text-muted">—</small> }
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/Vendedor/Detalle/@req.Id" class="btn btn-outline-primary" title="Ver detalle">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Borrador)
+                                    {
+                                        <button class="btn btn-outline-success btn-enviar" data-id="@req.Id" title="Enviar al cliente">
+                                            <i class="fa-solid fa-paper-plane"></i>
+                                        </button>
+                                    }
+                                    <button class="btn btn-outline-secondary btn-copy-link"
+                                            data-token="@req.ClientToken"
+                                            title="Copiar enlace cliente">
+                                        <i class="fa-solid fa-link"></i>
+                                    </button>
+                                    @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Aprobada)
+                                    {
+                                        <a href="/Vendedor/DescargarPdf/@req.Id" class="btn btn-outline-dark" title="Descargar PDF">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.btn-copy-link').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const token = this.dataset.token;
+        const url = `${location.origin}/Cliente/Inicio?token=${token}`;
+        navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles', 'success'));
+    });
+});
+
+document.querySelectorAll('.btn-enviar').forEach(btn => {
+    btn.addEventListener('click', async function () {
+        if (!confirm('¿Enviar esta solicitud al cliente?')) return;
+        const id = this.dataset.id;
+        const res = await fetch(`/api/solicitudes/${id}/enviar`, { method: 'POST', headers: { 'X-CSRF-TOKEN': getCsrfToken() } });
+        if (res.ok) { showToast('Solicitud enviada', 'success'); setTimeout(() => location.reload(), 1000); }
+        else showToast('Error al enviar', 'danger');
+    });
+});
+</script>
+}

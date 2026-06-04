@@ -1,0 +1,89 @@
+@page
+@model FormulariosUAF.Pages.Cliente.Paso2Model
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Beneficiarios Finales";
+    ViewData["CurrentStep"] = 2;
+}
+
+<div class="card border-0 shadow">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-users me-2"></i>Paso 2: Beneficiarios Finales
+    </div>
+    <div class="card-body p-4">
+        <div class="alert alert-info small">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            Se consideran <strong>Beneficiarios Finales</strong> las personas naturales con participación igual o superior al <strong>10%</strong> en la persona jurídica.
+            También puede registrar personas que ejercen control efectivo con menor participación.
+        </div>
+
+        <form method="post" id="benefForm">
+            <div id="beneficiarios-container">
+                @for (int i = 0; i < Model.Beneficiarios.Count; i++)
+                {
+                    <partial name="_BeneficiarioRow" model="@(new FormulariosUAF.Pages.Cliente.BeneficiarioRowModel(i, Model.Beneficiarios[i]))" />
+                }
+            </div>
+
+            <button type="button" class="btn btn-outline-primary mt-3" id="addBenef">
+                <i class="fa-solid fa-plus me-1"></i>Agregar Beneficiario
+            </button>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger small mt-3">@Model.ErrorMessage</div>
+            }
+
+            <input type="hidden" name="Count" id="benefCount" value="@Model.Beneficiarios.Count" />
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="/Cliente/Paso1" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Anterior
+                </a>
+                <button type="submit" class="btn btn-primary px-4">
+                    Guardar y Continuar <i class="fa-solid fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<template id="benef-template">
+    <partial name="_BeneficiarioRow" model="@(new FormulariosUAF.Pages.Cliente.BeneficiarioRowModel(-1, new FormulariosUAF.Pages.Cliente.BeneficiarioInput()))" />
+</template>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+let count = parseInt(document.getElementById('benefCount').value) || 0;
+document.getElementById('addBenef').addEventListener('click', () => {
+    const template = document.getElementById('benef-template').innerHTML
+        .replace(/__INDEX__/g, count);
+    document.getElementById('beneficiarios-container').insertAdjacentHTML('beforeend', template);
+    count++;
+    document.getElementById('benefCount').value = count;
+    bindRemove();
+    bindPepToggle();
+});
+
+function bindRemove() {
+    document.querySelectorAll('.btn-remove-benef').forEach(btn => {
+        btn.onclick = function() {
+            this.closest('.benef-row').remove();
+        };
+    });
+}
+
+function bindPepToggle() {
+    document.querySelectorAll('.pep-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const detail = this.closest('.benef-row').querySelector('.pep-detail');
+            detail.style.display = this.checked ? 'block' : 'none';
+        });
+    });
+}
+
+bindRemove();
+bindPepToggle();
+</script>
+}
