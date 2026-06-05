@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using FormulariosUAF.Data;
+using FormulariosUAF.Hubs;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
@@ -19,9 +20,11 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
+// ── Base de datos ──────────────────────────────────────────────────────────
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ── Identity ───────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -44,13 +47,36 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+// ── Almacenamiento de archivos (seleccionable por config) ──────────────────
+var storageProvider = builder.Configuration["FileStorage:Provider"] ?? "Local";
+if (storageProvider.Equals("AzureBlob", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddScoped<IFileStorageService, AzureBlobStorageService>();
+else
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+
+// ── Email (Fase 2) ─────────────────────────────────────────────────────────
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+// ── Firma electrónica ──────────────────────────────────────────────────────
+builder.Services.AddScoped<IElectronicSignatureService, SimpleElectronicSignatureService>();
+
+// ── Exportación ZIP ────────────────────────────────────────────────────────
+builder.Services.AddScoped<IExpedienteExportService, ExpedienteExportService>();
+
+// ── Notificaciones (preparado para SignalR) ────────────────────────────────
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// ── Otros servicios core ───────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
 
+// ── SignalR ────────────────────────────────────────────────────────────────
+builder.Services.AddSignalR();
+
+// ── Sesión para flujo cliente externo ──────────────────────────────────────
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(4);
@@ -60,6 +86,7 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = ".UAF.Session";
 });
 
+// ── Rate Limiting ──────────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("ClientEndpoints", opt =>
@@ -73,11 +100,13 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
+// ── Razor Pages ────────────────────────────────────────────────────────────
 builder.Services.AddRazorPages(options =>
 {
-    options.Conventions.AuthorizeFolder("/Vendedor", "VendedorPolicy");
+    options.Conventions.AuthorizeFolder("/Vendedor",     "VendedorPolicy");
     options.Conventions.AuthorizeFolder("/Cumplimiento", "CumplimientoPolicy");
-    options.Conventions.AuthorizeFolder("/Admin", "AdminPolicy");
+    options.Conventions.AuthorizeFolder("/Admin",        "AdminPolicy");
+    options.Conventions.AuthorizeFolder("/Interno",      "InternoPolicy");
     options.Conventions.AllowAnonymousToFolder("/Cliente");
     options.Conventions.AllowAnonymousToFolder("/Account");
     options.Conventions.AllowAnonymousToPage("/Index");
@@ -85,13 +114,16 @@ builder.Services.AddRazorPages(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminPolicy", p => p.RequireRole("Administrador"));
-    options.AddPolicy("VendedorPolicy", p => p.RequireRole("Administrador", "Vendedor"));
-    options.AddPolicy("CumplimientoPolicy", p => p.RequireRole("Administrador", "Cumplimiento"));
+    options.AddPolicy("AdminPolicy",        p => p.RequireRole("Administrador"));
+    options.AddPolicy("VendedorPolicy",     p => p.RequireRole("Administrador", "Vendedor"));
+    options.AddPolicy("CumplimientoPolicy", p => p.RequireRole("Administrador", "Cumplimiento", "Revisor"));
+    options.AddPolicy("InternoPolicy",      p => p.RequireRole("Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura"));
+    options.AddPolicy("ExportPolicy",       p => p.RequireRole("Administrador", "Cumplimiento"));
 });
 
 var app = builder.Build();
 
+// ── Seed ───────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     try { await SeedData.InitializeAsync(scope.ServiceProvider); }
@@ -112,5 +144,6 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
+app.MapHub<NotificationHub>("/hubs/notificaciones").RequireAuthorization();
 
 app.Run();

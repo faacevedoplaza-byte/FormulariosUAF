@@ -179,6 +179,11 @@
                     </div>
                 </form>
 
+                <hr />
+                <a href="/Cumplimiento/ExportarZip/@req.Id" class="btn btn-outline-dark w-100 mb-2">
+                    <i class="fa-solid fa-file-zipper me-1"></i>Exportar Expediente ZIP
+                </a>
+
                 @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Aprobada)
                 {
                     <hr />

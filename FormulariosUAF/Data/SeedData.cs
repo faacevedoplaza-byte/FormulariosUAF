@@ -5,6 +5,16 @@ namespace FormulariosUAF.Data;
 
 public static class SeedData
 {
+    // Roles del sistema
+    public static readonly string[] Roles =
+    [
+        "Administrador",
+        "Vendedor",
+        "Cumplimiento",
+        "Revisor",       // Fase 2: revisor interno sin aprobar
+        "SoloLectura"    // Fase 2: consulta sin modificar
+    ];
+
     public static async Task InitializeAsync(IServiceProvider services)
     {
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -13,16 +23,17 @@ public static class SeedData
 
         await db.Database.EnsureCreatedAsync();
 
-        string[] roles = ["Administrador", "Vendedor", "Cumplimiento"];
-        foreach (var role in roles)
+        foreach (var role in Roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        await CreateUserAsync(userManager, "admin@uaf.cl", "Admin@123!", "Administrador del Sistema", "Administrador");
-        await CreateUserAsync(userManager, "vendedor@uaf.cl", "Vendedor@123!", "Vendedor Demo", "Vendedor");
-        await CreateUserAsync(userManager, "cumplimiento@uaf.cl", "Cumplimiento@123!", "Oficial de Cumplimiento", "Cumplimiento");
+        // Usuarios de prueba / seed
+        await CreateUserAsync(userManager, "admin@uaf.cl",         "Admin@123!",         "Administrador del Sistema", "Administrador");
+        await CreateUserAsync(userManager, "vendedor@uaf.cl",      "Vendedor@123!",      "Vendedor Demo",             "Vendedor");
+        await CreateUserAsync(userManager, "cumplimiento@uaf.cl",  "Cumplimiento@123!",  "Oficial de Cumplimiento",   "Cumplimiento");
+        await CreateUserAsync(userManager, "revisor@uaf.cl",       "Revisor@123!",       "Revisor Interno",           "Revisor");
     }
 
     private static async Task CreateUserAsync(UserManager<ApplicationUser> userManager,

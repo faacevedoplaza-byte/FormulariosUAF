@@ -1,0 +1,72 @@
+@page
+@model FormulariosUAF.Pages.Interno.Notificaciones.IndexModel
+@{
+    ViewData["Title"] = "Notificaciones";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-bell me-2 text-primary"></i>Notificaciones</h4>
+    @if (Model.Notifications.Any(n => !n.IsRead))
+    {
+        <form method="post" asp-page-handler="MarkAll">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-check-double me-1"></i>Marcar todas como leídas
+            </button>
+        </form>
+    }
+</div>
+
+@if (!Model.Notifications.Any())
+{
+    <div class="text-center text-muted py-5">
+        <i class="fa-solid fa-bell-slash fs-1 mb-3 d-block"></i>
+        No tienes notificaciones
+    </div>
+}
+else
+{
+    <div class="list-group shadow-sm">
+        @foreach (var n in Model.Notifications)
+        {
+            <div class="list-group-item list-group-item-action @(n.IsRead ? "" : "border-start border-primary border-4")">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge @GetTypeBadge(n.Type) me-2">@n.Type.ToString()</span>
+                        @n.Message
+                        @if (n.RequestId.HasValue)
+                        {
+                            <a href="/Cumplimiento/Revision/@n.RequestId" class="ms-2 small">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver solicitud
+                            </a>
+                        }
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">@n.CreatedAt.ToString("dd/MM HH:mm")</small>
+                        @if (!n.IsRead)
+                        {
+                            <form method="post" asp-page-handler="MarkRead" class="d-inline">
+                                <input type="hidden" name="id" value="@n.Id" />
+                                <button type="submit" class="btn btn-xs btn-link text-muted p-0 small">Marcar leída</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <small class="text-success"><i class="fa-solid fa-check"></i> Leída</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    static string GetTypeBadge(FormulariosUAF.Models.Enums.NotificationType type) => type switch
+    {
+        FormulariosUAF.Models.Enums.NotificationType.SolicitudCompletada => "bg-warning text-dark",
+        FormulariosUAF.Models.Enums.NotificationType.SolicitudAprobada   => "bg-success",
+        FormulariosUAF.Models.Enums.NotificationType.SolicitudRechazada  => "bg-danger",
+        FormulariosUAF.Models.Enums.NotificationType.SolicitudObservada  => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

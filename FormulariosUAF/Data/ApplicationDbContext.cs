@@ -8,6 +8,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
+    // Módulo core
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Request> Requests => Set<Request>();
     public DbSet<LegalEntityDeclaration> LegalEntityDeclarations => Set<LegalEntityDeclaration>();
@@ -19,6 +20,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<FileStorageRecord> FileStorageRecords => Set<FileStorageRecord>();
     public DbSet<RequestStatusHistory> RequestStatusHistories => Set<RequestStatusHistory>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // Fase 2 — Firma + Notificaciones
+    public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -128,7 +133,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // Rename Identity tables to Spanish-friendly names
+        builder.Entity<SignatureRecord>(e =>
+        {
+            e.HasIndex(s => s.RequestId);
+            e.HasOne(s => s.Request)
+                .WithMany()
+                .HasForeignKey(s => s.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Notification>(e =>
+        {
+            e.HasIndex(n => n.UserId);
+            e.HasIndex(n => new { n.UserId, n.IsRead });
+            e.HasIndex(n => n.CreatedAt);
+        });
+
+        // Renombrar tablas Identity a nombres amigables
         builder.Entity<ApplicationUser>().ToTable("Usuarios");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>().ToTable("Roles");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>().ToTable("UsuariosRoles");

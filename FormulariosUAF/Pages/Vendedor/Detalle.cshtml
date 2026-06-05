@@ -85,6 +85,20 @@
                         <span class="badge bg-danger ms-2">Vencido</span>
                     }
                 </div>
+                <hr class="my-3" />
+                <form method="post" asp-page-handler="EnviarEmail" class="row g-2 align-items-end">
+                    <input type="hidden" name="id" value="@req.Id" />
+                    <div class="col">
+                        <label class="form-label small">Enviar enlace por email al cliente</label>
+                        <input type="email" name="clientEmail" class="form-control form-control-sm"
+                               placeholder="cliente@empresa.cl" required />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            <i class="fa-solid fa-envelope me-1"></i>Enviar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
