@@ -3,6 +3,7 @@ using FormulariosUAF.Data;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
+using FormulariosUAF.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ public class Paso4Model : PageModel
         public string? VinculoType { get; set; }
         [Required] public string SignatureFullName { get; set; } = string.Empty;
         [Required] public string SignatureIdNumber { get; set; } = string.Empty;
-        [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar la declaración")]
+        [MustBeTrue(ErrorMessage = "Debe aceptar la declaración bajo juramento para continuar.")]
         public bool AcceptsUnderOath { get; set; }
     }
 

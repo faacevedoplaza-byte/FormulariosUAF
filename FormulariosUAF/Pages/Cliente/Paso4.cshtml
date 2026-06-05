@@ -104,12 +104,20 @@
                     <span asp-validation-for="Input.SignatureIdNumber" class="text-danger small"></span>
                 </div>
             </div>
-            <div class="form-check mb-4">
-                <input class="form-check-input" type="checkbox" asp-for="Input.AcceptsUnderOath" required />
-                <label class="form-check-label" asp-for="Input.AcceptsUnderOath">
-                    Acepto y declaro bajo juramento que la información ingresada es correcta y verídica. <span class="text-danger">*</span>
-                </label>
-                <span asp-validation-for="Input.AcceptsUnderOath" class="text-danger small d-block"></span>
+            <div class="card border-warning mb-4">
+                <div class="card-body py-3">
+                    <div class="form-check">
+                        <input class="form-check-input @(ViewData.ModelState["Input.AcceptsUnderOath"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                               type="checkbox" asp-for="Input.AcceptsUnderOath" />
+                        <label class="form-check-label fw-semibold" asp-for="Input.AcceptsUnderOath">
+                            Acepto y declaro bajo juramento que la información ingresada es correcta y verídica.
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="invalid-feedback d-block">
+                            <span asp-validation-for="Input.AcceptsUnderOath"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))

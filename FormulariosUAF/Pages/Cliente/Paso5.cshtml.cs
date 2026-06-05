@@ -3,6 +3,7 @@ using FormulariosUAF.Data;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
+using FormulariosUAF.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ public class Paso5Model : PageModel
         public string? LastName2 { get; set; }
         public string? PlaceOfOrigin { get; set; }
         [Required] public string RelationshipWithLegalEntity { get; set; } = string.Empty;
-        [Range(typeof(bool), "true", "true", ErrorMessage = "Debe declarar bajo juramento")]
+        [MustBeTrue(ErrorMessage = "Debe declarar bajo juramento para continuar.")]
         public bool DeclaresUnderOath { get; set; }
         [Required] public string City { get; set; } = string.Empty;
         [Required] public DateTime DeclarationDate { get; set; } = DateTime.Today;

@@ -2,6 +2,7 @@
    FormulariosUAF — JavaScript principal
    ================================================ */
 
+
 // ---- Toast helper ----
 function showToast(message, type) {
     type = type || 'success';

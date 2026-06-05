@@ -1,3 +1,15 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.21.0/jquery.validate.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+<script>
+/* Adaptador MustBeTrue — debe registrarse después de jquery.validate.unobtrusive */
+(function ($) {
+    if (!$.validator || !$.validator.unobtrusive) return;
+
+    $.validator.addMethod('mustbetrue', function (value, element) {
+        return element.type === 'checkbox' ? element.checked : value === 'true';
+    });
+
+    $.validator.unobtrusive.adapters.addBool('mustbetrue');
+}(jQuery));
+</script>
