@@ -9,17 +9,15 @@ namespace FormulariosUAF.Pages.Cumplimiento;
 public class RevisionModel : PageModel
 {
     private readonly IRequestService _requestService;
-    private readonly IPdfService _pdfService;
     private readonly IAuditService _audit;
     private readonly IExpedienteExportService _export;
     private readonly INotificationService _notifications;
 
-    public RevisionModel(IRequestService requestService, IPdfService pdfService,
+    public RevisionModel(IRequestService requestService,
         IAuditService audit, IExpedienteExportService export,
         INotificationService notifications)
     {
         _requestService = requestService;
-        _pdfService = pdfService;
         _audit = audit;
         _export = export;
         _notifications = notifications;
@@ -45,7 +43,6 @@ public class RevisionModel : PageModel
         await _requestService.UpdateStatusAsync(requestId, RequestStatus.Aprobada, userName, observacion);
         await _audit.LogAsync("APROBAR", "Request", requestId.ToString(), requestId: requestId, userName: userName);
 
-        // Notificar al vendedor
         var req = await _requestService.GetByIdAsync(requestId);
         if (req is not null)
             await _notifications.CreateAsync(req.VendorUserId, NotificationType.SolicitudAprobada,
@@ -101,14 +98,6 @@ public class RevisionModel : PageModel
 
         TempData["Success"] = "Se solicitó corrección al cliente.";
         return RedirectToPage(new { id = requestId });
-    }
-
-    public async Task<IActionResult> OnGetDescargarPdfAsync(Guid id)
-    {
-        var request = await _requestService.GetByIdAsync(id);
-        if (request is null) return NotFound();
-        var pdf = _pdfService.GenerateConsolidatedPdf(request);
-        return File(pdf, "application/pdf", $"declaracion_{request.RequestNumber}.pdf");
     }
 
     public async Task<IActionResult> OnGetExportarZipAsync(Guid id)
