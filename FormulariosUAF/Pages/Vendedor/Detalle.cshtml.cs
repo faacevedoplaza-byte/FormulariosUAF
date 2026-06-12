@@ -9,16 +9,14 @@ namespace FormulariosUAF.Pages.Vendedor;
 public class DetalleModel : PageModel
 {
     private readonly IRequestService _requestService;
-    private readonly IPdfService _pdfService;
     private readonly IEmailService _email;
     private readonly IAuditService _audit;
     private readonly IConfiguration _config;
 
-    public DetalleModel(IRequestService requestService, IPdfService pdfService,
+    public DetalleModel(IRequestService requestService,
         IEmailService email, IAuditService audit, IConfiguration config)
     {
         _requestService = requestService;
-        _pdfService = pdfService;
         _email = email;
         _audit = audit;
         _config = config;
@@ -87,11 +85,4 @@ public class DetalleModel : PageModel
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnGetDescargarPdfAsync(Guid id)
-    {
-        var request = await _requestService.GetByIdAsync(id);
-        if (request is null) return NotFound();
-        var pdf = _pdfService.GenerateConsolidatedPdf(request);
-        return File(pdf, "application/pdf", $"declaracion_{request.RequestNumber}.pdf");
-    }
 }
