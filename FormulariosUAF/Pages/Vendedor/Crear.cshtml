@@ -5,41 +5,118 @@
 }
 
 <div class="row">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-primary text-white">
                 <i class="fa-solid fa-plus-circle me-2"></i>Crear Nueva Solicitud
             </div>
             <div class="card-body">
                 <form method="post">
-                    <div class="mb-3">
-                        <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
-                        <input asp-for="Input.RutCliente" class="form-control" placeholder="76.123.456-7" />
-                        <span asp-validation-for="Input.RutCliente" class="text-danger small"></span>
+
+                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-building me-2"></i>Datos de la Empresa</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input asp-for="Input.RutCliente" class="form-control" placeholder="76.123.456-7" id="rutInput" />
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarRut" title="Buscar datos en SII/API">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.RutCliente" class="text-danger small"></span>
+                            <div id="rutLookupMsg" class="form-text"></div>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Input.RazonSocial" class="form-label">Razón Social <span class="text-danger">*</span></label>
+                            <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre oficial de la empresa" />
+                            <span asp-validation-for="Input.RazonSocial" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Input.Address" class="form-label">Domicilio <span class="text-danger">*</span></label>
+                            <input asp-for="Input.Address" class="form-control" placeholder="Calle, número, comuna" />
+                            <span asp-validation-for="Input.Address" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.City" class="form-label">Ciudad <span class="text-danger">*</span></label>
+                            <input asp-for="Input.City" class="form-control" placeholder="Ciudad" />
+                            <span asp-validation-for="Input.City" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.CountryOfIncorporation" class="form-label">País de Constitución <span class="text-danger">*</span></label>
+                            <input asp-for="Input.CountryOfIncorporation" class="form-control" />
+                            <span asp-validation-for="Input.CountryOfIncorporation" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.Phone" class="form-label">Teléfono</label>
+                            <input asp-for="Input.Phone" class="form-control" placeholder="+56 2 XXXX XXXX" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.EntityType" class="form-label">Tipo de Entidad <span class="text-danger">*</span></label>
+                            <select asp-for="Input.EntityType" class="form-select" id="entityTypeSelect">
+                                @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.EntityType>())
+                                {
+                                    <option value="@((int)t)">@t.ToDisplayString()</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-8" id="entityTypeOtherDiv" style="display:none">
+                            <label asp-for="Input.EntityTypeOther" class="form-label">Especifique tipo de entidad</label>
+                            <input asp-for="Input.EntityTypeOther" class="form-control" />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="Input.RazonSocial" class="form-label">Razón Social <span class="text-danger">*</span></label>
-                        <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre de la empresa" />
-                        <span asp-validation-for="Input.RazonSocial" class="text-danger small"></span>
+
+                    <hr />
+                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-user-tie me-2"></i>Representante Legal</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label asp-for="Input.LegalRepresentativeIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
+                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control" placeholder="12.345.678-9" />
+                            <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Input.LegalRepresentativeName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                            <input asp-for="Input.LegalRepresentativeName" class="form-control" placeholder="Nombre Apellido" />
+                            <span asp-validation-for="Input.LegalRepresentativeName" class="text-danger small"></span>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="Input.TipoSolicitud" class="form-label">Tipo de Solicitud <span class="text-danger">*</span></label>
-                        <select asp-for="Input.TipoSolicitud" class="form-select">
-                            @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
-                            {
-                                <option value="@((int)t)">@t.ToDisplayString()</option>
-                            }
-                        </select>
-                        <span asp-validation-for="Input.TipoSolicitud" class="text-danger small"></span>
+
+                    <hr />
+                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-envelope me-2"></i>Contacto del Cliente</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.ClientEmail" class="form-label">Correo electrónico del cliente</label>
+                            <input asp-for="Input.ClientEmail" type="email" class="form-control" placeholder="cliente@empresa.cl" />
+                            <span asp-validation-for="Input.ClientEmail" class="text-danger small"></span>
+                            <div class="form-text">Se usará para enviar el enlace de declaración.</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Input.ClientPhone" class="form-label">Teléfono del cliente</label>
+                            <input asp-for="Input.ClientPhone" class="form-control" placeholder="+56 9 XXXX XXXX" />
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label asp-for="Input.DiasVigencia" class="form-label">Días de vigencia del enlace</label>
-                        <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" />
-                        <div class="form-text">El cliente tendrá este número de días para completar la declaración.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Input.Observaciones" class="form-label">Observaciones internas</label>
-                        <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
+
+                    <hr />
+                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-gear me-2"></i>Configuración de la Solicitud</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Input.TipoSolicitud" class="form-label">Tipo de Solicitud <span class="text-danger">*</span></label>
+                            <select asp-for="Input.TipoSolicitud" class="form-select">
+                                @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
+                                {
+                                    <option value="@((int)t)">@t.ToDisplayString()</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.TipoSolicitud" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Input.DiasVigencia" class="form-label">Días de vigencia del enlace</label>
+                            <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" />
+                            <div class="form-text">Máximo 90 días.</div>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Input.Observaciones" class="form-label">Observaciones internas</label>
+                            <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
+                        </div>
                     </div>
 
                     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -57,16 +134,16 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-5">
+    <div class="col-lg-4">
         <div class="card border-0 bg-light">
             <div class="card-body">
                 <h6 class="fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>¿Cómo funciona?</h6>
                 <ol class="small text-muted ps-3">
-                    <li class="mb-1">Crea la solicitud con los datos básicos del cliente.</li>
+                    <li class="mb-1">Completa los datos de la empresa y representante legal.</li>
                     <li class="mb-1">El sistema genera un enlace único y seguro.</li>
                     <li class="mb-1">Copia y envía el enlace al cliente por correo o WhatsApp.</li>
-                    <li class="mb-1">El cliente completa los formularios paso a paso.</li>
-                    <li class="mb-1">El área de cumplimiento revisa y aprueba.</li>
+                    <li class="mb-1">El cliente solo declara beneficiarios, PEP y sube la carpeta tributaria.</li>
+                    <li class="mb-1">El área de cumplimiento revisa y aprueba internamente.</li>
                 </ol>
                 <div class="alert alert-warning small mb-0">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i>
@@ -79,4 +156,34 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+    // EntityType other toggle
+    const sel = document.getElementById('entityTypeSelect');
+    const otherDiv = document.getElementById('entityTypeOtherDiv');
+    function toggleOther() { otherDiv.style.display = sel.value == '5' ? 'block' : 'none'; }
+    sel.addEventListener('change', toggleOther);
+    toggleOther();
+
+    // RUT autocomplete
+    document.getElementById('btnBuscarRut').addEventListener('click', async function () {
+        const rut = document.getElementById('rutInput').value.trim();
+        const msg = document.getElementById('rutLookupMsg');
+        if (!rut) { msg.textContent = 'Ingrese un RUT primero.'; msg.className = 'form-text text-warning'; return; }
+        msg.textContent = 'Buscando...'; msg.className = 'form-text text-muted';
+        try {
+            const resp = await fetch(`/Api/CompanyLookup?rut=${encodeURIComponent(rut)}`);
+            if (!resp.ok) { msg.textContent = 'No se encontraron datos para ese RUT.'; msg.className = 'form-text text-danger'; return; }
+            const d = await resp.json();
+            if (d.businessName) document.getElementById('Input_RazonSocial').value = d.businessName;
+            if (d.address) document.getElementById('Input_Address').value = d.address;
+            if (d.city) document.getElementById('Input_City').value = d.city;
+            if (d.legalRepresentative) document.getElementById('Input_LegalRepresentativeName').value = d.legalRepresentative;
+            msg.textContent = 'Datos completados automáticamente. Verifique antes de guardar.';
+            msg.className = 'form-text text-success';
+        } catch (e) {
+            msg.textContent = 'Error al consultar. Complete los datos manualmente.';
+            msg.className = 'form-text text-danger';
+        }
+    });
+    </script>
 }

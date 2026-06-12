@@ -42,39 +42,50 @@
             </div>
         }
 
-        <!-- Beneficiarios -->
-        @if (req.BeneficialOwners.Any())
+        <!-- Personas declaradas (nuevo modelo) -->
+        @if (req.DeclaredPersons.Any())
         {
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header fw-bold bg-light">
-                    <i class="fa-solid fa-users me-2"></i>Beneficiarios Finales
-                    @if (req.BeneficialOwners.Any(b => b.IsPEP))
+                    <i class="fa-solid fa-users me-2"></i>Personas Declaradas (@req.DeclaredPersons.Count)
+                    @if (req.DeclaredPersons.Any(p => p.IsPEP))
                     {
                         <span class="badge bg-danger ms-2">Incluye PEP</span>
+                    }
+                    @if (req.DeclaredPersons.Any(p => p.IsEffectiveController))
+                    {
+                        <span class="badge bg-warning text-dark ms-1">Control Efectivo</span>
                     }
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
-                            <tr><th>Nombre</th><th>RUT/ID</th><th>% Participación</th><th>PEP</th></tr>
+                            <tr>
+                                <th>Nombre</th><th>RUT/ID</th><th>Tipo Relación</th>
+                                <th>% Part.</th><th>PEP</th><th>Control</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            @foreach (var bo in req.BeneficialOwners.OrderBy(b => b.SortOrder))
+                            @foreach (var p in req.DeclaredPersons.OrderBy(x => x.SortOrder))
                             {
-                                <tr class="@(bo.IsPEP ? "table-danger" : "")">
-                                    <td>@bo.FullName</td>
-                                    <td>@bo.IdNumber</td>
-                                    <td>@bo.ParticipationPercentage.ToString("F2")%</td>
+                                <tr class="@(p.IsPEP ? "table-danger" : p.IsEffectiveController ? "table-warning" : "")">
+                                    <td>@p.FullName</td>
+                                    <td><small>@p.IdNumber</small></td>
+                                    <td><span class="badge bg-secondary">@p.RelationshipType.ToDisplayString()</span></td>
+                                    <td>@p.ParticipationPercentage.ToString("F1")%</td>
                                     <td>
-                                        @if (bo.IsPEP)
+                                        @if (p.IsPEP)
                                         {
-                                            <span class="badge bg-danger">Sí</span>
-                                            if (!string.IsNullOrEmpty(bo.PepDetail))
-                                            {
-                                                <small class="d-block text-muted">@bo.PepDetail</small>
-                                            }
+                                            <span class="badge bg-danger">PEP</span>
+                                            <small class="d-block text-muted">@p.PepType?.ToDisplayString()</small>
                                         }
-                                        else { <span class="text-muted">No</span> }
+                                        else { <span class="text-muted small">No</span> }
+                                    </td>
+                                    <td>
+                                        @if (p.IsEffectiveController)
+                                        {
+                                            <i class="fa-solid fa-circle-check text-warning" title="@p.EffectiveControlDescription"></i>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -84,33 +95,74 @@
             </div>
         }
 
-        <!-- PEP -->
-        @if (req.PepDeclaration is { } pep)
+        <!-- Análisis carpeta tributaria -->
+        @if (req.TaxFolderAnalysis is { } tax)
         {
-            <div class="card border-0 shadow-sm mb-3 @(pep.DeclaresPEP ? "border-danger" : "")">
+            <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header fw-bold bg-light">
-                    <i class="fa-solid fa-id-card me-2"></i>Declaración PEP
-                    @if (pep.DeclaresPEP)
+                    <i class="fa-solid fa-folder-open me-2"></i>Análisis Carpeta Tributaria
+                    @if (!tax.WasReadable)
                     {
-                        <span class="badge bg-danger ms-2">Declara ser PEP</span>
+                        <span class="badge bg-danger ms-2">No legible</span>
+                    }
+                    else if (tax.Alerts.Any(a => !a.IsResolved))
+                    {
+                        <span class="badge bg-warning text-dark ms-2">@tax.Alerts.Count(a => !a.IsResolved) alerta(s)</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success ms-2">Sin alertas</span>
                     }
                 </div>
                 <div class="card-body small">
-                    <div class="row g-2">
-                        <div class="col-md-6"><strong>Declarante:</strong> @pep.DeclarantName</div>
-                        <div class="col-md-6"><strong>RUT:</strong> @pep.IdNumber</div>
-                        <div class="col-md-6"><strong>Declara PEP:</strong>
-                            @if (pep.DeclaresPEP) { <span class="text-danger fw-bold">SÍ</span> } else { <span class="text-success">NO</span> }
+                    @if (tax.WasReadable)
+                    {
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4"><strong>RUT:</strong> @(tax.ExtractedRut ?? "—")</div>
+                            <div class="col-md-8"><strong>Razón Social:</strong> @(tax.ExtractedBusinessName ?? "—")</div>
+                            <div class="col-md-8"><strong>Domicilio:</strong> @(tax.ExtractedAddress ?? "—")</div>
+                            <div class="col-md-4"><strong>Analizado:</strong> @tax.AnalyzedAt.ToString("dd/MM/yyyy HH:mm")</div>
                         </div>
-                        @if (pep.DeclaresPEP)
+                    }
+                    @if (tax.Alerts.Any())
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var alert in tax.Alerts)
+                            {
+                                <li class="@(alert.Severity == "Error" ? "text-danger" : alert.Severity == "Warning" ? "text-warning" : "text-muted") mb-1">
+                                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                                    <small>@alert.Message</small>
+                                    @if (alert.IsResolved)
+                                    {
+                                        <span class="badge bg-success ms-1">Resuelta</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Declarante -->
+        @if (req.Declarant is { } dec)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header fw-bold bg-light">
+                    <i class="fa-solid fa-user-pen me-2"></i>Declarante y Firma
+                </div>
+                <div class="card-body small">
+                    <div class="row g-2">
+                        <div class="col-md-6"><strong>Nombre:</strong> @dec.FullName</div>
+                        <div class="col-md-6"><strong>RUT/ID:</strong> @dec.IdNumber</div>
+                        <div class="col-md-6"><strong>Cargo/Relación:</strong> @dec.RelationshipWithLegalEntity</div>
+                        <div class="col-md-6"><strong>Ciudad:</strong> @dec.City</div>
+                        @if (dec.SignatureFullName is not null)
                         {
-                            <div class="col-md-6"><strong>Nombre PEP:</strong> @pep.PepName</div>
-                            <div class="col-md-6"><strong>Institución:</strong> @pep.Institution</div>
-                            <div class="col-md-6"><strong>Motivo:</strong> @pep.PepReasonType?.ToDisplayString()</div>
+                            <div class="col-md-6"><strong>Firma:</strong> @dec.SignatureFullName</div>
+                            <div class="col-md-6"><strong>Fecha firma:</strong> @dec.SignatureDateTime?.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="col-md-6"><strong>IP:</strong> @dec.SignatureIpAddress</div>
                         }
-                        <div class="col-md-6"><strong>Firma:</strong> @pep.SignatureFullName</div>
-                        <div class="col-md-6"><strong>Fecha firma:</strong> @pep.SignatureDateTime.ToString("dd/MM/yyyy HH:mm")</div>
-                        <div class="col-md-6"><strong>IP:</strong> @pep.SignatureIpAddress</div>
                     </div>
                 </div>
             </div>
@@ -170,8 +222,11 @@
                         <button type="submit" asp-page-handler="Aprobar" class="btn btn-success">
                             <i class="fa-solid fa-check me-1"></i>Aprobar
                         </button>
-                        <button type="submit" asp-page-handler="Observar" class="btn btn-warning">
-                            <i class="fa-solid fa-comment-dots me-1"></i>Observar / Solicitar Corrección
+                        <button type="submit" asp-page-handler="SolicitarCorreccion" class="btn btn-warning">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Solicitar Corrección al Cliente
+                        </button>
+                        <button type="submit" asp-page-handler="Observar" class="btn btn-outline-warning">
+                            <i class="fa-solid fa-comment-dots me-1"></i>Observar (Interno)
                         </button>
                         <button type="submit" asp-page-handler="Rechazar" class="btn btn-danger">
                             <i class="fa-solid fa-xmark me-1"></i>Rechazar

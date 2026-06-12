@@ -4,21 +4,6 @@ namespace FormulariosUAF.Extensions;
 
 public static class EnumExtensions
 {
-    public static string ToDisplayString(this RequestStatus status) => status switch
-    {
-        RequestStatus.Borrador => "Borrador",
-        RequestStatus.EnviadaAlCliente => "Enviada al Cliente",
-        RequestStatus.AbiertaPorCliente => "Abierta por Cliente",
-        RequestStatus.CompletadaPorCliente => "Completada por Cliente",
-        RequestStatus.EnRevision => "En Revisión",
-        RequestStatus.Observada => "Observada",
-        RequestStatus.CorregidaPorCliente => "Corregida por Cliente",
-        RequestStatus.Aprobada => "Aprobada",
-        RequestStatus.Rechazada => "Rechazada",
-        RequestStatus.Vencida => "Vencida",
-        _ => status.ToString()
-    };
-
     public static string ToBadgeClass(this RequestStatus status) => status switch
     {
         RequestStatus.Borrador => "bg-secondary",
@@ -28,6 +13,7 @@ public static class EnumExtensions
         RequestStatus.EnRevision => "bg-warning text-dark",
         RequestStatus.Observada => "bg-danger",
         RequestStatus.CorregidaPorCliente => "bg-info text-dark",
+        RequestStatus.CorreccionSolicitada => "bg-warning text-dark",
         RequestStatus.Aprobada => "bg-success",
         RequestStatus.Rechazada => "bg-danger",
         RequestStatus.Vencida => "bg-dark",
@@ -78,5 +64,44 @@ public static class EnumExtensions
         PepReason.Parentesco => "Parentesco",
         PepReason.Otro => "Otro",
         _ => reason.ToString()
+    };
+
+    public static string ToDisplayString(this RelationshipType type) => type switch
+    {
+        RelationshipType.BeneficiarioFinal => "Beneficiario Final",
+        RelationshipType.Socio => "Socio",
+        RelationshipType.Accionista => "Accionista",
+        RelationshipType.RepresentanteLegal => "Representante Legal",
+        RelationshipType.ControladorEfectivo => "Controlador Efectivo",
+        RelationshipType.Apoderado => "Apoderado",
+        RelationshipType.Otro => "Otro",
+        _ => type.ToString()
+    };
+
+    public static string ToDisplayString(this PepType type) => type switch
+    {
+        PepType.Titular => "Titular",
+        PepType.Asociado => "Asociado",
+        PepType.Parentesco => "Parentesco",
+        PepType.ConyugeOConviviente => "Cónyuge / Conviviente Civil",
+        PepType.PactoActuacionConjunta => "Pacto de Actuación Conjunta",
+        PepType.Otro => "Otro",
+        _ => type.ToString()
+    };
+
+    public static string ToDisplayString(this RequestStatus status, bool includeNew = true) => status switch
+    {
+        RequestStatus.Borrador => "Borrador",
+        RequestStatus.EnviadaAlCliente => "Enviada al Cliente",
+        RequestStatus.AbiertaPorCliente => "Abierta por Cliente",
+        RequestStatus.CompletadaPorCliente => "Completada por Cliente",
+        RequestStatus.EnRevision => "En Revisión",
+        RequestStatus.Observada => "Observada",
+        RequestStatus.CorregidaPorCliente => "Corregida por Cliente",
+        RequestStatus.CorreccionSolicitada => "Corrección Solicitada",
+        RequestStatus.Aprobada => "Aprobada",
+        RequestStatus.Rechazada => "Rechazada",
+        RequestStatus.Vencida => "Vencida",
+        _ => status.ToString()
     };
 }

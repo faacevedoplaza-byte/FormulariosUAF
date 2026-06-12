@@ -1,0 +1,166 @@
+@page
+@model FormulariosUAF.Pages.Cliente.EnvioModel
+@using FormulariosUAF.Extensions
+@using FormulariosUAF.Models.Enums
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Revisión y Envío";
+    ViewData["CurrentStep"] = 3;
+}
+
+<div class="card border-0 shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-paper-plane me-2"></i>Revisión y Envío de la Declaración
+    </div>
+    <div class="card-body p-4">
+
+        @if (Model.ValidationErrors.Any())
+        {
+            <div class="alert alert-danger">
+                <strong>Debe completar los siguientes puntos antes de enviar:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach (var e in Model.ValidationErrors)
+                    {
+                        <li>@e</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (Model.Request is { } req)
+        {
+            @* Empresa *@
+            <div class="card border mb-3">
+                <div class="card-header bg-light py-2 fw-semibold"><i class="fa-solid fa-building me-2 text-primary"></i>Empresa Declarante</div>
+                <div class="card-body py-2">
+                    <div class="row small g-1">
+                        <div class="col-md-3"><span class="text-muted">RUT:</span> @req.LegalEntityDeclaration?.RUT</div>
+                        <div class="col-md-9"><span class="text-muted">Razón Social:</span> @req.LegalEntityDeclaration?.BusinessName</div>
+                        <div class="col-md-6"><span class="text-muted">Domicilio:</span> @req.LegalEntityDeclaration?.Address</div>
+                        <div class="col-md-3"><span class="text-muted">Ciudad:</span> @req.LegalEntityDeclaration?.City</div>
+                    </div>
+                </div>
+            </div>
+
+            @* Personas *@
+            <div class="card border mb-3">
+                <div class="card-header bg-light py-2 fw-semibold">
+                    <i class="fa-solid fa-users me-2 text-primary"></i>
+                    Personas Declaradas (@req.DeclaredPersons.Count)
+                </div>
+                <div class="card-body py-2">
+                    @if (req.DeclaredPersons.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var p in req.DeclaredPersons)
+                            {
+                                <li class="list-group-item px-0 py-1 small">
+                                    <strong>@p.FullName</strong>
+                                    <span class="text-muted ms-2">@p.IdNumber</span>
+                                    <span class="badge bg-secondary ms-2">@p.RelationshipType.ToDisplayString()</span>
+                                    @if (p.IsPEP)
+                                    {
+                                        <span class="badge bg-danger ms-1">PEP</span>
+                                    }
+                                    @if (p.IsEffectiveController)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1">Control Efectivo</span>
+                                    }
+                                    <span class="text-muted ms-2">@p.ParticipationPercentage%</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Sin personas declaradas.</span>
+                    }
+                </div>
+            </div>
+
+            @* Declarante *@
+            @if (req.Declarant is { } dec)
+            {
+                <div class="card border mb-3">
+                    <div class="card-header bg-light py-2 fw-semibold"><i class="fa-solid fa-user-pen me-2 text-primary"></i>Declarante</div>
+                    <div class="card-body py-2 small">
+                        <div class="row g-1">
+                            <div class="col-md-6"><span class="text-muted">Nombre:</span> @dec.FullName</div>
+                            <div class="col-md-3"><span class="text-muted">RUT:</span> @dec.IdNumber</div>
+                            <div class="col-md-3"><span class="text-muted">Ciudad:</span> @dec.City</div>
+                            <div class="col-md-6"><span class="text-muted">Relación:</span> @dec.RelationshipWithLegalEntity</div>
+                            <div class="col-md-6"><span class="text-muted">Firma:</span> @dec.SignatureFullName — @dec.SignatureDateTime?.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Adjuntos *@
+            <div class="card border mb-3">
+                <div class="card-header bg-light py-2 fw-semibold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Adjuntos (@req.Documents.Count)</div>
+                <div class="card-body py-2">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var doc in req.Documents)
+                        {
+                            <li class="list-group-item px-0 py-1 small">
+                                <i class="fa-solid fa-file-check text-success me-2"></i>
+                                <strong>@doc.DocumentType.ToDisplayString()</strong>
+                                <span class="text-muted ms-2">@doc.OriginalFileName</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            @* Alertas carpeta tributaria *@
+            @if (Model.TaxAlerts.Any())
+            {
+                <div class="card border border-warning mb-3">
+                    <div class="card-header bg-warning text-dark py-2 fw-semibold">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Alertas detectadas en la Carpeta Tributaria
+                    </div>
+                    <div class="card-body py-2">
+                        <p class="small text-muted mb-2">Estas alertas son informativas y no impiden el envío. El área de cumplimiento las revisará.</p>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var alert in Model.TaxAlerts)
+                            {
+                                <li class="small @(alert.Severity == "Error" ? "text-danger" : "text-warning")">
+                                    <i class="fa-solid fa-circle-exclamation me-1"></i>@alert.Message
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+        }
+
+        @if (Model.IsComplete)
+        {
+            <form method="post">
+                <div class="alert alert-success small mb-3">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    Su declaración está lista para enviar. Una vez enviada, no podrá modificarla directamente.
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="/Cliente/Adjuntos" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i>Volver a Adjuntos
+                    </a>
+                    <button type="submit" class="btn btn-success px-5 fw-bold">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Enviar Declaración para Revisión
+                    </button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="d-flex justify-content-between">
+                <a href="/Cliente/Adjuntos" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Volver a Adjuntos
+                </a>
+                <a href="/Cliente/Declaracion" class="btn btn-warning">
+                    <i class="fa-solid fa-pen me-1"></i>Completar Declaración
+                </a>
+            </div>
+        }
+    </div>
+</div>

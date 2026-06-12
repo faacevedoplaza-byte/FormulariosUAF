@@ -1,0 +1,498 @@
+@page
+@model FormulariosUAF.Pages.Cliente.DeclaracionModel
+@using FormulariosUAF.Extensions
+@using FormulariosUAF.Models.Enums
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Declaración";
+    ViewData["CurrentStep"] = 1;
+    var led = Model.Declaration!;
+}
+
+<form method="post" id="formDeclaracion" novalidate>
+
+    @* ── SECCIÓN 1: DATOS EMPRESA ───────────────────────────────────────────── *@
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-building me-2"></i>I. Antecedentes de la Empresa Declarante</span>
+            <button type="button" id="btnEditEmpresa" class="btn btn-sm btn-outline-light">
+                <i class="fa-solid fa-pen me-1"></i>Editar
+            </button>
+        </div>
+        <div class="card-body p-4">
+
+            <div id="empresaDisplay">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-muted small">RUT / N° Identificación</div>
+                        <div class="fw-semibold">@led.RUT</div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="text-muted small">Razón Social</div>
+                        <div class="fw-semibold">@led.BusinessName</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Tipo de Solicitud</div>
+                        <div>@Model.RequestType.ToDisplayString()</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small">Domicilio</div>
+                        <div>@(led.Address ?? "—")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Ciudad</div>
+                        <div>@(led.City ?? "—")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">País</div>
+                        <div>@(led.CountryOfIncorporation ?? "—")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Tipo de Entidad</div>
+                        <div>@led.EntityType.ToDisplayString()@(!string.IsNullOrEmpty(led.EntityTypeOther) ? $" — {led.EntityTypeOther}" : "")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Teléfono</div>
+                        <div>@(led.Phone ?? "—")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">RUT Representante Legal</div>
+                        <div>@(led.LegalRepresentativeIdNumber ?? "—")</div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="text-muted small">Nombre Representante Legal</div>
+                        <div>@(led.LegalRepresentativeName ?? "—")</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="empresaEditPanel" style="display:none">
+                <div class="alert alert-warning small mb-3">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Los cambios que realice quedarán registrados para revisión interna.
+                </div>
+                <input type="hidden" asp-for="Input.EmpresaEdited" id="hidEmpresaEdited" value="false" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label small">Domicilio</label>
+                        <input asp-for="Input.EmpresaAddress" class="form-control form-control-sm" value="@led.Address" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Ciudad</label>
+                        <input asp-for="Input.EmpresaCity" class="form-control form-control-sm" value="@led.City" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">País</label>
+                        <input asp-for="Input.EmpresaCountryOfIncorporation" class="form-control form-control-sm" value="@led.CountryOfIncorporation" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Teléfono</label>
+                        <input asp-for="Input.EmpresaPhone" class="form-control form-control-sm" value="@led.Phone" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Tipo de Entidad</label>
+                        <select asp-for="Input.EmpresaEntityType" class="form-select form-select-sm" id="editEntityType">
+                            @foreach (var t in Enum.GetValues<EntityType>())
+                            {
+                                <option value="@((int)t)" selected="@(t == led.EntityType)">@t.ToDisplayString()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 edit-entity-other" style="display:@(led.EntityType == EntityType.Otra ? "block" : "none")">
+                        <label class="form-label small">Especifique tipo</label>
+                        <input asp-for="Input.EmpresaEntityTypeOther" class="form-control form-control-sm" value="@led.EntityTypeOther" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">RUT Representante Legal</label>
+                        <input asp-for="Input.EmpresaLegalRepresentativeIdNumber" class="form-control form-control-sm" value="@led.LegalRepresentativeIdNumber" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Nombre Representante Legal</label>
+                        <input asp-for="Input.EmpresaLegalRepresentativeName" class="form-control form-control-sm" value="@led.LegalRepresentativeName" />
+                    </div>
+                </div>
+                <button type="button" id="btnCancelarEdicion" class="btn btn-sm btn-outline-secondary mt-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    @* ── SECCIÓN 2: ACTUALIZACIÓN SIN CAMBIOS (solo si aplica) ─────────────── *@
+    @if (Model.EsActualizacionSinCambios)
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fa-solid fa-rotate me-2"></i>Actualización de Datos sin Cambios
+            </div>
+            <div class="card-body p-4">
+                <div class="form-check mb-3">
+                    <input asp-for="Input.SinCambiosConfirma" class="form-check-input" id="chkSinCambios" />
+                    <label asp-for="Input.SinCambiosConfirma" class="form-check-label">
+                        Se reitera la información de la Declaración Jurada anterior en cuanto a que <strong>no ha habido cambios</strong> en los beneficiarios finales de la persona jurídica.
+                    </label>
+                </div>
+                <div id="sinCambiosDetalle" class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Input.SinCambiosNumDeclaracion" class="form-label small">N° de declaración anterior</label>
+                        <input asp-for="Input.SinCambiosNumDeclaracion" class="form-control form-control-sm" placeholder="UAF-2024-00001" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.SinCambiosFecha" class="form-label small">Fecha de declaración anterior</label>
+                        <input asp-for="Input.SinCambiosFecha" type="date" class="form-control form-control-sm" />
+                    </div>
+                </div>
+                <div class="alert alert-info small mt-3 mb-0">
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    Si marcó la opción anterior y en realidad <strong>sí hubo cambios</strong>, complete la sección de beneficiarios a continuación.
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── SECCIÓN 3: PERSONAS DECLARADAS ────────────────────────────────────── *@
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fa-solid fa-users me-2"></i>II. Beneficiarios Finales, Control Efectivo y Condición PEP
+        </div>
+        <div class="card-body p-4">
+            <div class="alert alert-light border small mb-3">
+                Indique las personas naturales que tienen participación igual o superior al <strong>10%</strong> en la empresa o estructura jurídica.
+                También debe informar personas que, aunque tengan una participación menor, <strong>ejercen control efectivo</strong>, toman decisiones relevantes o influyen en la administración, fondos o pagos de la empresa.
+            </div>
+
+            <div id="personasList">
+                @for (int i = 0; i < Model.Input.Personas.Count; i++)
+                {
+                    var p = Model.Input.Personas[i];
+                    <partial name="_PersonaDeclaradaRow" model='(Index: i, Data: p)' />
+                }
+            </div>
+
+            <button type="button" id="btnAddPersona" class="btn btn-outline-primary btn-sm mt-2">
+                <i class="fa-solid fa-plus me-1"></i>Agregar persona
+            </button>
+
+            <div id="sinPersonasPanel" class="mt-3 border rounded p-3 bg-light" style="display:none">
+                <div class="form-check">
+                    <input asp-for="Input.SinPersonasConfirma" class="form-check-input" id="chkSinPersonas" />
+                    <label asp-for="Input.SinPersonasConfirma" class="form-check-label small">
+                        <strong>Declaro</strong> que no existen beneficiarios finales ni personas con control efectivo distintas a las ya informadas a la institución.
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── SECCIÓN 4: DECLARANTE ──────────────────────────────────────────────── *@
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fa-solid fa-user-pen me-2"></i>III. Antecedentes del Declarante
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">
+                El declarante es la persona que completa y confirma esta información en representación de la empresa. Puede ser representante legal, socio, apoderado o una persona autorizada.
+            </p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclaranteNacionalidad" class="form-label">Nacionalidad</label>
+                    <select asp-for="Input.DeclaranteNacionalidad" class="form-select">
+                        @foreach (var n in Enum.GetValues<NationalityType>())
+                        {
+                            <option value="@((int)n)">@n.ToDisplayString()</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclaranteIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclaranteIdNumber" class="form-control" placeholder="12.345.678-9" />
+                    <span asp-validation-for="Input.DeclaranteIdNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclarantePlaceOfOrigin" class="form-label">Lugar de origen</label>
+                    <input asp-for="Input.DeclarantePlaceOfOrigin" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclaranteFirstName" class="form-label">Nombres <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclaranteFirstName" class="form-control" />
+                    <span asp-validation-for="Input.DeclaranteFirstName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclaranteLastName1" class="form-label">Apellido paterno <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclaranteLastName1" class="form-control" />
+                    <span asp-validation-for="Input.DeclaranteLastName1" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.DeclaranteLastName2" class="form-label">Apellido materno</label>
+                    <input asp-for="Input.DeclaranteLastName2" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Input.DeclaranteRelationship" class="form-label">Relación con la empresa <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclaranteRelationship" class="form-control" placeholder="Ej: Representante Legal, Apoderado..." />
+                    <span asp-validation-for="Input.DeclaranteRelationship" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Input.DeclaranteCity" class="form-label">Ciudad de firma <span class="text-danger">*</span></label>
+                    <input asp-for="Input.DeclaranteCity" class="form-control" />
+                    <span asp-validation-for="Input.DeclaranteCity" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="text" class="form-control bg-light" value="@DateTime.Today.ToString("dd/MM/yyyy")" readonly />
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="Input.DeclaranteEmail" class="form-label">Correo electrónico</label>
+                    <input asp-for="Input.DeclaranteEmail" type="email" class="form-control" />
+                    <span asp-validation-for="Input.DeclaranteEmail" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Input.DeclarantePhone" class="form-label">Teléfono</label>
+                    <input asp-for="Input.DeclarantePhone" class="form-control" placeholder="+56 9..." />
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <h6 class="text-primary"><i class="fa-solid fa-signature me-2"></i>Declaración bajo juramento y firma</h6>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label asp-for="Input.FirmaFullName" class="form-label">Nombre completo (para firma) <span class="text-danger">*</span></label>
+                    <input asp-for="Input.FirmaFullName" class="form-control" />
+                    <span asp-validation-for="Input.FirmaFullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Input.FirmaIdNumber" class="form-label">RUT (para firma) <span class="text-danger">*</span></label>
+                    <input asp-for="Input.FirmaIdNumber" class="form-control" />
+                    <span asp-validation-for="Input.FirmaIdNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check border rounded p-3 bg-light">
+                        <input asp-for="Input.FirmaDeclaraJuramento" class="form-check-input" />
+                        <label asp-for="Input.FirmaDeclaraJuramento" class="form-check-label fw-semibold">
+                            Declaro bajo juramento que la información proporcionada en este formulario es completa y veraz, y que me hago responsable de su contenido conforme a la normativa vigente.
+                        </label>
+                        <span asp-validation-for="Input.FirmaDeclaraJuramento" class="text-danger d-block small mt-1"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <div class="d-flex justify-content-end mb-5">
+        <button type="submit" class="btn btn-primary px-5">
+            Continuar a Adjuntos <i class="fa-solid fa-arrow-right ms-2"></i>
+        </button>
+    </div>
+
+</form>
+
+@* Template para nueva fila de persona (reemplaza __IDX__ en JS) *@
+<template id="personaRowTemplate">
+    <div class="persona-row card border mb-3 shadow-sm" data-idx="__IDX__">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light py-2">
+            <span class="fw-semibold text-primary small">Persona <span class="persona-num"></span></span>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-persona">
+                <i class="fa-solid fa-trash"></i> Eliminar
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label small">RUT / N° ID <span class="text-danger">*</span></label>
+                    <input name="Input.Personas[__IDX__].IdNumber" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small">Nombre completo <span class="text-danger">*</span></label>
+                    <input name="Input.Personas[__IDX__].FullName" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Tipo de relación <span class="text-danger">*</span></label>
+                    <select name="Input.Personas[__IDX__].RelationshipType" class="form-select form-select-sm">
+                        <option value="0">Beneficiario Final</option>
+                        <option value="1">Socio</option>
+                        <option value="2">Accionista</option>
+                        <option value="3">Representante Legal</option>
+                        <option value="4">Controlador Efectivo</option>
+                        <option value="5">Apoderado</option>
+                        <option value="6">Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small">Domicilio</label>
+                    <input name="Input.Personas[__IDX__].Address" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Ciudad</label>
+                    <input name="Input.Personas[__IDX__].City" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">País</label>
+                    <input name="Input.Personas[__IDX__].Country" class="form-control form-control-sm" value="Chile" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">% Participación</label>
+                    <input name="Input.Personas[__IDX__].ParticipationPercentage" type="number" min="0" max="100" step="0.01" class="form-control form-control-sm pct-input" value="0" />
+                </div>
+                <div class="col-12 border-top pt-2 mt-1">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="Input.Personas[__IDX__].HasMinTenPercentParticipation" value="true" class="form-check-input chk-10pct" />
+                                <label class="form-check-label small">Participación ≥ 10%</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="Input.Personas[__IDX__].IsEffectiveController" value="true" class="form-check-input chk-control" />
+                                <label class="form-check-label small">Ejerce control efectivo</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="Input.Personas[__IDX__].HandlesCashOrFunds" value="true" class="form-check-input" />
+                                <label class="form-check-label small">Maneja fondos/efectivo</label>
+                            </div>
+                        </div>
+                        <div class="col-12 desc-control" style="display:none">
+                            <input name="Input.Personas[__IDX__].EffectiveControlDescription" class="form-control form-control-sm" placeholder="Describa el control efectivo ejercido..." />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 border-top pt-2 mt-1">
+                    <div class="form-check">
+                        <input type="checkbox" name="Input.Personas[__IDX__].IsPEP" value="true" class="form-check-input chk-pep" />
+                        <label class="form-check-label small fw-semibold text-danger">¿Es Persona Expuesta Políticamente (PEP)?</label>
+                    </div>
+                    <div class="pep-detail mt-2 border rounded p-2 bg-light" style="display:none">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Tipo PEP <span class="text-danger">*</span></label>
+                                <select name="Input.Personas[__IDX__].PepType" class="form-select form-select-sm">
+                                    <option value="">— Seleccione —</option>
+                                    <option value="0">Titular</option>
+                                    <option value="1">Asociado</option>
+                                    <option value="2">Parentesco</option>
+                                    <option value="3">Cónyuge / Conviviente Civil</option>
+                                    <option value="4">Pacto de Actuación Conjunta</option>
+                                    <option value="5">Otro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Nombre PEP</label>
+                                <input name="Input.Personas[__IDX__].PepTypeName" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Institución</label>
+                                <input name="Input.Personas[__IDX__].PepInstitution" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Cargo / Motivo</label>
+                                <input name="Input.Personas[__IDX__].PepPosition" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Relación con el PEP</label>
+                                <input name="Input.Personas[__IDX__].PepRelationship" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small">Observación</label>
+                                <input name="Input.Personas[__IDX__].PepObservation" class="form-control form-control-sm" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+// ── Empresa edit toggle
+const btnEdit = document.getElementById('btnEditEmpresa');
+const btnCancel = document.getElementById('btnCancelarEdicion');
+const display = document.getElementById('empresaDisplay');
+const editPanel = document.getElementById('empresaEditPanel');
+const hidEdited = document.getElementById('hidEmpresaEdited');
+
+btnEdit?.addEventListener('click', () => {
+    display.style.display = 'none';
+    editPanel.style.display = 'block';
+    hidEdited.value = 'true';
+});
+btnCancel?.addEventListener('click', () => {
+    display.style.display = 'block';
+    editPanel.style.display = 'none';
+    hidEdited.value = 'false';
+});
+const editEntityType = document.getElementById('editEntityType');
+editEntityType?.addEventListener('change', () => {
+    document.querySelector('.edit-entity-other').style.display = editEntityType.value === '5' ? 'block' : 'none';
+});
+
+// ── Personas dinámicas
+const list = document.getElementById('personasList');
+const template = document.getElementById('personaRowTemplate');
+const btnAdd = document.getElementById('btnAddPersona');
+const sinPersonasPanel = document.getElementById('sinPersonasPanel');
+let idx = @Model.Input.Personas.Count;
+
+function updateNumbers() {
+    list.querySelectorAll('.persona-row').forEach((row, i) => {
+        row.querySelector('.persona-num').textContent = i + 1;
+    });
+    sinPersonasPanel.style.display = list.querySelectorAll('.persona-row').length === 0 ? 'block' : 'none';
+}
+
+function bindRowEvents(row) {
+    row.querySelector('.btn-remove-persona')?.addEventListener('click', () => {
+        row.remove();
+        renumberRows();
+        updateNumbers();
+    });
+    row.querySelector('.chk-control')?.addEventListener('change', e => {
+        row.querySelector('.desc-control').style.display = e.target.checked ? 'block' : 'none';
+    });
+    row.querySelector('.chk-pep')?.addEventListener('change', e => {
+        row.querySelector('.pep-detail').style.display = e.target.checked ? 'block' : 'none';
+    });
+    const pctInput = row.querySelector('.pct-input');
+    const chk10 = row.querySelector('.chk-10pct');
+    pctInput?.addEventListener('input', () => {
+        if (chk10) chk10.checked = parseFloat(pctInput.value || 0) >= 10;
+    });
+}
+
+function renumberRows() {
+    list.querySelectorAll('.persona-row').forEach((row, i) => {
+        row.setAttribute('data-idx', i);
+        row.querySelectorAll('[name]').forEach(el => {
+            el.name = el.name.replace(/Personas\[\d+\]/, `Personas[${i}]`);
+        });
+    });
+    idx = list.querySelectorAll('.persona-row').length;
+}
+
+btnAdd?.addEventListener('click', () => {
+    const clone = template.content.cloneNode(true);
+    const div = clone.querySelector('.persona-row');
+    div.innerHTML = div.innerHTML.replaceAll('__IDX__', idx);
+    div.setAttribute('data-idx', idx);
+    idx++;
+    list.appendChild(div);
+    bindRowEvents(list.lastElementChild);
+    updateNumbers();
+});
+
+// Bind events on pre-rendered rows
+list.querySelectorAll('.persona-row').forEach(bindRowEvents);
+updateNumbers();
+
+// Re-number on submit to ensure sequential indices
+document.getElementById('formDeclaracion')?.addEventListener('submit', renumberRows);
+</script>
+}

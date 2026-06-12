@@ -11,5 +11,6 @@ public enum RequestStatus
     CorregidaPorCliente = 6,
     Aprobada = 7,
     Rechazada = 8,
-    Vencida = 9
+    Vencida = 9,
+    CorreccionSolicitada = 10
 }

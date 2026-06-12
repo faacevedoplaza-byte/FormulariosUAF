@@ -1,5 +1,6 @@
 using FormulariosUAF.Models.Domain;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Data;
 
@@ -21,7 +22,9 @@ public static class SeedData
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var db = services.GetRequiredService<ApplicationDbContext>();
 
-        await db.Database.EnsureCreatedAsync();
+        // Aplica las migraciones pendientes y crea __EFMigrationsHistory.
+        // Reemplaza a EnsureCreatedAsync para soportar despliegues y futuras migraciones.
+        await db.Database.MigrateAsync();
 
         foreach (var role in Roles)
         {

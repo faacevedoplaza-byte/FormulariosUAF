@@ -21,6 +21,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RequestStatusHistory> RequestStatusHistories => Set<RequestStatusHistory>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // Flujo simplificado
+    public DbSet<DeclaredPerson> DeclaredPersons => Set<DeclaredPerson>();
+    public DbSet<TaxFolderAnalysis> TaxFolderAnalyses => Set<TaxFolderAnalysis>();
+    public DbSet<TaxFolderAlert> TaxFolderAlerts => Set<TaxFolderAlert>();
+
     // Fase 2 — Firma + Notificaciones
     public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -147,6 +152,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(n => n.UserId);
             e.HasIndex(n => new { n.UserId, n.IsRead });
             e.HasIndex(n => n.CreatedAt);
+        });
+
+        builder.Entity<DeclaredPerson>(e =>
+        {
+            e.Property(d => d.ParticipationPercentage).HasPrecision(5, 2);
+            e.HasIndex(d => d.RequestId);
+            e.HasOne(d => d.Request)
+                .WithMany(r => r.DeclaredPersons)
+                .HasForeignKey(d => d.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<TaxFolderAnalysis>(e =>
+        {
+            e.HasIndex(t => t.RequestId).IsUnique();
+            e.HasOne(t => t.Request)
+                .WithOne(r => r.TaxFolderAnalysis)
+                .HasForeignKey<TaxFolderAnalysis>(t => t.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<TaxFolderAlert>(e =>
+        {
+            e.HasOne(a => a.TaxFolderAnalysis)
+                .WithMany(t => t.Alerts)
+                .HasForeignKey(a => a.TaxFolderAnalysisId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Renombrar tablas Identity a nombres amigables

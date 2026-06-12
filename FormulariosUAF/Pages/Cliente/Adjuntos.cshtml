@@ -1,0 +1,90 @@
+@page
+@model FormulariosUAF.Pages.Cliente.AdjuntosModel
+@using FormulariosUAF.Extensions
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Adjuntos";
+    ViewData["CurrentStep"] = 2;
+}
+
+<div class="card border-0 shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <i class="fa-solid fa-paperclip me-2"></i>Adjuntos / Documentos de Respaldo
+    </div>
+    <div class="card-body p-4">
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger small"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.ErrorMessage</div>
+        }
+
+        @if (Model.ExistingDocs.Any())
+        {
+            <div class="mb-4">
+                <h6 class="text-secondary">Documentos cargados</h6>
+                <ul class="list-group list-group-flush">
+                    @foreach (var doc in Model.ExistingDocs)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>
+                                <i class="fa-solid fa-file-check text-success me-2"></i>
+                                <strong>@doc.DocumentType.ToDisplayString()</strong>
+                                <span class="text-muted small ms-2">@doc.OriginalFileName</span>
+                            </span>
+                            <span class="badge bg-success">Cargado</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <form method="post" enctype="multipart/form-data">
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">
+                    Carpeta Tributaria <span class="text-danger">*</span>
+                    @if (Model.HasCarpetaTributaria)
+                    {
+                        <span class="badge bg-success ms-2"><i class="fa-solid fa-check me-1"></i>Ya cargada</span>
+                    }
+                </label>
+                <input type="file" name="carpetaTributaria" class="form-control"
+                       accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"
+                       @(Model.HasCarpetaTributaria ? "" : "required") />
+                <div class="form-text">Obligatoria. Formatos: PDF, JPG, PNG, DOCX, XLSX. Máx. @(20) MB.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Cédula de Identidad del Representante Legal</label>
+                <input type="file" name="cedulaRepresentante" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Escritura, Poderes o Documento Societario</label>
+                <input type="file" name="escrituras" class="form-control" accept=".pdf,.docx" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Otros Documentos</label>
+                <input type="file" name="otrosDocumentos" multiple class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" />
+                <div class="form-text">Puede seleccionar múltiples archivos.</div>
+            </div>
+
+            <div class="alert alert-info small">
+                <i class="fa-solid fa-shield-halved me-2"></i>
+                Los archivos se almacenan de forma segura. El sistema intentará leer la carpeta tributaria para verificar la información declarada.
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <a href="/Cliente/Declaracion" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Volver
+                </a>
+                <button type="submit" class="btn btn-primary px-5">
+                    @(Model.HasCarpetaTributaria ? "Continuar a Envío" : "Cargar y Continuar")
+                    <i class="fa-solid fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

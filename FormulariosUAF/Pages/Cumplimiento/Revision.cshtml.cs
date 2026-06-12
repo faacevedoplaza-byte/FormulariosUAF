@@ -87,6 +87,22 @@ public class RevisionModel : PageModel
         return RedirectToPage(new { id = requestId });
     }
 
+    public async Task<IActionResult> OnPostSolicitarCorreccionAsync(Guid requestId, string? observacion)
+    {
+        var userName = User.Identity?.Name ?? "cumplimiento";
+        await _requestService.UpdateStatusAsync(requestId, RequestStatus.CorreccionSolicitada, userName, observacion);
+        await _audit.LogAsync("SOLICITAR_CORRECCION", "Request", requestId.ToString(), requestId: requestId,
+            newValues: new { observacion }, userName: userName);
+
+        var req = await _requestService.GetByIdAsync(requestId);
+        if (req is not null)
+            await _notifications.CreateAsync(req.VendorUserId, NotificationType.SolicitudObservada,
+                $"Solicitud {req.RequestNumber} requiere corrección: {observacion}", requestId);
+
+        TempData["Success"] = "Se solicitó corrección al cliente.";
+        return RedirectToPage(new { id = requestId });
+    }
+
     public async Task<IActionResult> OnGetDescargarPdfAsync(Guid id)
     {
         var request = await _requestService.GetByIdAsync(id);

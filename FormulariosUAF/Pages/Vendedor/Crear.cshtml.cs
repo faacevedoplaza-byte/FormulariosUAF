@@ -18,6 +18,7 @@ public class CrearModel : PageModel
 
     public class InputModel
     {
+        // Identificación empresa
         [Required(ErrorMessage = "El RUT es obligatorio")]
         [MaxLength(20)]
         public string RutCliente { get; set; } = string.Empty;
@@ -26,6 +27,45 @@ public class CrearModel : PageModel
         [MaxLength(500)]
         public string RazonSocial { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "El domicilio es obligatorio")]
+        [MaxLength(500)]
+        public string Address { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La ciudad es obligatoria")]
+        [MaxLength(200)]
+        public string City { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(200)]
+        public string CountryOfIncorporation { get; set; } = "Chile";
+
+        [MaxLength(50)]
+        public string? Phone { get; set; }
+
+        [Required]
+        public EntityType EntityType { get; set; }
+
+        [MaxLength(200)]
+        public string? EntityTypeOther { get; set; }
+
+        // Representante legal
+        [Required(ErrorMessage = "El RUT del representante es obligatorio")]
+        [MaxLength(50)]
+        public string LegalRepresentativeIdNumber { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El nombre del representante es obligatorio")]
+        [MaxLength(500)]
+        public string LegalRepresentativeName { get; set; } = string.Empty;
+
+        // Contacto cliente
+        [EmailAddress]
+        [MaxLength(200)]
+        public string? ClientEmail { get; set; }
+
+        [MaxLength(50)]
+        public string? ClientPhone { get; set; }
+
+        // Solicitud
         [Required]
         public RequestType TipoSolicitud { get; set; } = RequestType.ClienteNuevo;
 
@@ -47,14 +87,25 @@ public class CrearModel : PageModel
 
         try
         {
-            var request = await _requestService.CreateRequestAsync(
-                Input.RutCliente, Input.RazonSocial, Input.TipoSolicitud, userId);
+            var data = new NewRequestData(
+                Input.RutCliente,
+                Input.RazonSocial,
+                Input.TipoSolicitud,
+                Input.DiasVigencia,
+                Input.Observaciones,
+                Input.Address,
+                Input.City,
+                Input.CountryOfIncorporation,
+                Input.Phone,
+                Input.EntityType,
+                Input.EntityTypeOther,
+                Input.LegalRepresentativeIdNumber,
+                Input.LegalRepresentativeName,
+                Input.ClientEmail,
+                Input.ClientPhone
+            );
 
-            if (!string.IsNullOrEmpty(Input.Observaciones))
-            {
-                // Update notes via DbContext directly
-                // (simplified — could be a separate service method)
-            }
+            var request = await _requestService.CreateRequestAsync(data, userId);
 
             TempData["Success"] = $"Solicitud {request.RequestNumber} creada correctamente.";
             return RedirectToPage("/Vendedor/Detalle", new { id = request.Id });

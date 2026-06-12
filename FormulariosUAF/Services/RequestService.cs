@@ -18,32 +18,51 @@ public class RequestService : IRequestService
         _config = config;
     }
 
-    public async Task<Request> CreateRequestAsync(string rutCliente, string razonSocial, RequestType tipo, string vendorUserId)
+    public async Task<Request> CreateRequestAsync(NewRequestData data, string vendorUserId)
     {
-        var client = await _db.Clients.FirstOrDefaultAsync(c => c.RUT == rutCliente);
+        var client = await _db.Clients.FirstOrDefaultAsync(c => c.RUT == data.RutCliente);
         if (client is null)
         {
-            client = new Client { RUT = rutCliente, BusinessName = razonSocial, CreatedBy = vendorUserId };
+            client = new Client { RUT = data.RutCliente, BusinessName = data.RazonSocial, CreatedBy = vendorUserId };
             _db.Clients.Add(client);
             await _db.SaveChangesAsync();
         }
 
-        var expirationDays = _config.GetValue<int>("TokenSettings:ExpirationDays", 30);
         var request = new Request
         {
             ClientId = client.Id,
             VendorUserId = vendorUserId,
-            RequestType = tipo,
+            RequestType = data.TipoSolicitud,
             Status = RequestStatus.Borrador,
             ClientToken = _tokenService.GenerateClientToken(),
-            TokenExpiry = DateTime.UtcNow.AddDays(expirationDays),
+            TokenExpiry = DateTime.UtcNow.AddDays(data.DiasVigencia),
+            InternalNotes = data.Observaciones,
+            ClientEmail = data.ClientEmail,
+            ClientPhone = data.ClientPhone,
             CreatedBy = vendorUserId,
-            DueDate = DateTime.UtcNow.AddDays(expirationDays)
+            DueDate = DateTime.UtcNow.AddDays(data.DiasVigencia)
         };
 
         request.RequestNumber = await GenerateRequestNumberAsync();
         _db.Requests.Add(request);
         await _db.SaveChangesAsync();
+
+        _db.LegalEntityDeclarations.Add(new LegalEntityDeclaration
+        {
+            RequestId = request.Id,
+            RUT = data.RutCliente,
+            BusinessName = data.RazonSocial,
+            Address = data.Address,
+            City = data.City,
+            CountryOfIncorporation = data.CountryOfIncorporation,
+            Phone = data.Phone,
+            EntityType = data.EntityType,
+            EntityTypeOther = data.EntityTypeOther,
+            LegalRepresentativeIdNumber = data.LegalRepresentativeIdNumber,
+            LegalRepresentativeName = data.LegalRepresentativeName
+        });
+        await _db.SaveChangesAsync();
+
         return request;
     }
 
@@ -52,11 +71,13 @@ public class RequestService : IRequestService
         return await _db.Requests
             .Include(r => r.Client)
             .Include(r => r.LegalEntityDeclaration)
+            .Include(r => r.DeclaredPersons.OrderBy(d => d.SortOrder))
             .Include(r => r.BeneficialOwners)
             .Include(r => r.EffectiveControllers)
             .Include(r => r.PepDeclaration)
             .Include(r => r.Declarant)
             .Include(r => r.Documents.Where(d => d.IsActive))
+            .Include(r => r.TaxFolderAnalysis!).ThenInclude(t => t.Alerts)
             .FirstOrDefaultAsync(r => r.ClientToken == token && !r.IsDeleted);
     }
 
@@ -66,11 +87,13 @@ public class RequestService : IRequestService
             .Include(r => r.Client)
             .Include(r => r.VendorUser)
             .Include(r => r.LegalEntityDeclaration)
+            .Include(r => r.DeclaredPersons.OrderBy(d => d.SortOrder))
             .Include(r => r.BeneficialOwners)
             .Include(r => r.EffectiveControllers)
             .Include(r => r.PepDeclaration)
             .Include(r => r.Declarant)
             .Include(r => r.Documents.Where(d => d.IsActive))
+            .Include(r => r.TaxFolderAnalysis!).ThenInclude(t => t.Alerts)
             .Include(r => r.StatusHistory.OrderByDescending(h => h.ChangedAt))
             .FirstOrDefaultAsync(r => r.Id == id);
     }
@@ -119,14 +142,10 @@ public class RequestService : IRequestService
 
     public string GetNextStepUrl(int currentStep, Guid requestId) => currentStep switch
     {
-        1 => "/Cliente/Paso2",
-        2 => "/Cliente/Paso3",
-        3 => "/Cliente/Paso4",
-        4 => "/Cliente/Paso5",
-        5 => "/Cliente/Paso6",
-        6 => "/Cliente/Paso7",
-        7 => "/Cliente/Completado",
-        _ => "/Cliente/Paso1"
+        1 => "/Cliente/Adjuntos",
+        2 => "/Cliente/Envio",
+        3 => "/Cliente/Completado",
+        _ => "/Cliente/Declaracion"
     };
 
     private async Task<string> GenerateRequestNumberAsync()

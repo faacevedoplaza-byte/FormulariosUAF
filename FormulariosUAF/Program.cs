@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using FormulariosUAF.Data;
 using FormulariosUAF.Hubs;
 using FormulariosUAF.Models.Domain;
@@ -6,8 +5,10 @@ using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using QuestPDF.Infrastructure;
 using Serilog;
+using System.Threading.RateLimiting;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -22,7 +23,9 @@ builder.Host.UseSerilog();
 
 // ── Base de datos ──────────────────────────────────────────────────────────
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("LocalConnection")));
+
 
 // ── Identity ───────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -73,6 +76,25 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
 
+// ── Carpeta tributaria ─────────────────────────────────────────────────────
+builder.Services.AddScoped<ITaxFolderTextExtractor, PdfTextExtractorService>();
+builder.Services.AddScoped<ITaxFolderAnalysisService, TaxFolderAnalysisService>();
+
+// ── Proveedor de datos de empresa (configurable) ───────────────────────────
+var companyProvider = builder.Configuration["CompanyDataProvider:Provider"] ?? "Manual";
+if (companyProvider.Equals("Sii", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<ICompanyDataProvider, SiiCompanyDataProvider>();
+}
+else if (companyProvider.Equals("SimpleApi", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<ICompanyDataProvider, SimpleApiCompanyDataProvider>();
+}
+else
+{
+    builder.Services.AddScoped<ICompanyDataProvider, ManualCompanyDataProvider>();
+}
+
 // ── SignalR ────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
@@ -110,6 +132,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToFolder("/Cliente");
     options.Conventions.AllowAnonymousToFolder("/Account");
     options.Conventions.AllowAnonymousToPage("/Index");
+    options.Conventions.AuthorizeFolder("/Api", "InternoPolicy");
 });
 
 builder.Services.AddAuthorization(options =>

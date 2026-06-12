@@ -64,7 +64,7 @@ public class InicioModel : PageModel
 
         await _audit.LogAsync("ABRIR_ENLACE", "Request", request.Id.ToString(), requestId: request.Id);
 
-        return RedirectToPage("/Cliente/Paso1");
+        return RedirectToPage("/Cliente/Declaracion");
     }
 }
 
