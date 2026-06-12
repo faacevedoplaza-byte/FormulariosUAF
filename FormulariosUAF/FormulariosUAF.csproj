@@ -36,8 +36,10 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
   </ItemGroup>
 
-  <!-- La config de produccion vive SOLO en el servidor: nunca se publica para no sobrescribirla -->
+  <!-- La config vive SOLO en el servidor: estos archivos NO se publican para no sobrescribir
+       la conexion/correo de produccion al copiar la carpeta de publish al servidor -->
   <ItemGroup>
+    <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
     <Content Update="appsettings.Production.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
