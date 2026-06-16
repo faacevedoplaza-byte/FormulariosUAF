@@ -64,6 +64,15 @@ function formatRUT(rut) {
     return body + formatted + '-' + dv;
 }
 
+// Auto-formatea cualquier campo con clase .rut-input al salir del campo.
+// Usa 'focusout' (que sí propaga) para cubrir también campos agregados dinámicamente.
+document.addEventListener('focusout', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('rut-input')) {
+        var formatted = formatRUT(e.target.value);
+        if (formatted) e.target.value = formatted;
+    }
+});
+
 // ---- File size check ----
 document.addEventListener('change', function (e) {
     if (e.target.type === 'file') {

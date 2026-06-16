@@ -18,7 +18,7 @@
                         <div class="col-md-4">
                             <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input asp-for="Input.RutCliente" class="form-control" placeholder="76.123.456-7" id="rutInput" />
+                                <input asp-for="Input.RutCliente" class="form-control rut-input" placeholder="76.123.456-7" id="rutInput" />
                                 <button type="button" class="btn btn-outline-secondary" id="btnBuscarRut" title="Buscar datos en SII/API">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </button>
@@ -70,7 +70,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label asp-for="Input.LegalRepresentativeIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
-                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control" placeholder="12.345.678-9" />
+                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control rut-input" placeholder="12.345.678-9" />
                             <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
