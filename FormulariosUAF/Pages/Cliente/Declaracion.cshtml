@@ -108,7 +108,7 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label small">Nombre Representante Legal</label>
-                        <input asp-for="Input.EmpresaLegalRepresentativeName" class="form-control form-control-sm" value="@led.LegalRepresentativeName" />
+                        <input asp-for="Input.EmpresaLegalRepresentativeName" class="form-control form-control-sm name-input" value="@led.LegalRepresentativeName" />
                     </div>
                 </div>
                 <button type="button" id="btnCancelarEdicion" class="btn btn-sm btn-outline-secondary mt-2">Cancelar</button>
@@ -219,17 +219,17 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Input.DeclaranteFirstName" class="form-label">Nombres <span class="text-danger">*</span></label>
-                    <input asp-for="Input.DeclaranteFirstName" class="form-control" />
+                    <input asp-for="Input.DeclaranteFirstName" class="form-control name-input" />
                     <span asp-validation-for="Input.DeclaranteFirstName" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Input.DeclaranteLastName1" class="form-label">Apellido paterno <span class="text-danger">*</span></label>
-                    <input asp-for="Input.DeclaranteLastName1" class="form-control" />
+                    <input asp-for="Input.DeclaranteLastName1" class="form-control name-input" />
                     <span asp-validation-for="Input.DeclaranteLastName1" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Input.DeclaranteLastName2" class="form-label">Apellido materno</label>
-                    <input asp-for="Input.DeclaranteLastName2" class="form-control" />
+                    <input asp-for="Input.DeclaranteLastName2" class="form-control name-input" />
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Input.DeclaranteRelationship" class="form-label">Relación con la empresa <span class="text-danger">*</span></label>
@@ -261,7 +261,7 @@
             <div class="row g-3 mt-1">
                 <div class="col-md-6">
                     <label asp-for="Input.FirmaFullName" class="form-label">Nombre completo (para firma) <span class="text-danger">*</span></label>
-                    <input asp-for="Input.FirmaFullName" class="form-control" />
+                    <input asp-for="Input.FirmaFullName" class="form-control name-input" />
                     <span asp-validation-for="Input.FirmaFullName" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
@@ -314,7 +314,7 @@
                 </div>
                 <div class="col-md-5">
                     <label class="form-label small">Nombre completo <span class="text-danger">*</span></label>
-                    <input name="Input.Personas[__IDX__].FullName" class="form-control form-control-sm" required />
+                    <input name="Input.Personas[__IDX__].FullName" class="form-control form-control-sm name-input" required />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Tipo de relación <span class="text-danger">*</span></label>
@@ -466,6 +466,12 @@ function bindRowEvents(row) {
     });
     row.querySelector('.chk-pep')?.addEventListener('change', e => {
         row.querySelector('.pep-detail').style.display = e.target.checked ? 'block' : 'none';
+        // Al marcar PEP, copia el nombre de la persona al campo "Nombre PEP" (si está vacío)
+        if (e.target.checked) {
+            const nombre = row.querySelector('[name$=".FullName"]')?.value || '';
+            const pepNombre = row.querySelector('[name$=".PepTypeName"]');
+            if (pepNombre && !pepNombre.value) pepNombre.value = nombre;
+        }
     });
     const pctInput = row.querySelector('.pct-input');
     const chk10 = row.querySelector('.chk-10pct');

@@ -73,6 +73,27 @@ document.addEventListener('focusout', function (e) {
     }
 });
 
+// ---- Capitalización de nombres ----
+// Deja cada palabra con la primera letra en mayúscula. Las partículas (de, la, ...)
+// quedan en minúscula, salvo que sean la primera palabra.
+var NAME_PARTICLES = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'do', 'von', 'van'];
+function toTitleCaseName(str) {
+    if (!str) return str;
+    var words = str.toLowerCase().trim().split(/\s+/);
+    return words.map(function (w, i) {
+        if (i > 0 && NAME_PARTICLES.indexOf(w) !== -1) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ');
+}
+
+// Auto-capitaliza cualquier campo con clase .name-input al salir del campo.
+document.addEventListener('focusout', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('name-input')) {
+        var formatted = toTitleCaseName(e.target.value);
+        if (formatted) e.target.value = formatted;
+    }
+});
+
 // ---- File size check ----
 document.addEventListener('change', function (e) {
     if (e.target.type === 'file') {
