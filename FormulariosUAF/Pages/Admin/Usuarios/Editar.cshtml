@@ -1,4 +1,4 @@
-@page "{id}"
+@page
 @model FormulariosUAF.Pages.Admin.Usuarios.EditarModel
 @{
     ViewData["Title"] = "Editar Usuario";
@@ -16,6 +16,7 @@
             </div>
             <div class="card-body p-4">
                 <form method="post">
+                    <input type="hidden" asp-for="Input.UserId" />
                     <div class="mb-3">
                         <label asp-for="Input.FullName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
                         <input asp-for="Input.FullName" class="form-control" />
