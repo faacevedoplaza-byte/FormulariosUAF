@@ -81,6 +81,9 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<ITaxFolderTextExtractor, PdfTextExtractorService>();
 builder.Services.AddScoped<ITaxFolderAnalysisService, TaxFolderAnalysisService>();
 
+// ── Búsqueda de empresa en base de producción (SP, solo lectura) ────────────
+builder.Services.AddScoped<IEmpresaProduccionService, EmpresaProduccionService>();
+
 // ── Proveedor de datos de empresa (configurable) ───────────────────────────
 var companyProvider = builder.Configuration["CompanyDataProvider:Provider"] ?? "Manual";
 if (companyProvider.Equals("Sii", StringComparison.OrdinalIgnoreCase))
