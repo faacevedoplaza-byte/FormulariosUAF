@@ -26,6 +26,32 @@ function showToast(message, type) {
     setTimeout(function () { toast.remove(); }, 3400);
 }
 
+// ---- Copiar al portapapeles (con fallback para HTTP) ----
+// navigator.clipboard solo existe en contexto seguro (HTTPS o localhost);
+// en producción por HTTP usamos el método antiguo execCommand.
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            ok ? resolve() : reject(new Error('execCommand copy falló'));
+        } catch (e) {
+            document.body.removeChild(ta);
+            reject(e);
+        }
+    });
+}
+
 // ---- CSRF token helper ----
 function getCsrfToken() {
     var input = document.querySelector('input[name="__RequestVerificationToken"]');

@@ -127,7 +127,9 @@ document.querySelectorAll('.btn-copy-link').forEach(btn => {
     btn.addEventListener('click', function () {
         const token = this.dataset.token;
         const url = `${location.origin}/Cliente/Inicio?token=${token}`;
-        navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles', 'success'));
+        copyToClipboard(url)
+            .then(() => showToast('Enlace copiado al portapapeles', 'success'))
+            .catch(() => showToast('No se pudo copiar. Copie el enlace manualmente.', 'danger'));
     });
 });
 
