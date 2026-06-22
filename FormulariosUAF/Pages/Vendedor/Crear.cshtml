@@ -18,7 +18,7 @@
                         <div class="col-md-4">
                             <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input asp-for="Input.RutCliente" class="form-control" placeholder="76.123.456-7" id="rutInput" />
+                                <input asp-for="Input.RutCliente" class="form-control rut-input" placeholder="76.123.456-7" id="rutInput" />
                                 <button type="button" class="btn btn-outline-secondary" id="btnBuscarRut" title="Buscar datos en SII/API">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </button>
@@ -70,12 +70,12 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label asp-for="Input.LegalRepresentativeIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
-                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control" placeholder="12.345.678-9" />
+                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control rut-input" placeholder="12.345.678-9" />
                             <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
                             <label asp-for="Input.LegalRepresentativeName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
-                            <input asp-for="Input.LegalRepresentativeName" class="form-control" placeholder="Nombre Apellido" />
+                            <input asp-for="Input.LegalRepresentativeName" class="form-control name-input" placeholder="Nombre Apellido" />
                             <span asp-validation-for="Input.LegalRepresentativeName" class="text-danger small"></span>
                         </div>
                     </div>
@@ -164,20 +164,28 @@
     sel.addEventListener('change', toggleOther);
     toggleOther();
 
-    // RUT autocomplete
+    // Búsqueda de empresa por RUT (base de producción, vía SP)
     document.getElementById('btnBuscarRut').addEventListener('click', async function () {
         const rut = document.getElementById('rutInput').value.trim();
         const msg = document.getElementById('rutLookupMsg');
         if (!rut) { msg.textContent = 'Ingrese un RUT primero.'; msg.className = 'form-text text-warning'; return; }
         msg.textContent = 'Buscando...'; msg.className = 'form-text text-muted';
         try {
-            const resp = await fetch(`/Api/CompanyLookup?rut=${encodeURIComponent(rut)}`);
+            const resp = await fetch(`/Api/BuscarEmpresaPorRut?rut=${encodeURIComponent(rut)}`);
             if (!resp.ok) { msg.textContent = 'No se encontraron datos para ese RUT.'; msg.className = 'form-text text-danger'; return; }
             const d = await resp.json();
-            if (d.businessName) document.getElementById('Input_RazonSocial').value = d.businessName;
-            if (d.address) document.getElementById('Input_Address').value = d.address;
-            if (d.city) document.getElementById('Input_City').value = d.city;
-            if (d.legalRepresentative) document.getElementById('Input_LegalRepresentativeName').value = d.legalRepresentative;
+            const set = (id, v) => { if (v) { const el = document.getElementById(id); if (el) el.value = v; } };
+            const setRut = (id, v) => set(id, (typeof formatRUT === 'function' && formatRUT(v)) || v);
+
+            set('Input_RazonSocial', d.razonSocial);
+            set('Input_Address', d.domicilio);
+            set('Input_City', d.ciudad);
+            set('Input_CountryOfIncorporation', d.paisConstitucion);
+            set('Input_Phone', d.telefono);
+            setRut('Input_LegalRepresentativeIdNumber', d.rutRepresentanteLegal);
+            set('Input_LegalRepresentativeName', d.nombreRepresentanteLegal);
+            set('Input_ClientEmail', d.email);
+
             msg.textContent = 'Datos completados automáticamente. Verifique antes de guardar.';
             msg.className = 'form-text text-success';
         } catch (e) {

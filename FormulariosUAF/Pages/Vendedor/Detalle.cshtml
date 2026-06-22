@@ -190,8 +190,9 @@
 @section Scripts {
 <script>
 function copyLink() {
-    navigator.clipboard.writeText(document.getElementById('clientLink').value)
-        .then(() => showToast('Enlace copiado', 'success'));
+    copyToClipboard(document.getElementById('clientLink').value)
+        .then(() => showToast('Enlace copiado', 'success'))
+        .catch(() => showToast('No se pudo copiar. Copie el enlace manualmente.', 'danger'));
 }
 </script>
 }

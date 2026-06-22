@@ -16,7 +16,7 @@
     <div class="card-body">
         <form method="get" class="row g-2">
             <div class="col-md-3">
-                <input name="rut" value="@Model.FilterRut" class="form-control form-control-sm" placeholder="RUT cliente" />
+                <input name="rut" value="@Model.FilterRut" class="form-control form-control-sm rut-input" placeholder="RUT cliente" />
             </div>
             <div class="col-md-3">
                 <input name="razon" value="@Model.FilterRazon" class="form-control form-control-sm" placeholder="Razón social" />
@@ -127,7 +127,9 @@ document.querySelectorAll('.btn-copy-link').forEach(btn => {
     btn.addEventListener('click', function () {
         const token = this.dataset.token;
         const url = `${location.origin}/Cliente/Inicio?token=${token}`;
-        navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles', 'success'));
+        copyToClipboard(url)
+            .then(() => showToast('Enlace copiado al portapapeles', 'success'))
+            .catch(() => showToast('No se pudo copiar. Copie el enlace manualmente.', 'danger'));
     });
 });
 

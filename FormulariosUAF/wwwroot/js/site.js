@@ -26,6 +26,32 @@ function showToast(message, type) {
     setTimeout(function () { toast.remove(); }, 3400);
 }
 
+// ---- Copiar al portapapeles (con fallback para HTTP) ----
+// navigator.clipboard solo existe en contexto seguro (HTTPS o localhost);
+// en producción por HTTP usamos el método antiguo execCommand.
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            ok ? resolve() : reject(new Error('execCommand copy falló'));
+        } catch (e) {
+            document.body.removeChild(ta);
+            reject(e);
+        }
+    });
+}
+
 // ---- CSRF token helper ----
 function getCsrfToken() {
     var input = document.querySelector('input[name="__RequestVerificationToken"]');
@@ -63,6 +89,36 @@ function formatRUT(rut) {
     while (body.length > 3) { formatted = '.' + body.slice(-3) + formatted; body = body.slice(0, -3); }
     return body + formatted + '-' + dv;
 }
+
+// Auto-formatea cualquier campo con clase .rut-input al salir del campo.
+// Usa 'focusout' (que sí propaga) para cubrir también campos agregados dinámicamente.
+document.addEventListener('focusout', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('rut-input')) {
+        var formatted = formatRUT(e.target.value);
+        if (formatted) e.target.value = formatted;
+    }
+});
+
+// ---- Capitalización de nombres ----
+// Deja cada palabra con la primera letra en mayúscula. Las partículas (de, la, ...)
+// quedan en minúscula, salvo que sean la primera palabra.
+var NAME_PARTICLES = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'do', 'von', 'van'];
+function toTitleCaseName(str) {
+    if (!str) return str;
+    var words = str.toLowerCase().trim().split(/\s+/);
+    return words.map(function (w, i) {
+        if (i > 0 && NAME_PARTICLES.indexOf(w) !== -1) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ');
+}
+
+// Auto-capitaliza cualquier campo con clase .name-input al salir del campo.
+document.addEventListener('focusout', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('name-input')) {
+        var formatted = toTitleCaseName(e.target.value);
+        if (formatted) e.target.value = formatted;
+    }
+});
 
 // ---- File size check ----
 document.addEventListener('change', function (e) {
