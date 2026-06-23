@@ -84,7 +84,7 @@
                     <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-envelope me-2"></i>Contacto del Cliente</h6>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label asp-for="Input.ClientEmail" class="form-label">Correo electrónico del cliente</label>
+                            <label asp-for="Input.ClientEmail" class="form-label">Correo electrónico del cliente <span class="text-danger">*</span></label>
                             <input asp-for="Input.ClientEmail" type="email" class="form-control" placeholder="cliente@empresa.cl" />
                             <span asp-validation-for="Input.ClientEmail" class="text-danger small"></span>
                             <div class="form-text">Se usará para enviar el enlace de declaración.</div>

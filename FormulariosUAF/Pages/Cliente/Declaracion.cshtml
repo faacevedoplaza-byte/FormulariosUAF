@@ -217,7 +217,8 @@
             @if (!string.IsNullOrWhiteSpace(led.LegalRepresentativeName))
             {
                 <button type="button" id="btnUsarRepLegal" class="btn btn-sm decl-ghost-btn"
-                        data-rut="@led.LegalRepresentativeIdNumber" data-nombre="@led.LegalRepresentativeName">
+                        data-rut="@led.LegalRepresentativeIdNumber" data-nombre="@led.LegalRepresentativeName"
+                        data-email="@Model.ClientEmail" data-telefono="@Model.ClientPhone">
                     <i class="fa-solid fa-paste me-1"></i>Usar datos del representante legal
                 </button>
             }
@@ -564,8 +565,14 @@ document.getElementById('btnUsarRepLegal')?.addEventListener('click', function (
     setVal('Input_DeclaranteRelationship', 'Representante Legal');
     setVal('Input_FirmaFullName', nombre);
 
+    // Contacto del cliente registrado por el vendedor (correo y teléfono)
+    const email = (this.dataset.email || '').trim();
+    const tel = (this.dataset.telefono || '').trim();
+    if (email) setVal('Input_DeclaranteEmail', email);
+    if (tel) setVal('Input_DeclarantePhone', tel);
+
     if (typeof showToast === 'function')
-        showToast('Datos del representante legal copiados. Verifique nombres y apellidos.', 'info');
+        showToast('Datos del representante legal y contacto del cliente copiados. Verifique nombres y apellidos.', 'info');
 });
 </script>
 }

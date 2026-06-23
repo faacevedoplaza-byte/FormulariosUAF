@@ -54,7 +54,10 @@ public class DetalleModel : PageModel
             return RedirectToPage(new { id });
         }
 
-        var baseUrl = _config["AppSettings:BaseUrl"] ?? $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}";
+        var configuredBase = _config["AppSettings:BaseUrl"];
+        var baseUrl = (!string.IsNullOrWhiteSpace(configuredBase) && !configuredBase.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+            ? configuredBase.TrimEnd('/')
+            : $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}";
         var link = $"{baseUrl}/Cliente/Inicio?token={request.ClientToken}";
         var vendorName = User.Identity?.Name ?? "Ejecutivo";
 
