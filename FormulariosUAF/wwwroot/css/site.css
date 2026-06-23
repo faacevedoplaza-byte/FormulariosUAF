@@ -110,3 +110,241 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
 /* ---- SIDEBAR TOGGLE ---- */
 #wrapper.sidebar-hidden .sidebar-nav { display: none !important; }
+
+/* ================================================
+   DECLARACIÓN — rediseño v2 (solo presentación)
+   Paleta: navy #1a2b4a · azul #1565C0 · azul claro #e8f0fe
+   Todo va scopeado bajo #formDeclaracion / .decl-v2 para no
+   afectar otras páginas. No cambia ningún name/id/clase de JS.
+   ================================================ */
+
+/* Encabezado de página */
+.decl-page-head h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: .15rem;
+}
+.decl-page-head p { color: #94a3b8; font-size: .9rem; margin: 0; }
+
+/* Tarjeta de sección */
+#formDeclaracion .decl-card {
+    border-radius: 16px;
+    border: 1px solid #eef2f7;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+}
+#formDeclaracion .decl-card-header {
+    background: #fff !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #eef2f7;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+#formDeclaracion .decl-card .card-body { padding: 1.25rem 1.5rem; }
+
+/* Título de sección con badge de número (I, II, III, IV) */
+.decl-sec-title {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.decl-sec-num {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: #1565C0;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Botón "ghost" (Editar / Usar datos del representante legal) */
+#formDeclaracion .decl-ghost-btn {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-weight: 600;
+    font-size: .8rem;
+}
+#formDeclaracion .decl-ghost-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+/* Pie de acciones */
+.decl-actions { padding-top: .25rem; }
+.decl-actions .decl-required-hint { color: #94a3b8; font-size: .8rem; }
+.decl-actions .decl-required-hint .req { color: #3b82f6; }
+#formDeclaracion .decl-submit {
+    background: #1a2b4a;
+    border-color: #1a2b4a;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: .7rem 1.6rem;
+    box-shadow: 0 8px 20px rgba(26, 43, 74, .25);
+}
+#formDeclaracion .decl-submit:hover {
+    background: #142037;
+    border-color: #142037;
+}
+
+/* ---- Sección I: tarjetitas de datos de empresa ---- */
+.decl-info-tile {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: .7rem .9rem;
+    height: 100%;
+}
+.decl-info-label {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #94a3b8;
+    margin-bottom: .15rem;
+}
+.decl-info-val { font-size: .9rem; font-weight: 600; color: #334155; line-height: 1.3; }
+
+/* ---- Aviso ámbar (Sección II) ---- */
+#formDeclaracion .decl-warn {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    font-size: .85rem;
+    line-height: 1.5;
+}
+
+/* ---- Bloque Persona ---- */
+#formDeclaracion .decl-persona {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+#formDeclaracion .decl-persona-head {
+    background: #f8fafc;
+    padding: .6rem 1rem;
+    border-bottom: 1px solid #eef2f7;
+}
+#formDeclaracion .decl-persona-badge {
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 50%;
+    background: #1a2b4a;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+#formDeclaracion .decl-remove-btn {
+    color: #f87171;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: .8rem;
+}
+#formDeclaracion .decl-remove-btn:hover { color: #dc2626; background: #fef2f2; }
+#formDeclaracion .decl-persona-body { padding: 1rem; }
+
+/* ---- Panel PEP ---- */
+#formDeclaracion .decl-pep-panel {
+    border: 1px solid #bcd4f8;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+}
+#formDeclaracion .decl-pep-toggle .form-check-label { color: #1565C0; }
+
+/* ---- Botón "Agregar persona" punteado ---- */
+#formDeclaracion .decl-add-btn {
+    border: 2px dashed #93c5fd;
+    color: #1565C0;
+    background: transparent;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: .6rem 1rem;
+}
+#formDeclaracion .decl-add-btn:hover { background: #eff6ff; color: #0d47a1; }
+
+/* ================================================
+   _ClientLayout — sidebar de pasos (rediseño v2)
+   ================================================ */
+body.decl-shell { background: #f0f4f9; }
+.decl-layout { display: flex; min-height: 100vh; }
+
+.decl-sidebar {
+    width: 16rem;
+    flex-shrink: 0;
+    background: #1a2b4a;
+    position: sticky;
+    top: 0;
+    align-self: stretch;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.decl-sidebar-head {
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.decl-sidebar-logo {
+    width: 2rem; height: 2rem; border-radius: .6rem;
+    background: #1565C0; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.decl-steps { padding: 1.25rem; }
+.decl-steps-label {
+    font-size: .68rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .12em; color: rgba(255,255,255,.3); margin-bottom: 1rem;
+}
+.decl-step { display: flex; align-items: flex-start; gap: .75rem; padding: .35rem 0; }
+.decl-step-dot {
+    width: 1.75rem; height: 1.75rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700; flex-shrink: 0;
+}
+.decl-step.done    .decl-step-dot { background: #22c55e; color: #fff; }
+.decl-step.active  .decl-step-dot { background: #1565C0; color: #fff; }
+.decl-step.pending .decl-step-dot { background: rgba(255,255,255,.12); color: rgba(255,255,255,.4); }
+.decl-step-name { font-size: .85rem; font-weight: 600; }
+.decl-step.done    .decl-step-name { color: #86efac; }
+.decl-step.active  .decl-step-name { color: #fff; }
+.decl-step.pending .decl-step-name { color: rgba(255,255,255,.35); }
+.decl-step-sub { font-size: .72rem; }
+.decl-step.active  .decl-step-sub { color: rgba(255,255,255,.6); }
+.decl-step.pending .decl-step-sub { color: rgba(255,255,255,.25); }
+.decl-step.done    .decl-step-sub { color: rgba(255,255,255,.4); }
+.decl-step-line { width: 1px; flex: 1; min-height: 1.2rem; margin: .25rem auto 0; }
+.decl-step.done .decl-step-line { background: #22c55e; }
+.decl-step:not(.done) .decl-step-line { background: rgba(255,255,255,.1); }
+
+.decl-progress-box {
+    margin: auto 1.25rem 1.5rem; padding: 1rem;
+    border-radius: 12px; background: rgba(255,255,255,.06);
+}
+.decl-progress-box .lbl { font-size: .72rem; font-weight: 600; color: #fff; }
+.decl-progress-box .pct { font-size: .72rem; font-weight: 700; color: #e8f0fe; }
+.decl-progress-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; }
+.decl-progress-fill { height: 100%; border-radius: 4px; background: #60a5fa; }
+
+.decl-main { flex: 1; min-width: 0; padding: 2rem 1rem; }
+.decl-main-inner { max-width: 56rem; margin: 0 auto; }
+
+@media (max-width: 991.98px) {
+    .decl-sidebar { display: none; }
+    .decl-main { padding: 1.5rem 1rem; }
+}

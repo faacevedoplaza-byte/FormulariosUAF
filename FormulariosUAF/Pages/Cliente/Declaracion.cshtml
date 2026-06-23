@@ -9,13 +9,18 @@
     var led = Model.Declaration!;
 }
 
+<div class="decl-page-head mb-4">
+    <h1>Declaración</h1>
+    <p>Complete la información solicitada para generar su declaración UAF.</p>
+</div>
+
 <form method="post" id="formDeclaracion" novalidate>
 
     @* ── SECCIÓN 1: DATOS EMPRESA ───────────────────────────────────────────── *@
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-building me-2"></i>I. Antecedentes de la Empresa Declarante</span>
-            <button type="button" id="btnEditEmpresa" class="btn btn-sm btn-outline-light">
+    <div class="card decl-card mb-4">
+        <div class="card-header decl-card-header d-flex justify-content-between align-items-center">
+            <span class="decl-sec-title"><span class="decl-sec-num">I</span>Antecedentes de la Empresa Declarante</span>
+            <button type="button" id="btnEditEmpresa" class="btn btn-sm decl-ghost-btn">
                 <i class="fa-solid fa-pen me-1"></i>Editar
             </button>
         </div>
@@ -23,45 +28,65 @@
 
             <div id="empresaDisplay">
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="text-muted small">RUT / N° Identificación</div>
-                        <div class="fw-semibold">@led.RUT</div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">RUT / N° Identificación</div>
+                            <div class="decl-info-val">@led.RUT</div>
+                        </div>
                     </div>
-                    <div class="col-md-9">
-                        <div class="text-muted small">Razón Social</div>
-                        <div class="fw-semibold">@led.BusinessName</div>
+                    <div class="col-md-8">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Razón Social</div>
+                            <div class="decl-info-val">@led.BusinessName</div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-muted small">Tipo de Solicitud</div>
-                        <div>@Model.RequestType.ToDisplayString()</div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Tipo de Solicitud</div>
+                            <div class="decl-info-val">@Model.RequestType.ToDisplayString()</div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Domicilio</div>
-                        <div>@(led.Address ?? "—")</div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-muted small">Ciudad</div>
-                        <div>@(led.City ?? "—")</div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-muted small">País</div>
-                        <div>@(led.CountryOfIncorporation ?? "—")</div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-muted small">Tipo de Entidad</div>
-                        <div>@led.EntityType.ToDisplayString()@(!string.IsNullOrEmpty(led.EntityTypeOther) ? $" — {led.EntityTypeOther}" : "")</div>
+                    <div class="col-md-5">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Domicilio</div>
+                            <div class="decl-info-val">@(led.Address ?? "—")</div>
+                        </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">Teléfono</div>
-                        <div>@(led.Phone ?? "—")</div>
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Ciudad</div>
+                            <div class="decl-info-val">@(led.City ?? "—")</div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-muted small">RUT Representante Legal</div>
-                        <div>@(led.LegalRepresentativeIdNumber ?? "—")</div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">País</div>
+                            <div class="decl-info-val">@(led.CountryOfIncorporation ?? "—")</div>
+                        </div>
                     </div>
-                    <div class="col-md-9">
-                        <div class="text-muted small">Nombre Representante Legal</div>
-                        <div>@(led.LegalRepresentativeName ?? "—")</div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Tipo de Entidad</div>
+                            <div class="decl-info-val">@led.EntityType.ToDisplayString()@(!string.IsNullOrEmpty(led.EntityTypeOther) ? $" — {led.EntityTypeOther}" : "")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Teléfono</div>
+                            <div class="decl-info-val">@(led.Phone ?? "—")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">RUT Representante Legal</div>
+                            <div class="decl-info-val">@(led.LegalRepresentativeIdNumber ?? "—")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="decl-info-tile">
+                            <div class="decl-info-label">Nombre Representante Legal</div>
+                            <div class="decl-info-val">@(led.LegalRepresentativeName ?? "—")</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,14 +174,17 @@
     }
 
     @* ── SECCIÓN 3: PERSONAS DECLARADAS ────────────────────────────────────── *@
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <i class="fa-solid fa-users me-2"></i>II. Beneficiarios Finales, Control Efectivo y Condición PEP
+    <div class="card decl-card mb-4">
+        <div class="card-header decl-card-header">
+            <span class="decl-sec-title"><span class="decl-sec-num">II</span>Beneficiarios Finales, Control Efectivo y Condición PEP</span>
         </div>
         <div class="card-body p-4">
-            <div class="alert alert-light border small mb-3">
-                Indique las personas naturales que tienen participación igual o superior al <strong>10%</strong> en la empresa o estructura jurídica.
-                También debe informar personas que, aunque tengan una participación menor, <strong>ejercen control efectivo</strong>, toman decisiones relevantes o influyen en la administración, fondos o pagos de la empresa.
+            <div class="decl-warn d-flex gap-2 mb-3">
+                <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+                <div>
+                    Indique las personas naturales que tienen participación igual o superior al <strong>10%</strong> en la empresa o estructura jurídica.
+                    También debe informar personas que, aunque tengan una participación menor, <strong>ejercen control efectivo</strong>, toman decisiones relevantes o influyen en la administración, fondos o pagos de la empresa.
+                </div>
             </div>
 
             <div id="personasList">
@@ -167,7 +195,7 @@
                 }
             </div>
 
-            <button type="button" id="btnAddPersona" class="btn btn-outline-primary btn-sm mt-2">
+            <button type="button" id="btnAddPersona" class="btn decl-add-btn btn-sm mt-2">
                 <i class="fa-solid fa-plus me-1"></i>Agregar persona
             </button>
 
@@ -183,12 +211,12 @@
     </div>
 
     @* ── SECCIÓN 4: DECLARANTE ──────────────────────────────────────────────── *@
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <span><i class="fa-solid fa-user-pen me-2"></i>III. Antecedentes del Declarante</span>
+    <div class="card decl-card mb-4">
+        <div class="card-header decl-card-header d-flex justify-content-between align-items-center">
+            <span class="decl-sec-title"><span class="decl-sec-num">III</span>Antecedentes del Declarante</span>
             @if (!string.IsNullOrWhiteSpace(led.LegalRepresentativeName))
             {
-                <button type="button" id="btnUsarRepLegal" class="btn btn-sm btn-outline-light"
+                <button type="button" id="btnUsarRepLegal" class="btn btn-sm decl-ghost-btn"
                         data-rut="@led.LegalRepresentativeIdNumber" data-nombre="@led.LegalRepresentativeName">
                     <i class="fa-solid fa-paste me-1"></i>Usar datos del representante legal
                 </button>
@@ -289,8 +317,9 @@
         </div>
     }
 
-    <div class="d-flex justify-content-end mb-5">
-        <button type="submit" class="btn btn-primary px-5">
+    <div class="decl-actions d-flex justify-content-between align-items-center mb-5">
+        <p class="decl-required-hint mb-0">Los campos marcados con <span class="req">*</span> son obligatorios</p>
+        <button type="submit" class="btn btn-primary decl-submit">
             Continuar a Adjuntos <i class="fa-solid fa-arrow-right ms-2"></i>
         </button>
     </div>
@@ -299,14 +328,17 @@
 
 @* Template para nueva fila de persona (reemplaza __IDX__ en JS) *@
 <template id="personaRowTemplate">
-    <div class="persona-row card border mb-3 shadow-sm" data-idx="__IDX__">
-        <div class="card-header d-flex justify-content-between align-items-center bg-light py-2">
-            <span class="fw-semibold text-primary small">Persona <span class="persona-num"></span></span>
-            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-persona">
-                <i class="fa-solid fa-trash"></i> Eliminar
+    <div class="persona-row decl-persona mb-3" data-idx="__IDX__">
+        <div class="decl-persona-head d-flex justify-content-between align-items-center">
+            <span class="d-flex align-items-center gap-2">
+                <span class="decl-persona-badge"><span class="persona-num"></span></span>
+                <span class="fw-semibold small">Persona</span>
+            </span>
+            <button type="button" class="btn btn-sm decl-remove-btn btn-remove-persona">
+                <i class="fa-solid fa-trash me-1"></i>Eliminar
             </button>
         </div>
-        <div class="card-body">
+        <div class="decl-persona-body">
             <div class="row g-2">
                 <div class="col-md-3">
                     <label class="form-label small">RUT / N° ID <span class="text-danger">*</span></label>
@@ -370,11 +402,11 @@
                     </div>
                 </div>
                 <div class="col-12 border-top pt-2 mt-1">
-                    <div class="form-check">
+                    <div class="form-check decl-pep-toggle">
                         <input type="checkbox" name="Input.Personas[__IDX__].IsPEP" value="true" class="form-check-input chk-pep" />
-                        <label class="form-check-label small fw-semibold text-danger">¿Es Persona Expuesta Políticamente (PEP)?</label>
+                        <label class="form-check-label small fw-semibold">¿Es Persona Expuesta Políticamente (PEP)?</label>
                     </div>
-                    <div class="pep-detail mt-2 border rounded p-2 bg-light" style="display:none">
+                    <div class="pep-detail decl-pep-panel mt-2" style="display:none">
                         <div class="row g-2">
                             <div class="col-md-3">
                                 <label class="form-label small">Tipo PEP <span class="text-danger">*</span></label>

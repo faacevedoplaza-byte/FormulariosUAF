@@ -5,14 +5,17 @@
     var i = Model.Index;
     var p = Model.Data;
 }
-<div class="persona-row card border mb-3 shadow-sm" data-idx="@i">
-    <div class="card-header d-flex justify-content-between align-items-center bg-light py-2">
-        <span class="fw-semibold text-primary small">Persona <span class="persona-num">@(i + 1)</span></span>
-        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-persona">
-            <i class="fa-solid fa-trash"></i> Eliminar
+<div class="persona-row decl-persona mb-3" data-idx="@i">
+    <div class="decl-persona-head d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <span class="decl-persona-badge"><span class="persona-num">@(i + 1)</span></span>
+            <span class="fw-semibold small">Persona</span>
+        </span>
+        <button type="button" class="btn btn-sm decl-remove-btn btn-remove-persona">
+            <i class="fa-solid fa-trash me-1"></i>Eliminar
         </button>
     </div>
-    <div class="card-body">
+    <div class="decl-persona-body">
         <div class="row g-2">
             <div class="col-md-3">
                 <label class="form-label small">RUT / N° ID <span class="text-danger">*</span></label>
@@ -73,11 +76,11 @@
                 </div>
             </div>
             <div class="col-12 border-top pt-2 mt-1">
-                <div class="form-check">
+                <div class="form-check decl-pep-toggle">
                     <input type="checkbox" name="Input.Personas[@i].IsPEP" value="true" class="form-check-input chk-pep" @(p.IsPEP ? "checked" : "") />
-                    <label class="form-check-label small fw-semibold text-danger">¿Es Persona Expuesta Políticamente (PEP)?</label>
+                    <label class="form-check-label small fw-semibold">¿Es Persona Expuesta Políticamente (PEP)?</label>
                 </div>
-                <div class="pep-detail mt-2 border rounded p-2 bg-light" style="display:@(p.IsPEP ? "block" : "none")">
+                <div class="pep-detail decl-pep-panel mt-2" style="display:@(p.IsPEP ? "block" : "none")">
                     <div class="row g-2">
                         <div class="col-md-3">
                             <label class="form-label small">Tipo PEP <span class="text-danger">*</span></label>

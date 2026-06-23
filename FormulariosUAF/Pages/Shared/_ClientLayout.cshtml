@@ -8,66 +8,134 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="bg-light">
+@{
+    var companyName = ViewData["CompanyName"] ?? "FormulariosUAF";
+    var stepObj = ViewData["CurrentStep"];
+}
 
-<nav class="navbar navbar-dark" style="background-color:#1a3a5c;">
-    <div class="container">
-        <span class="navbar-brand fw-bold">
-            <i class="fa-solid fa-shield-halved me-2"></i>
-            @(ViewData["CompanyName"] ?? "FormulariosUAF")
-        </span>
-        <span class="text-white-50 small">Declaración Digital Segura</span>
-    </div>
-</nav>
-
-@if (ViewData["CurrentStep"] != null)
+@if (stepObj != null)
 {
-    var step = (int)ViewData["CurrentStep"]!;
+    var step = (int)stepObj!;
     var steps = new[] { "Declaración", "Adjuntos", "Envío" };
-    <div class="container mt-3">
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body pb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <small class="text-muted">Paso @step de 3: <strong>@(step <= steps.Length ? steps[step - 1] : "")</strong></small>
-                    <small class="text-muted">@(step * 100 / 3)% completado</small>
+    var pct = step * 100 / steps.Length;
+
+    <body class="decl-shell">
+    <div class="decl-layout">
+
+        @* ── Sidebar de pasos ── *@
+        <aside class="decl-sidebar">
+            <div class="decl-sidebar-head d-flex align-items-center gap-2">
+                <span class="decl-sidebar-logo"><i class="fa-solid fa-shield-halved"></i></span>
+                <div>
+                    <div class="text-white fw-bold" style="font-size:.9rem;line-height:1.1">@companyName</div>
+                    <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Declaración Digital Segura</div>
                 </div>
-                <div class="progress" style="height: 8px;">
-                    <div class="progress-bar bg-primary" style="width: @(step * 100 / 3)%"></div>
+            </div>
+
+            <div class="decl-steps">
+                <div class="decl-steps-label">Progreso</div>
+                @for (int i = 0; i < steps.Length; i++)
+                {
+                    var n = i + 1;
+                    var state = n < step ? "done" : n == step ? "active" : "pending";
+                    var sub = n < step ? "Completado" : n == step ? "En curso" : "Pendiente";
+                    <div class="decl-step @state">
+                        <div class="d-flex flex-column align-items-center align-self-stretch">
+                            <span class="decl-step-dot">
+                                @if (n < step)
+                                {
+                                    <i class="fa-solid fa-check"></i>
+                                }
+                                else
+                                {
+                                    @n
+                                }
+                            </span>
+                            @if (n < steps.Length)
+                            {
+                                <span class="decl-step-line"></span>
+                            }
+                        </div>
+                        <div class="pt-1">
+                            <div class="decl-step-name">@steps[i]</div>
+                            <div class="decl-step-sub">@sub</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="decl-progress-box">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="lbl">Completado</span>
+                    <span class="pct">@pct%</span>
                 </div>
-                <div class="d-none d-md-flex justify-content-around mt-2">
-                    @for (int i = 0; i < steps.Length; i++)
-                    {
-                        <small class="@(i + 1 < step ? "text-success fw-bold" : i + 1 == step ? "text-primary fw-bold" : "text-muted")">
-                            @if (i + 1 < step) { <i class="fa-solid fa-check-circle"></i> }
-                            else if (i + 1 == step) { <i class="fa-solid fa-circle-dot"></i> }
-                            else { <i class="fa-regular fa-circle"></i> }
-                            @steps[i]
-                        </small>
-                    }
+                <div class="decl-progress-track">
+                    <div class="decl-progress-fill" style="width:@pct%"></div>
                 </div>
+            </div>
+        </aside>
+
+        @* ── Contenido principal ── *@
+        <div class="decl-main">
+            <div class="decl-main-inner">
+
+                @* Cabecera móvil (sidebar oculto en pantallas chicas) *@
+                <div class="d-flex d-lg-none justify-content-between align-items-center mb-4">
+                    <span class="d-flex align-items-center gap-2">
+                        <span class="decl-sidebar-logo" style="width:1.75rem;height:1.75rem"><i class="fa-solid fa-shield-halved"></i></span>
+                        <span class="fw-bold text-dark">@companyName</span>
+                    </span>
+                    <span class="badge" style="background:#e8f0fe;color:#1565C0">Paso @step de @steps.Length</span>
+                </div>
+
+                @RenderBody()
+
+                <footer class="text-center text-muted small pb-4 pt-2">
+                    <i class="fa-solid fa-lock me-1"></i>
+                    Conexión segura. La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.
+                </footer>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    </body>
+}
+else
+{
+    @* ── Páginas sin pasos (p. ej. Inicio): layout simple centrado ── *@
+    <body class="bg-light">
+
+    <nav class="navbar navbar-dark" style="background-color:#1a2b4a;">
+        <div class="container">
+            <span class="navbar-brand fw-bold">
+                <i class="fa-solid fa-shield-halved me-2"></i>@companyName
+            </span>
+            <span class="text-white-50 small">Declaración Digital Segura</span>
+        </div>
+    </nav>
+
+    <div class="container py-3">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-9">
+                @RenderBody()
             </div>
         </div>
     </div>
-}
 
-<div class="container py-3">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-9">
-            @RenderBody()
+    <footer class="py-3 mt-4 border-top bg-white">
+        <div class="container text-center text-muted small">
+            <i class="fa-solid fa-lock me-1"></i>
+            Conexión segura. La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.
         </div>
-    </div>
-</div>
+    </footer>
 
-<footer class="py-3 mt-4 border-top bg-white">
-    <div class="container text-center text-muted small">
-        <i class="fa-solid fa-lock me-1"></i>
-        Conexión segura. La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.
-    </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="~/js/site.js" asp-append-version="true"></script>
-@await RenderSectionAsync("Scripts", required: false)
-
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    </body>
+}
 </html>
