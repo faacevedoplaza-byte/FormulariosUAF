@@ -292,8 +292,9 @@ body.decl-shell { background: #f0f4f9; }
     background: #1a2b4a;
     position: sticky;
     top: 0;
-    align-self: stretch;
-    min-height: 100vh;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
@@ -348,3 +349,62 @@ body.decl-shell { background: #f0f4f9; }
     .decl-sidebar { display: none; }
     .decl-main { padding: 1.5rem 1rem; }
 }
+
+/* ================================================
+   Cliente/Inicio — bienvenida (rediseño v2)
+   ================================================ */
+.decl-welcome { display: flex; justify-content: center; padding: 2rem 0; }
+.decl-welcome-card {
+    width: 100%;
+    max-width: 32rem;
+    background: #fff;
+    border: 1px solid #eef2f7;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+.decl-welcome-logo {
+    width: 4rem; height: 4rem; border-radius: 1rem;
+    background: #1565C0; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 8px 20px rgba(21, 101, 192, .3);
+}
+.decl-welcome-logo.is-error { background: #ef4444; box-shadow: 0 8px 20px rgba(239, 68, 68, .3); }
+.decl-welcome-title { margin-top: 1.25rem; font-weight: 700; color: #1e293b; }
+.decl-welcome-sub { color: #94a3b8; font-size: .9rem; }
+.decl-welcome-company {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1.25rem 0;
+}
+.decl-welcome-company .name { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+.decl-welcome-company .rut { color: #64748b; font-size: .85rem; }
+.decl-welcome-expiry { font-size: .8rem; color: #94a3b8; }
+.decl-welcome-note {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    font-size: .82rem;
+    line-height: 1.5;
+    text-align: left;
+    display: flex;
+    gap: .6rem;
+    margin-top: 1rem;
+}
+.decl-welcome-btn {
+    background: #1a2b4a;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: .8rem 2rem;
+    box-shadow: 0 8px 20px rgba(26, 43, 74, .25);
+    transition: background .15s;
+}
+.decl-welcome-btn:hover { background: #142037; color: #fff; }

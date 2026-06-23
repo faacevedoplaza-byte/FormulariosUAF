@@ -5,36 +5,36 @@
     ViewData["Title"] = "Bienvenido";
 }
 
-<div class="card border-0 shadow">
-    <div class="card-body text-center p-5">
+<div class="decl-welcome">
+    <div class="decl-welcome-card">
         @if (Model.RequestInfo is not null)
         {
-            <i class="fa-solid fa-shield-halved text-primary" style="font-size:3.5rem"></i>
-            <h3 class="mt-3 fw-bold">Declaración Digital</h3>
-            <p class="text-muted">Has sido invitado a completar la declaración de Beneficiario Final y PEP para:</p>
-            <div class="alert alert-light border my-3">
-                <div class="fs-5 fw-bold">@Model.RequestInfo.ClientRazonSocial</div>
-                <div class="text-muted">RUT: @Model.RequestInfo.ClientRut</div>
+            <div class="decl-welcome-logo"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3 class="decl-welcome-title">Declaración Digital</h3>
+            <p class="decl-welcome-sub">Has sido invitado a completar la declaración de Beneficiario Final y PEP para:</p>
+            <div class="decl-welcome-company">
+                <div class="name">@Model.RequestInfo.ClientRazonSocial</div>
+                <div class="rut">RUT: @Model.RequestInfo.ClientRut</div>
             </div>
-            <p class="small text-muted">
+            <p class="decl-welcome-expiry">
                 <i class="fa-solid fa-clock me-1"></i>Este enlace vence el <strong>@Model.RequestInfo.Expiry.ToString("dd/MM/yyyy HH:mm")</strong>
             </p>
-            <div class="alert alert-warning text-start small">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente, conforme a la normativa vigente.
+            <div class="decl-welcome-note">
+                <i class="fa-solid fa-circle-info mt-1"></i>
+                <span>La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente, conforme a la normativa vigente.</span>
             </div>
-            <form method="post" class="mt-3">
+            <form method="post" class="mt-4">
                 <input type="hidden" asp-for="Token" />
-                <button type="submit" class="btn btn-primary btn-lg px-5">
+                <button type="submit" class="btn decl-welcome-btn btn-lg">
                     <i class="fa-solid fa-play me-2"></i>Iniciar Declaración
                 </button>
             </form>
         }
         else
         {
-            <i class="fa-solid fa-circle-xmark text-danger" style="font-size:3.5rem"></i>
-            <h3 class="mt-3">Enlace no válido</h3>
-            <p class="text-muted">@Model.ErrorMessage</p>
+            <div class="decl-welcome-logo is-error"><i class="fa-solid fa-circle-xmark"></i></div>
+            <h3 class="decl-welcome-title">Enlace no válido</h3>
+            <p class="decl-welcome-sub">@Model.ErrorMessage</p>
         }
     </div>
 </div>
