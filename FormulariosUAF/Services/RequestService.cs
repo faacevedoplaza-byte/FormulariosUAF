@@ -39,6 +39,7 @@ public class RequestService : IRequestService
             InternalNotes = data.Observaciones,
             ClientEmail = data.ClientEmail,
             ClientPhone = data.ClientPhone,
+            NetcarBusinessNumber = data.NetcarBusinessNumber,
             CreatedBy = vendorUserId,
             DueDate = DateTime.UtcNow.AddDays(data.DiasVigencia)
         };

@@ -1,54 +1,131 @@
 @page
 @model FormulariosUAF.Pages.Account.LoginModel
 @{
-    Layout = "_Layout";
+    Layout = null;
     ViewData["Title"] = "Iniciar Sesión";
 }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión — FormulariosUAF</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="login-wrap">
 
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow border-0 mt-5">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="fa-solid fa-shield-halved text-primary" style="font-size:3rem"></i>
-                    <h4 class="mt-2 fw-bold">FormulariosUAF</h4>
-                    <p class="text-muted small">Acceso interno</p>
-                </div>
+    @* ── Panel izquierdo (marca) ── *@
+    <div class="login-left">
+        <svg class="login-left-svg" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                    <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" stroke-width="0.8" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <circle cx="120" cy="200" r="180" fill="none" stroke="white" stroke-width="1.5" />
+            <circle cx="480" cy="600" r="220" fill="none" stroke="white" stroke-width="1.5" />
+            <circle cx="300" cy="400" r="120" fill="none" stroke="white" stroke-width="0.8" />
+            <line x1="0" y1="300" x2="600" y2="500" stroke="white" stroke-width="1" />
+            <line x1="0" y1="600" x2="600" y2="200" stroke="white" stroke-width="0.6" />
+        </svg>
 
-                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                {
-                    <div class="alert alert-danger small">
-                        <i class="fa-solid fa-circle-exclamation me-1"></i> @Model.ErrorMessage
-                    </div>
-                }
+        <div class="login-brand">
+            <span class="login-brand-ic"><i class="fa-solid fa-shield-halved"></i></span>
+            <span class="login-brand-name">FormulariosUAF</span>
+        </div>
 
-                <form method="post">
-                    <div class="mb-3">
-                        <label asp-for="Input.Email" class="form-label">Correo electrónico</label>
-                        <input asp-for="Input.Email" class="form-control" placeholder="usuario@empresa.cl" autofocus />
-                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Input.Password" class="form-label">Contraseña</label>
-                        <input asp-for="Input.Password" class="form-control" placeholder="••••••••" />
-                        <span asp-validation-for="Input.Password" class="text-danger small"></span>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input asp-for="Input.RememberMe" class="form-check-input" />
-                        <label asp-for="Input.RememberMe" class="form-check-label">Recordarme</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fa-solid fa-right-to-bracket me-2"></i>Ingresar
-                    </button>
-                </form>
+        <div>
+            <span class="login-badge"><span class="dot"></span>Sistema Seguro</span>
+            <h1 class="login-h1">Portal de Acceso<br /><span>Institucional</span></h1>
+            <p class="login-lead">
+                Plataforma centralizada para la gestión de formularios y reportes internos.
+                Acceso exclusivo para personal autorizado.
+            </p>
+            <div class="login-feats">
+                <div class="login-feat"><span class="login-feat-ic"><i class="fa-solid fa-chevron-right"></i></span><span>Cifrado de extremo a extremo</span></div>
+                <div class="login-feat"><span class="login-feat-ic"><i class="fa-solid fa-chevron-right"></i></span><span>Autenticación segura institucional</span></div>
+                <div class="login-feat"><span class="login-feat-ic"><i class="fa-solid fa-chevron-right"></i></span><span>Registro de auditoría completo</span></div>
             </div>
         </div>
-        <p class="text-center text-muted small mt-3">
-            Acceso exclusivo para personal autorizado.
-        </p>
+
+        <div>
+            <div class="login-foot-line"></div>
+            <p class="login-foot mb-0">© @DateTime.Now.Year UAF · Todos los derechos reservados</p>
+        </div>
     </div>
+
+    @* ── Panel derecho (formulario) ── *@
+    <div class="login-right">
+        <div class="login-form">
+            <div class="login-mobile-brand">
+                <span class="ic"><i class="fa-solid fa-shield-halved"></i></span>
+                <span class="name">FormulariosUAF</span>
+            </div>
+
+            <h2 class="login-title">Iniciar sesión</h2>
+            <p class="login-sub">Ingresa tus credenciales para continuar</p>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger small">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> @Model.ErrorMessage
+                </div>
+            }
+
+            <form method="post">
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="login-label">Correo electrónico</label>
+                    <div class="login-field">
+                        <span class="ic"><i class="fa-solid fa-envelope"></i></span>
+                        <input asp-for="Input.Email" class="form-control" placeholder="usuario@uaf.cl" autofocus />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="login-label">Contraseña</label>
+                    <div class="login-field">
+                        <span class="ic"><i class="fa-solid fa-lock"></i></span>
+                        <input asp-for="Input.Password" class="form-control" placeholder="••••••••" id="passwordInput" />
+                        <button type="button" class="eye" id="togglePassword" title="Mostrar/ocultar">
+                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                </div>
+
+                <div class="login-check mb-4">
+                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                    <label asp-for="Input.RememberMe">Recordar sesión en este equipo</label>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fa-solid fa-right-to-bracket"></i>Ingresar al sistema
+                </button>
+            </form>
+
+            <div class="login-notice">
+                <i class="fa-solid fa-shield-halved mt-1"></i>
+                <span>Acceso exclusivo para personal autorizado. Las actividades en esta plataforma son registradas y auditadas.</span>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_ValidationScriptsPartial" />
+<script>
+    document.getElementById('togglePassword')?.addEventListener('click', function () {
+        const input = document.getElementById('passwordInput');
+        const icon = document.getElementById('eyeIcon');
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    });
+</script>
+</body>
+</html>

@@ -1,123 +1,165 @@
 @page
 @model FormulariosUAF.Pages.Vendedor.IndexModel
+@using FormulariosUAF.Models.Enums
 @{
     ViewData["Title"] = "Mis Solicitudes";
+
+    string BadgeClass(RequestStatus s) => s switch
+    {
+        RequestStatus.Borrador => "badge-borrador",
+        RequestStatus.EnviadaAlCliente => "badge-enviada",
+        RequestStatus.AbiertaPorCliente => "badge-abierta",
+        RequestStatus.CompletadaPorCliente => "badge-abierta",
+        RequestStatus.EnRevision => "badge-revision",
+        RequestStatus.Observada => "badge-observada",
+        RequestStatus.CorregidaPorCliente => "badge-abierta",
+        RequestStatus.CorreccionSolicitada => "badge-observada",
+        RequestStatus.Aprobada => "badge-aprobada",
+        RequestStatus.Rechazada => "badge-rechazada",
+        RequestStatus.Vencida => "badge-rechazada",
+        _ => "badge-borrador"
+    };
+
+    var total = Model.Requests.Count;
+    var borradores = Model.Requests.Count(r => r.Status == RequestStatus.Borrador);
+    var enProceso = Model.Requests.Count(r => r.Status is RequestStatus.EnviadaAlCliente
+        or RequestStatus.AbiertaPorCliente or RequestStatus.CompletadaPorCliente
+        or RequestStatus.EnRevision or RequestStatus.Observada or RequestStatus.CorregidaPorCliente);
+    var aprobadas = Model.Requests.Count(r => r.Status == RequestStatus.Aprobada);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0"><i class="fa-solid fa-briefcase me-2 text-primary"></i>Solicitudes</h4>
-    <a href="/Vendedor/Crear" class="btn btn-primary">
-        <i class="fa-solid fa-plus me-1"></i> Nueva Solicitud
+    <h1 class="uaf-page-title"><i class="fa-solid fa-briefcase"></i>Solicitudes</h1>
+    <a href="/Vendedor/Crear" class="btn-uaf-primary">
+        <i class="fa-solid fa-plus"></i> Nueva Solicitud
     </a>
 </div>
 
-<!-- Filtros -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-2">
-            <div class="col-md-3">
-                <input name="rut" value="@Model.FilterRut" class="form-control form-control-sm rut-input" placeholder="RUT cliente" />
-            </div>
-            <div class="col-md-3">
-                <input name="razon" value="@Model.FilterRazon" class="form-control form-control-sm" placeholder="Razón social" />
-            </div>
-            <div class="col-md-2">
-                <select name="estado" class="form-select form-select-sm">
-                    <option value="">Todos los estados</option>
-                    @foreach (var s in Enum.GetValues<FormulariosUAF.Models.Enums.RequestStatus>())
-                    {
-                        <option value="@((int)s)" selected="@(Model.FilterEstado == (int)s)">@s.ToDisplayString()</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary btn-sm w-100">
-                    <i class="fa-solid fa-filter me-1"></i>Filtrar
-                </button>
-            </div>
-            <div class="col-md-2">
-                <a href="/Vendedor" class="btn btn-outline-secondary btn-sm w-100">Limpiar</a>
-            </div>
-        </form>
+<!-- Stat chips -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-chip">
+            <span class="stat-icon" style="background:#e8f0fe;color:#1565C0"><i class="fa-solid fa-layer-group"></i></span>
+            <span><span class="stat-num">@total</span><span class="stat-lbl d-block">Total</span></span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-chip">
+            <span class="stat-icon" style="background:#f1f5f9;color:#64748b"><i class="fa-solid fa-pen-ruler"></i></span>
+            <span><span class="stat-num">@borradores</span><span class="stat-lbl d-block">Borradores</span></span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-chip">
+            <span class="stat-icon" style="background:#dbeafe;color:#1d4ed8"><i class="fa-solid fa-paper-plane"></i></span>
+            <span><span class="stat-num">@enProceso</span><span class="stat-lbl d-block">En proceso</span></span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-chip">
+            <span class="stat-icon" style="background:#dcfce7;color:#16a34a"><i class="fa-solid fa-circle-check"></i></span>
+            <span><span class="stat-num">@aprobadas</span><span class="stat-lbl d-block">Aprobadas</span></span>
+        </div>
     </div>
 </div>
 
-<!-- Tabla -->
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Folio</th>
-                        <th>RUT</th>
-                        <th>Razón Social</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
-                        <th>Envío</th>
-                        <th>Vencimiento</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Requests.Any())
-                    {
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                <i class="fa-solid fa-inbox me-2"></i>No hay solicitudes
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var req in Model.Requests)
-                    {
-                        <tr>
-                            <td><span class="font-monospace small">@req.RequestNumber</span></td>
-                            <td>@req.Client.RUT</td>
-                            <td>@req.Client.BusinessName</td>
-                            <td><small>@req.RequestType.ToDisplayString()</small></td>
-                            <td>
-                                <span class="badge @req.Status.ToBadgeClass()">@req.Status.ToDisplayString()</span>
-                            </td>
-                            <td><small class="text-muted">@(req.SentAt?.ToString("dd/MM/yyyy") ?? "—")</small></td>
-                            <td>
-                                @if (req.DueDate.HasValue)
-                                {
-                                    var vencido = req.DueDate < DateTime.Now;
-                                    <small class="@(vencido ? "text-danger fw-bold" : "text-muted")">
-                                        @req.DueDate.Value.ToString("dd/MM/yyyy")
-                                    </small>
-                                }
-                                else { <small class="text-muted">—</small> }
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
-                                    <a href="/Vendedor/Detalle/@req.Id" class="btn btn-outline-primary" title="Ver detalle">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </a>
-                                    @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Borrador)
-                                    {
-                                        <button class="btn btn-outline-success btn-enviar" data-id="@req.Id" title="Enviar al cliente">
-                                            <i class="fa-solid fa-paper-plane"></i>
-                                        </button>
-                                    }
-                                    <button class="btn btn-outline-secondary btn-copy-link"
-                                            data-token="@req.ClientToken"
-                                            title="Copiar enlace cliente">
-                                        <i class="fa-solid fa-link"></i>
-                                    </button>
-                                    @if (req.Status == FormulariosUAF.Models.Enums.RequestStatus.Aprobada)
-                                    {
-                                        <a href="/Vendedor/DescargarPdf/@req.Id" class="btn btn-outline-dark" title="Descargar PDF">
-                                            <i class="fa-solid fa-file-pdf"></i>
-                                        </a>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<!-- Filtros -->
+<div class="filter-card mb-4">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <input name="rut" value="@Model.FilterRut" class="form-control rut-input" placeholder="RUT cliente" />
         </div>
+        <div class="col-md-3">
+            <input name="razon" value="@Model.FilterRazon" class="form-control" placeholder="Razón social" />
+        </div>
+        <div class="col-md-2">
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                @foreach (var s in Enum.GetValues<RequestStatus>())
+                {
+                    <option value="@((int)s)" selected="@(Model.FilterEstado == (int)s)">@s.ToDisplayString()</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn-uaf-primary w-100 justify-content-center">
+                <i class="fa-solid fa-filter"></i>Filtrar
+            </button>
+        </div>
+        <div class="col-md-2">
+            <a href="/Vendedor" class="btn-uaf-ghost w-100 justify-content-center">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table-uaf">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>RUT</th>
+                    <th>Razón Social</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Envío</th>
+                    <th>Vencimiento</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Requests.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fa-solid fa-inbox me-2"></i>No hay solicitudes
+                        </td>
+                    </tr>
+                }
+                @foreach (var req in Model.Requests)
+                {
+                    var vencido = req.DueDate.HasValue && req.DueDate < DateTime.Now;
+                    <tr class="@(vencido ? "row-overdue" : "")">
+                        <td><a href="/Vendedor/Detalle/@req.Id" class="folio-link">@req.RequestNumber</a></td>
+                        <td><span class="rut-text">@req.Client.RUT</span></td>
+                        <td><span class="razon-social">@req.Client.BusinessName</span></td>
+                        <td>@req.RequestType.ToDisplayString()</td>
+                        <td><span class="badge-uaf @BadgeClass(req.Status)">@req.Status.ToDisplayString()</span></td>
+                        <td><span class="date-text">@(req.SentAt?.ToString("dd/MM/yyyy") ?? "—")</span></td>
+                        <td>
+                            @if (req.DueDate.HasValue)
+                            {
+                                <span class="@(vencido ? "date-overdue" : "date-text")">@req.DueDate.Value.ToString("dd/MM/yyyy")</span>
+                            }
+                            else { <span class="date-text">—</span> }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="/Vendedor/Detalle/@req.Id" class="btn-action" title="Ver detalle">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                @if (req.Status == RequestStatus.Borrador)
+                                {
+                                    <button class="btn-action send btn-enviar" data-id="@req.Id" title="Enviar al cliente">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                }
+                                <button class="btn-action btn-copy-link" data-token="@req.ClientToken" title="Copiar enlace cliente">
+                                    <i class="fa-solid fa-link"></i>
+                                </button>
+                                @if (req.Status == RequestStatus.Aprobada)
+                                {
+                                    <a href="/Vendedor/DescargarPdf/@req.Id" class="btn-action doc" title="Descargar PDF">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 

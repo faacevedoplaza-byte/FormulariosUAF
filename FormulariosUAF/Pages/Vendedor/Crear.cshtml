@@ -4,22 +4,25 @@
     ViewData["Title"] = "Nueva Solicitud";
 }
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <i class="fa-solid fa-plus-circle me-2"></i>Crear Nueva Solicitud
-            </div>
-            <div class="card-body">
-                <form method="post">
+<h1 class="uaf-page-title mb-4"><i class="fa-solid fa-plus-circle"></i>Crear Nueva Solicitud</h1>
 
-                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-building me-2"></i>Datos de la Empresa</h6>
-                    <div class="row g-3 mb-3">
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="post">
+
+            <!-- Datos de la Empresa -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <span class="form-card-icon"><i class="fa-solid fa-building"></i></span>
+                    <span class="form-card-title">Datos de la Empresa</span>
+                </div>
+                <div class="form-card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
-                            <label asp-for="Input.RutCliente" class="form-label">RUT Empresa <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input asp-for="Input.RutCliente" class="form-control rut-input" placeholder="76.123.456-7" id="rutInput" />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarRut" title="Buscar datos en SII/API">
+                            <div class="uaf-field">
+                                <input asp-for="Input.RutCliente" class="form-control rut-input" id="rutInput" placeholder="76.123.456-7" style="padding-right:44px" />
+                                <label asp-for="Input.RutCliente">RUT Empresa <span class="text-danger">*</span></label>
+                                <button type="button" class="input-btn" id="btnBuscarRut" title="Buscar datos en SII/API">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </button>
                             </div>
@@ -27,128 +30,183 @@
                             <div id="rutLookupMsg" class="form-text"></div>
                         </div>
                         <div class="col-md-8">
-                            <label asp-for="Input.RazonSocial" class="form-label">Razón Social <span class="text-danger">*</span></label>
-                            <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre oficial de la empresa" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre oficial de la empresa" />
+                                <label asp-for="Input.RazonSocial">Razón Social <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.RazonSocial" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
-                            <label asp-for="Input.Address" class="form-label">Domicilio <span class="text-danger">*</span></label>
-                            <input asp-for="Input.Address" class="form-control" placeholder="Calle, número, comuna" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.Address" class="form-control" placeholder="Calle, número, comuna" />
+                                <label asp-for="Input.Address">Domicilio <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.Address" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="Input.City" class="form-label">Ciudad <span class="text-danger">*</span></label>
-                            <input asp-for="Input.City" class="form-control" placeholder="Ciudad" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.City" class="form-control" placeholder="Ciudad" />
+                                <label asp-for="Input.City">Ciudad <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.City" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="Input.CountryOfIncorporation" class="form-label">País de Constitución <span class="text-danger">*</span></label>
-                            <input asp-for="Input.CountryOfIncorporation" class="form-control" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.CountryOfIncorporation" class="form-control" />
+                                <label asp-for="Input.CountryOfIncorporation">País de Constitución <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.CountryOfIncorporation" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="Input.Phone" class="form-label">Teléfono</label>
-                            <input asp-for="Input.Phone" class="form-control" placeholder="+56 2 XXXX XXXX" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.Phone" class="form-control" placeholder="+56 2 XXXX XXXX" />
+                                <label asp-for="Input.Phone">Teléfono</label>
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="Input.EntityType" class="form-label">Tipo de Entidad <span class="text-danger">*</span></label>
-                            <select asp-for="Input.EntityType" class="form-select" id="entityTypeSelect">
-                                @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.EntityType>())
-                                {
-                                    <option value="@((int)t)">@t.ToDisplayString()</option>
-                                }
-                            </select>
+                            <div class="uaf-field">
+                                <select asp-for="Input.EntityType" class="form-select" id="entityTypeSelect">
+                                    @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.EntityType>())
+                                    {
+                                        <option value="@((int)t)">@t.ToDisplayString()</option>
+                                    }
+                                </select>
+                                <label asp-for="Input.EntityType">Tipo de Entidad <span class="text-danger">*</span></label>
+                            </div>
                         </div>
-                        <div class="col-md-8" id="entityTypeOtherDiv" style="display:none">
-                            <label asp-for="Input.EntityTypeOther" class="form-label">Especifique tipo de entidad</label>
-                            <input asp-for="Input.EntityTypeOther" class="form-control" />
+                        <div class="col-md-4" id="entityTypeOtherDiv" style="display:none">
+                            <div class="uaf-field">
+                                <input asp-for="Input.EntityTypeOther" class="form-control" placeholder="Especifique" />
+                                <label asp-for="Input.EntityTypeOther">Especifique tipo de entidad</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="uaf-field">
+                                <input asp-for="Input.NetcarBusinessNumber" class="form-control" placeholder="N° de negocio" />
+                                <label asp-for="Input.NetcarBusinessNumber">Número de negocio en Netcar</label>
+                            </div>
+                            <span asp-validation-for="Input.NetcarBusinessNumber" class="text-danger small"></span>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr />
-                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-user-tie me-2"></i>Representante Legal</h6>
-                    <div class="row g-3 mb-3">
+            <!-- Representante Legal -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <span class="form-card-icon"><i class="fa-solid fa-user-tie"></i></span>
+                    <span class="form-card-title">Representante Legal</span>
+                </div>
+                <div class="form-card-body">
+                    <div class="row g-3">
                         <div class="col-md-4">
-                            <label asp-for="Input.LegalRepresentativeIdNumber" class="form-label">RUT / N° Identificación <span class="text-danger">*</span></label>
-                            <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control rut-input" placeholder="12.345.678-9" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control rut-input" placeholder="12.345.678-9" />
+                                <label asp-for="Input.LegalRepresentativeIdNumber">RUT / N° Identificación <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
-                            <label asp-for="Input.LegalRepresentativeName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
-                            <input asp-for="Input.LegalRepresentativeName" class="form-control name-input" placeholder="Nombre Apellido" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.LegalRepresentativeName" class="form-control name-input" placeholder="Nombre Apellido" />
+                                <label asp-for="Input.LegalRepresentativeName">Nombre completo <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.LegalRepresentativeName" class="text-danger small"></span>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr />
-                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-envelope me-2"></i>Contacto del Cliente</h6>
-                    <div class="row g-3 mb-3">
+            <!-- Contacto del Cliente -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <span class="form-card-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span class="form-card-title">Contacto del Cliente</span>
+                </div>
+                <div class="form-card-body">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label asp-for="Input.ClientEmail" class="form-label">Correo electrónico del cliente <span class="text-danger">*</span></label>
-                            <input asp-for="Input.ClientEmail" type="email" class="form-control" placeholder="cliente@empresa.cl" />
+                            <div class="uaf-field">
+                                <input asp-for="Input.ClientEmail" type="email" class="form-control" placeholder="cliente@empresa.cl" />
+                                <label asp-for="Input.ClientEmail">Correo electrónico del cliente <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.ClientEmail" class="text-danger small"></span>
                             <div class="form-text">Se usará para enviar el enlace de declaración.</div>
                         </div>
-                        <div class="col-md-3">
-                            <label asp-for="Input.ClientPhone" class="form-label">Teléfono del cliente</label>
-                            <input asp-for="Input.ClientPhone" class="form-control" placeholder="+56 9 XXXX XXXX" />
+                        <div class="col-md-4">
+                            <div class="uaf-field">
+                                <input asp-for="Input.ClientPhone" class="form-control" placeholder="+56 9 XXXX XXXX" />
+                                <label asp-for="Input.ClientPhone">Teléfono del cliente</label>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <hr />
-                    <h6 class="text-primary fw-semibold mb-3"><i class="fa-solid fa-gear me-2"></i>Configuración de la Solicitud</h6>
-                    <div class="row g-3 mb-4">
+            <!-- Configuración de la Solicitud -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <span class="form-card-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span class="form-card-title">Configuración de la Solicitud</span>
+                </div>
+                <div class="form-card-body">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label asp-for="Input.TipoSolicitud" class="form-label">Tipo de Solicitud <span class="text-danger">*</span></label>
-                            <select asp-for="Input.TipoSolicitud" class="form-select">
-                                @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
-                                {
-                                    <option value="@((int)t)">@t.ToDisplayString()</option>
-                                }
-                            </select>
+                            <div class="uaf-field">
+                                <select asp-for="Input.TipoSolicitud" class="form-select">
+                                    @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
+                                    {
+                                        <option value="@((int)t)">@t.ToDisplayString()</option>
+                                    }
+                                </select>
+                                <label asp-for="Input.TipoSolicitud">Tipo de Solicitud <span class="text-danger">*</span></label>
+                            </div>
                             <span asp-validation-for="Input.TipoSolicitud" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-3">
-                            <label asp-for="Input.DiasVigencia" class="form-label">Días de vigencia del enlace</label>
-                            <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" />
+                        <div class="col-md-4">
+                            <div class="uaf-field">
+                                <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" placeholder="30" />
+                                <label asp-for="Input.DiasVigencia">Días de vigencia del enlace</label>
+                            </div>
                             <div class="form-text">Máximo 90 días.</div>
                         </div>
                         <div class="col-12">
-                            <label asp-for="Input.Observaciones" class="form-label">Observaciones internas</label>
-                            <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
+                            <div class="uaf-field">
+                                <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
+                                <label asp-for="Input.Observaciones">Observaciones internas</label>
+                            </div>
                         </div>
                     </div>
-
-                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                    {
-                        <div class="alert alert-danger small">@Model.ErrorMessage</div>
-                    }
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa-solid fa-floppy-disk me-1"></i>Crear Solicitud
-                        </button>
-                        <a href="/Vendedor" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card border-0 bg-light">
-            <div class="card-body">
-                <h6 class="fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>¿Cómo funciona?</h6>
-                <ol class="small text-muted ps-3">
-                    <li class="mb-1">Completa los datos de la empresa y representante legal.</li>
-                    <li class="mb-1">El sistema genera un enlace único y seguro.</li>
-                    <li class="mb-1">Copia y envía el enlace al cliente por correo o WhatsApp.</li>
-                    <li class="mb-1">El cliente solo declara beneficiarios, PEP y sube la carpeta tributaria.</li>
-                    <li class="mb-1">El área de cumplimiento revisa y aprueba internamente.</li>
-                </ol>
-                <div class="alert alert-warning small mb-0">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.
                 </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger small">@Model.ErrorMessage</div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-uaf-primary">
+                    <i class="fa-solid fa-floppy-disk"></i>Crear Solicitud
+                </button>
+                <a href="/Vendedor" class="btn-uaf-ghost">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="info-box">
+            <div class="info-box-title"><i class="fa-solid fa-circle-info"></i>¿Cómo funciona?</div>
+            <ul class="info-steps">
+                <li><span class="step-num">1</span>Completa los datos de la empresa y representante legal.</li>
+                <li><span class="step-num">2</span>El sistema genera un enlace único y seguro.</li>
+                <li><span class="step-num">3</span>Al crear, se envía el enlace al correo del cliente automáticamente.</li>
+                <li><span class="step-num">4</span>El cliente declara beneficiarios, PEP y sube la carpeta tributaria.</li>
+                <li><span class="step-num">5</span>El área de cumplimiento revisa y aprueba internamente.</li>
+            </ul>
+            <div class="info-note">
+                <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+                <span>La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.</span>
             </div>
         </div>
     </div>

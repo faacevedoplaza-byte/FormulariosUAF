@@ -36,6 +36,9 @@ public class CrearModel : PageModel
         [MaxLength(500)]
         public string RazonSocial { get; set; } = string.Empty;
 
+        [MaxLength(100)]
+        public string? NetcarBusinessNumber { get; set; }
+
         [Required(ErrorMessage = "El domicilio es obligatorio")]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
@@ -112,7 +115,8 @@ public class CrearModel : PageModel
                 Input.LegalRepresentativeIdNumber,
                 Input.LegalRepresentativeName,
                 Input.ClientEmail,
-                Input.ClientPhone
+                Input.ClientPhone,
+                Input.NetcarBusinessNumber
             );
 
             var request = await _requestService.CreateRequestAsync(data, userId);
