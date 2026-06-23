@@ -146,6 +146,13 @@ public class DeclaracionModel : PageModel
             }).ToList();
         }
 
+        // Mostrar una persona vacía por defecto al abrir el formulario (formulario nuevo).
+        // En OnPost las personas con RUT vacío se descartan, así que no afecta el guardado.
+        if (Input.Personas.Count == 0)
+        {
+            Input.Personas.Add(new PersonaInput());
+        }
+
         if (req.Declarant is { } dec)
         {
             Input.DeclaranteNacionalidad = dec.NationalityType;

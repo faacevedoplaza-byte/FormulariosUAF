@@ -113,7 +113,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
 /* ================================================
    DECLARACIÓN — rediseño v2 (solo presentación)
-   Paleta: navy #1a2b4a · azul #1565C0 · azul claro #e8f0fe
+   Paleta: navy #3a3a3a · azul #e07b20 · azul claro #fff3e0
    Todo va scopeado bajo #formDeclaracion / .decl-v2 para no
    afectar otras páginas. No cambia ningún name/id/clase de JS.
    ================================================ */
@@ -155,7 +155,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     width: 1.7rem;
     height: 1.7rem;
     border-radius: 50%;
-    background: #1565C0;
+    background: #e07b20;
     color: #fff;
     font-size: .78rem;
     font-weight: 700;
@@ -182,18 +182,18 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 /* Pie de acciones */
 .decl-actions { padding-top: .25rem; }
 .decl-actions .decl-required-hint { color: #94a3b8; font-size: .8rem; }
-.decl-actions .decl-required-hint .req { color: #3b82f6; }
+.decl-actions .decl-required-hint .req { color: #e07b20; }
 #formDeclaracion .decl-submit {
-    background: #1a2b4a;
-    border-color: #1a2b4a;
+    background: #3a3a3a;
+    border-color: #3a3a3a;
     border-radius: 12px;
     font-weight: 600;
     padding: .7rem 1.6rem;
-    box-shadow: 0 8px 20px rgba(26, 43, 74, .25);
+    box-shadow: 0 8px 20px rgba(58, 58, 58, .25);
 }
 #formDeclaracion .decl-submit:hover {
-    background: #142037;
-    border-color: #142037;
+    background: #2b2b2b;
+    border-color: #2b2b2b;
 }
 
 /* ---- Sección I: tarjetitas de datos de empresa ---- */
@@ -241,7 +241,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     width: 1.45rem;
     height: 1.45rem;
     border-radius: 50%;
-    background: #1a2b4a;
+    background: #3a3a3a;
     color: #fff;
     font-size: .72rem;
     font-weight: 700;
@@ -262,23 +262,23 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
 /* ---- Panel PEP ---- */
 #formDeclaracion .decl-pep-panel {
-    border: 1px solid #bcd4f8;
+    border: 1px solid #ffe0b2;
     background: #fff;
     border-radius: 12px;
     padding: 1rem;
 }
-#formDeclaracion .decl-pep-toggle .form-check-label { color: #1565C0; }
+#formDeclaracion .decl-pep-toggle .form-check-label { color: #e07b20; }
 
 /* ---- Botón "Agregar persona" punteado ---- */
 #formDeclaracion .decl-add-btn {
-    border: 2px dashed #93c5fd;
-    color: #1565C0;
+    border: 2px dashed #ffd180;
+    color: #e07b20;
     background: transparent;
     font-weight: 600;
     border-radius: 12px;
     padding: .6rem 1rem;
 }
-#formDeclaracion .decl-add-btn:hover { background: #eff6ff; color: #0d47a1; }
+#formDeclaracion .decl-add-btn:hover { background: #fff3e0; color: #b35e10; }
 
 /* ================================================
    _ClientLayout — sidebar de pasos (rediseño v2)
@@ -289,7 +289,7 @@ body.decl-shell { background: #f0f4f9; }
 .decl-sidebar {
     width: 16rem;
     flex-shrink: 0;
-    background: #1a2b4a;
+    background: #3a3a3a;
     position: sticky;
     top: 0;
     align-self: flex-start;
@@ -304,7 +304,7 @@ body.decl-shell { background: #f0f4f9; }
 }
 .decl-sidebar-logo {
     width: 2rem; height: 2rem; border-radius: .6rem;
-    background: #1565C0; color: #fff;
+    background: #e07b20; color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
 }
 .decl-steps { padding: 1.25rem; }
@@ -319,7 +319,7 @@ body.decl-shell { background: #f0f4f9; }
     font-size: .75rem; font-weight: 700; flex-shrink: 0;
 }
 .decl-step.done    .decl-step-dot { background: #22c55e; color: #fff; }
-.decl-step.active  .decl-step-dot { background: #1565C0; color: #fff; }
+.decl-step.active  .decl-step-dot { background: #e07b20; color: #fff; }
 .decl-step.pending .decl-step-dot { background: rgba(255,255,255,.12); color: rgba(255,255,255,.4); }
 .decl-step-name { font-size: .85rem; font-weight: 600; }
 .decl-step.done    .decl-step-name { color: #86efac; }
@@ -338,9 +338,9 @@ body.decl-shell { background: #f0f4f9; }
     border-radius: 12px; background: rgba(255,255,255,.06);
 }
 .decl-progress-box .lbl { font-size: .72rem; font-weight: 600; color: #fff; }
-.decl-progress-box .pct { font-size: .72rem; font-weight: 700; color: #e8f0fe; }
+.decl-progress-box .pct { font-size: .72rem; font-weight: 700; color: #fff3e0; }
 .decl-progress-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; }
-.decl-progress-fill { height: 100%; border-radius: 4px; background: #60a5fa; }
+.decl-progress-fill { height: 100%; border-radius: 4px; background: #f4a84a; }
 
 .decl-main { flex: 1; min-width: 0; padding: 2rem 1rem; }
 .decl-main-inner { max-width: 56rem; margin: 0 auto; }
@@ -366,10 +366,10 @@ body.decl-shell { background: #f0f4f9; }
 }
 .decl-welcome-logo {
     width: 4rem; height: 4rem; border-radius: 1rem;
-    background: #1565C0; color: #fff;
+    background: #e07b20; color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 1.8rem;
-    box-shadow: 0 8px 20px rgba(21, 101, 192, .3);
+    box-shadow: 0 8px 20px rgba(224, 123, 32, .3);
 }
 .decl-welcome-logo.is-error { background: #ef4444; box-shadow: 0 8px 20px rgba(239, 68, 68, .3); }
 .decl-welcome-title { margin-top: 1.25rem; font-weight: 700; color: #1e293b; }
@@ -398,13 +398,28 @@ body.decl-shell { background: #f0f4f9; }
     margin-top: 1rem;
 }
 .decl-welcome-btn {
-    background: #1a2b4a;
+    background: #3a3a3a;
     border: none;
     color: #fff;
     font-weight: 600;
     border-radius: 12px;
     padding: .8rem 2rem;
-    box-shadow: 0 8px 20px rgba(26, 43, 74, .25);
+    box-shadow: 0 8px 20px rgba(58, 58, 58, .25);
     transition: background .15s;
 }
-.decl-welcome-btn:hover { background: #142037; color: #fff; }
+.decl-welcome-btn:hover { background: #2b2b2b; color: #fff; }
+
+/* ---- Tema UAF: foco y checkboxes en naranja (solo en el formulario) ---- */
+#formDeclaracion .form-control:focus,
+#formDeclaracion .form-select:focus {
+    border-color: #e07b20;
+    box-shadow: 0 0 0 .2rem rgba(224, 123, 32, .18);
+}
+#formDeclaracion .form-check-input:checked {
+    background-color: #e07b20;
+    border-color: #e07b20;
+}
+#formDeclaracion .form-check-input:focus {
+    border-color: #e07b20;
+    box-shadow: 0 0 0 .2rem rgba(224, 123, 32, .18);
+}
