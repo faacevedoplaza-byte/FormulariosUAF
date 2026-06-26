@@ -7,6 +7,7 @@ public enum EntityType
     EnComandita = 2,
     Limitada = 3,
     EIRL = 4,
-    SPA= 5,
-    Otra = 6
+    Otra = 5,
+    SPA = 6,
+    PersonaNatural = 7
 }

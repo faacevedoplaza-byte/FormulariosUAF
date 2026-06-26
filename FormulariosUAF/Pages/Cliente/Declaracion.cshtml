@@ -470,8 +470,9 @@ btnCancel?.addEventListener('click', () => {
     hidEdited.value = 'false';
 });
 const editEntityType = document.getElementById('editEntityType');
+const editOtraVal = '@((int)EntityType.Otra)';
 editEntityType?.addEventListener('change', () => {
-    document.querySelector('.edit-entity-other').style.display = editEntityType.value === '5' ? 'block' : 'none';
+    document.querySelector('.edit-entity-other').style.display = editEntityType.value === editOtraVal ? 'block' : 'none';
 });
 
 // ── Personas dinámicas

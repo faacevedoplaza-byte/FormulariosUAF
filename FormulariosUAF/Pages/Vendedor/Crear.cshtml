@@ -215,10 +215,11 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-    // EntityType other toggle
+    // EntityType other toggle (usa el valor real de "Otra", no un número fijo)
     const sel = document.getElementById('entityTypeSelect');
     const otherDiv = document.getElementById('entityTypeOtherDiv');
-    function toggleOther() { otherDiv.style.display = sel.value == '5' ? 'block' : 'none'; }
+    const otraVal = '@((int)FormulariosUAF.Models.Enums.EntityType.Otra)';
+    function toggleOther() { otherDiv.style.display = sel.value === otraVal ? 'block' : 'none'; }
     sel.addEventListener('change', toggleOther);
     toggleOther();
 
