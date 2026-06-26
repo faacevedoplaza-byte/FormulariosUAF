@@ -7,5 +7,6 @@ public enum EntityType
     EnComandita = 2,
     Limitada = 3,
     EIRL = 4,
-    Otra = 5
+    SPA= 5,
+    Otra = 6
 }

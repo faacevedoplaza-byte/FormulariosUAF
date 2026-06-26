@@ -31,11 +31,13 @@ public static class EnumExtensions
 
     public static string ToDisplayString(this EntityType type) => type switch
     {
-        EntityType.Anonima => "Sociedad Anónima",
-        EntityType.Colectiva => "Sociedad Colectiva",
+        EntityType.Anonima => "Sociedad Anónima Cerrada (S.A.)",
+        EntityType.Colectiva => "Sociedad Colectiva Comercial",
         EntityType.EnComandita => "Sociedad en Comandita",
-        EntityType.Limitada => "Sociedad de Responsabilidad Limitada",
+        EntityType.Limitada => "Sociedad de Responsabilidad Limitada (Ltda.)",
         EntityType.EIRL => "Empresa Individual de Responsabilidad Limitada (EIRL)",
+        EntityType.SPA => "Sociedad por Acciones (SpA)",
+        EntityType.PersonaNatural => "Persona Natural",
         EntityType.Otra => "Otra",
         _ => type.ToString()
     };
