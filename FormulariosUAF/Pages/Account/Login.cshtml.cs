@@ -59,7 +59,13 @@ public class LoginModel : PageModel
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
             await _audit.LogAsync("LOGIN", "ApplicationUser", user.Id, userId: user.Id, userName: user.Email);
-            return LocalRedirect(returnUrl ?? "/Vendedor");
+
+            // Si venía de un enlace protegido (returnUrl local y seguro), respétalo.
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
+
+            // Si no, cada rol a su propia área.
+            return LocalRedirect(await LandingPageForAsync(user));
         }
 
         if (result.IsLockedOut)
@@ -68,5 +74,17 @@ public class LoginModel : PageModel
             ErrorMessage = "Credenciales incorrectas.";
 
         return Page();
+    }
+
+    // Área de inicio según el rol (evita mandar a todos a /Vendedor,
+    // que Cumplimiento/Revisor no pueden abrir → acceso denegado).
+    private async Task<string> LandingPageForAsync(ApplicationUser user)
+    {
+        if (await _userManager.IsInRoleAsync(user, "Administrador")) return "/Admin";
+        if (await _userManager.IsInRoleAsync(user, "Vendedor"))      return "/Vendedor";
+        if (await _userManager.IsInRoleAsync(user, "Cumplimiento"))  return "/Cumplimiento";
+        if (await _userManager.IsInRoleAsync(user, "Revisor"))       return "/Cumplimiento";
+        // SoloLectura u otros roles sin área propia.
+        return "/Interno/Notificaciones";
     }
 }
