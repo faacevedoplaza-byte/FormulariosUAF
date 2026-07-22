@@ -1,3 +1,6 @@
+@using FormulariosUAF.Models.Domain
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,10 +10,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="alternate icon" href="~/favicon.ico" />
 </head>
 @{
     var path = Context.Request.Path.Value?.ToLower() ?? "";
     string ActiveIf(string prefix) => path.StartsWith(prefix.ToLower()) ? "active" : "";
+
+    // Nombre a mostrar en el panel: el nombre completo del usuario (no el RUT).
+    var displayName = User.Identity?.Name;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        if (currentUser != null && !string.IsNullOrWhiteSpace(currentUser.FullName))
+            displayName = currentUser.FullName;
+    }
 }
 <body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")">
 
@@ -64,7 +78,7 @@
             <div class="dropdown">
                 <a href="#" class="uaf-user dropdown-toggle" data-bs-toggle="dropdown">
                     <span class="uaf-avatar"><i class="fa-solid fa-user"></i></span>
-                    <span class="uaf-user-name text-truncate" style="max-width:130px">@User.Identity?.Name</span>
+                    <span class="uaf-user-name text-truncate" style="max-width:130px">@displayName</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark shadow w-100">
                     <li>

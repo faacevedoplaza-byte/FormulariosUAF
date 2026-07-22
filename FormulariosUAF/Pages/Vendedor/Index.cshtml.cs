@@ -1,4 +1,5 @@
 using FormulariosUAF.Data;
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
@@ -60,7 +61,7 @@ public class IndexModel : PageModel
             RequestId = id,
             OldStatus = RequestStatus.Borrador,
             NewStatus = RequestStatus.EnviadaAlCliente,
-            ChangedBy = User.Identity?.Name ?? "sistema"
+            ChangedBy = User.DisplayName() ?? "sistema"
         });
 
         await _db.SaveChangesAsync();

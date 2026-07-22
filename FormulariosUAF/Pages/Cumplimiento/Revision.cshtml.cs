@@ -1,3 +1,4 @@
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
@@ -31,7 +32,7 @@ public class RevisionModel : PageModel
         if (Request is null) return NotFound();
 
         if (Request.Status == RequestStatus.CompletadaPorCliente || Request.Status == RequestStatus.CorregidaPorCliente)
-            await _requestService.UpdateStatusAsync(id, RequestStatus.EnRevision, User.Identity?.Name ?? "cumplimiento");
+            await _requestService.UpdateStatusAsync(id, RequestStatus.EnRevision, User.DisplayName() ?? "cumplimiento");
 
         Request = await _requestService.GetByIdAsync(id);
         return Page();
@@ -39,8 +40,9 @@ public class RevisionModel : PageModel
 
     public async Task<IActionResult> OnPostAprobarAsync(Guid requestId, string? observacion)
     {
-        var userName = User.Identity?.Name ?? "cumplimiento";
-        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Aprobada, userName, observacion);
+        var userName = User.Identity?.Name ?? "cumplimiento";   // RUT/login: para auditoría
+        var gestor = User.DisplayName() ?? "cumplimiento";      // nombre: para la gestión visible
+        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Aprobada, gestor, observacion);
         await _audit.LogAsync("APROBAR", "Request", requestId.ToString(), requestId: requestId, userName: userName);
 
         var req = await _requestService.GetByIdAsync(requestId);
@@ -54,8 +56,9 @@ public class RevisionModel : PageModel
 
     public async Task<IActionResult> OnPostObservarAsync(Guid requestId, string? observacion)
     {
-        var userName = User.Identity?.Name ?? "cumplimiento";
-        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Observada, userName, observacion);
+        var userName = User.Identity?.Name ?? "cumplimiento";   // RUT/login: para auditoría
+        var gestor = User.DisplayName() ?? "cumplimiento";      // nombre: para la gestión visible
+        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Observada, gestor, observacion);
         await _audit.LogAsync("OBSERVAR", "Request", requestId.ToString(), requestId: requestId,
             newValues: new { observacion }, userName: userName);
 
@@ -70,8 +73,9 @@ public class RevisionModel : PageModel
 
     public async Task<IActionResult> OnPostRechazarAsync(Guid requestId, string? observacion)
     {
-        var userName = User.Identity?.Name ?? "cumplimiento";
-        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Rechazada, userName, observacion);
+        var userName = User.Identity?.Name ?? "cumplimiento";   // RUT/login: para auditoría
+        var gestor = User.DisplayName() ?? "cumplimiento";      // nombre: para la gestión visible
+        await _requestService.UpdateStatusAsync(requestId, RequestStatus.Rechazada, gestor, observacion);
         await _audit.LogAsync("RECHAZAR", "Request", requestId.ToString(), requestId: requestId,
             newValues: new { observacion }, userName: userName);
 
@@ -86,8 +90,9 @@ public class RevisionModel : PageModel
 
     public async Task<IActionResult> OnPostSolicitarCorreccionAsync(Guid requestId, string? observacion)
     {
-        var userName = User.Identity?.Name ?? "cumplimiento";
-        await _requestService.UpdateStatusAsync(requestId, RequestStatus.CorreccionSolicitada, userName, observacion);
+        var userName = User.Identity?.Name ?? "cumplimiento";   // RUT/login: para auditoría
+        var gestor = User.DisplayName() ?? "cumplimiento";      // nombre: para la gestión visible
+        await _requestService.UpdateStatusAsync(requestId, RequestStatus.CorreccionSolicitada, gestor, observacion);
         await _audit.LogAsync("SOLICITAR_CORRECCION", "Request", requestId.ToString(), requestId: requestId,
             newValues: new { observacion }, userName: userName);
 

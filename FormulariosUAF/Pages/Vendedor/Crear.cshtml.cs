@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -122,7 +123,7 @@ public class CrearModel : PageModel
             var request = await _requestService.CreateRequestAsync(data, userId);
 
             // Enviar el enlace al correo del cliente y marcar como "Enviada al cliente" de inmediato.
-            var vendorName = User.Identity?.Name ?? "Ejecutivo";
+            var vendorName = User.DisplayName() ?? "Ejecutivo";
             var configuredBase = _config["AppSettings:BaseUrl"];
             var baseUrl = (!string.IsNullOrWhiteSpace(configuredBase) && !configuredBase.Contains("localhost", StringComparison.OrdinalIgnoreCase))
                 ? configuredBase.TrimEnd('/')
@@ -134,7 +135,7 @@ public class CrearModel : PageModel
                     ToEmail: Input.ClientEmail,
                     ClientName: Input.RazonSocial,
                     VendorName: vendorName,
-                    VendorEmail: vendorName,
+                    VendorEmail: User.CorreoUsuario(),
                     SecureLink: link,
                     ExpirationDate: request.TokenExpiry,
                     RequestNumber: request.RequestNumber,
@@ -144,7 +145,7 @@ public class CrearModel : PageModel
                 await _requestService.UpdateStatusAsync(request.Id, RequestStatus.EnviadaAlCliente, vendorName,
                     $"Enlace enviado automáticamente al correo {Input.ClientEmail} al crear la solicitud.");
                 await _audit.LogAsync("ENVIAR_EMAIL_CLIENTE", "Request", request.Id.ToString(),
-                    newValues: new { Input.ClientEmail }, requestId: request.Id, userName: vendorName);
+                    newValues: new { Input.ClientEmail }, requestId: request.Id, userName: User.Identity?.Name);
 
                 TempData["Success"] = $"Solicitud {request.RequestNumber} creada y enviada a {Input.ClientEmail}.";
             }

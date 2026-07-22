@@ -1,3 +1,4 @@
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
@@ -33,7 +34,7 @@ public class DetalleModel : PageModel
 
     public async Task<IActionResult> OnPostEnviarAsync(Guid id)
     {
-        var userName = User.Identity?.Name ?? "sistema";
+        var userName = User.DisplayName() ?? "sistema";
         await _requestService.UpdateStatusAsync(id, RequestStatus.EnviadaAlCliente, userName);
         TempData["Success"] = "Solicitud enviada al cliente.";
         return RedirectToPage(new { id });
@@ -59,7 +60,7 @@ public class DetalleModel : PageModel
             ? configuredBase.TrimEnd('/')
             : $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}";
         var link = $"{baseUrl}/Cliente/Inicio?token={request.ClientToken}";
-        var vendorName = User.Identity?.Name ?? "Ejecutivo";
+        var vendorName = User.DisplayName() ?? "Ejecutivo";
 
         try
         {
@@ -67,7 +68,7 @@ public class DetalleModel : PageModel
                 ToEmail: clientEmail,
                 ClientName: request.Client.BusinessName,
                 VendorName: vendorName,
-                VendorEmail: User.Identity?.Name ?? "",
+                VendorEmail: User.CorreoUsuario(),
                 SecureLink: link,
                 ExpirationDate: request.TokenExpiry,
                 RequestNumber: request.RequestNumber,
@@ -76,7 +77,7 @@ public class DetalleModel : PageModel
 
             await _requestService.UpdateStatusAsync(id, RequestStatus.EnviadaAlCliente, vendorName);
             await _audit.LogAsync("ENVIAR_EMAIL_CLIENTE", "Request", id.ToString(),
-                newValues: new { clientEmail }, requestId: id, userName: vendorName);
+                newValues: new { clientEmail }, requestId: id, userName: User.Identity?.Name);
 
             TempData["Success"] = $"Email enviado a {clientEmail} y solicitud marcada como enviada.";
         }
