@@ -9,8 +9,8 @@
 </div>
 
 <!-- Estadísticas -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
+<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
+    <div class="col">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body py-3">
                 <div class="fs-3 fw-bold text-warning">@Model.Stats.Pendientes</div>
@@ -18,7 +18,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body py-3">
                 <div class="fs-3 fw-bold text-success">@Model.Stats.Aprobadas</div>
@@ -26,7 +26,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body py-3">
                 <div class="fs-3 fw-bold text-danger">@Model.Stats.Observadas</div>
@@ -34,7 +34,23 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-3 fw-bold text-danger">@Model.Stats.Rechazadas</div>
+                <small class="text-muted">Rechazadas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-3 fw-bold text-dark">@Model.Stats.Vencidas</div>
+                <small class="text-muted">Vencidas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body py-3">
                 <div class="fs-3 fw-bold text-info">@Model.Stats.ConPEP</div>
@@ -54,7 +70,7 @@
             <div class="col-md-3">
                 <select name="estado" class="form-select form-select-sm">
                     <option value="">Todos los estados</option>
-                    @foreach (var s in new[] { FormulariosUAF.Models.Enums.RequestStatus.CompletadaPorCliente, FormulariosUAF.Models.Enums.RequestStatus.EnRevision, FormulariosUAF.Models.Enums.RequestStatus.Observada, FormulariosUAF.Models.Enums.RequestStatus.CorregidaPorCliente })
+                    @foreach (var s in new[] { FormulariosUAF.Models.Enums.RequestStatus.CompletadaPorCliente, FormulariosUAF.Models.Enums.RequestStatus.EnRevision, FormulariosUAF.Models.Enums.RequestStatus.Observada, FormulariosUAF.Models.Enums.RequestStatus.CorregidaPorCliente, FormulariosUAF.Models.Enums.RequestStatus.Rechazada, FormulariosUAF.Models.Enums.RequestStatus.Vencida })
                     {
                         <option value="@((int)s)" selected="@(Model.FilterEstado == (int)s)">@s.ToDisplayString()</option>
                     }
@@ -83,7 +99,7 @@
                 <tbody>
                     @if (!Model.Requests.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-4">No hay solicitudes pendientes</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">No hay solicitudes para mostrar</td></tr>
                     }
                     @foreach (var req in Model.Requests)
                     {

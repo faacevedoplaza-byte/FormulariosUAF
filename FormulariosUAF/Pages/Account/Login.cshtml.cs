@@ -28,9 +28,9 @@ public class LoginModel : PageModel
 
     public class InputModel
     {
-        [Required(ErrorMessage = "El correo es obligatorio")]
-        [EmailAddress(ErrorMessage = "Correo inválido")]
-        public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "El login es obligatorio")]
+        [Display(Name = "Login")]
+        public string Login { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
         [DataType(DataType.Password)]
@@ -45,7 +45,12 @@ public class LoginModel : PageModel
     {
         if (!ModelState.IsValid) return Page();
 
-        var user = await _userManager.FindByEmailAsync(Input.Email);
+        // Login por el identificador que se definió al crear el usuario (UserName).
+        // Fallback a email para los usuarios de prueba antiguos (UserName = correo).
+        var id = Input.Login.Trim();
+        var user = await _userManager.FindByNameAsync(id)
+                   ?? await _userManager.FindByEmailAsync(id);
+
         if (user is null || !user.IsActive)
         {
             ErrorMessage = "Credenciales incorrectas o usuario inactivo.";

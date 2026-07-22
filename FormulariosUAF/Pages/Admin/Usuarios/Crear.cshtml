@@ -13,9 +13,32 @@
             <div class="card-body p-4">
                 <form method="post">
                     <div class="mb-3">
-                        <label asp-for="Input.FullName" class="form-label">Nombre completo <span class="text-danger">*</span></label>
-                        <input asp-for="Input.FullName" class="form-control" placeholder="Nombre Apellido" />
-                        <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                        <label asp-for="Input.Login" class="form-label">Login <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Login" class="form-control" placeholder="Ej: jperez" />
+                        <div class="form-text">Con este valor iniciará sesión el usuario.</div>
+                        <span asp-validation-for="Input.Login" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Rut" class="form-label">RUT <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Rut" class="form-control rut-input" placeholder="12.345.678-9" />
+                        <span asp-validation-for="Input.Rut" class="text-danger small"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.Nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input asp-for="Input.Nombre" class="form-control name-input" placeholder="Nombre" />
+                            <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.ApellidoPaterno" class="form-label">Apellido paterno <span class="text-danger">*</span></label>
+                            <input asp-for="Input.ApellidoPaterno" class="form-control name-input" placeholder="Apellido paterno" />
+                            <span asp-validation-for="Input.ApellidoPaterno" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.ApellidoMaterno" class="form-label">Apellido materno</label>
+                            <input asp-for="Input.ApellidoMaterno" class="form-control name-input" placeholder="Apellido materno" />
+                            <span asp-validation-for="Input.ApellidoMaterno" class="text-danger small"></span>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label asp-for="Input.Email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -35,7 +58,7 @@
                     <div class="mb-3">
                         <label asp-for="Input.Password" class="form-label">Contraseña inicial <span class="text-danger">*</span></label>
                         <input asp-for="Input.Password" type="password" class="form-control" />
-                        <div class="form-text">Mínimo 8 caracteres, una mayúscula y un número.</div>
+                        <div class="form-text">Mínimo 4 caracteres.</div>
                         <span asp-validation-for="Input.Password" class="text-danger small"></span>
                     </div>
                     <div class="mb-4">

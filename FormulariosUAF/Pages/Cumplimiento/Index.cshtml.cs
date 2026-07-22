@@ -48,6 +48,8 @@ public class IndexModel : PageModel
             Aprobadas = await _db.Requests.CountAsync(r =>
                 r.Status == RequestStatus.Aprobada && r.UpdatedAt >= firstOfMonth),
             Observadas = await _db.Requests.CountAsync(r => r.Status == RequestStatus.Observada),
+            Rechazadas = await _db.Requests.CountAsync(r => r.Status == RequestStatus.Rechazada),
+            Vencidas = await _db.Requests.CountAsync(r => r.Status == RequestStatus.Vencida),
             ConPEP = await _db.Requests.CountAsync(r =>
                 r.PepDeclaration != null && r.PepDeclaration.DeclaresPEP)
         };
@@ -59,5 +61,7 @@ public class CumplimientoStats
     public int Pendientes { get; set; }
     public int Aprobadas { get; set; }
     public int Observadas { get; set; }
+    public int Rechazadas { get; set; }
+    public int Vencidas { get; set; }
     public int ConPEP { get; set; }
 }
