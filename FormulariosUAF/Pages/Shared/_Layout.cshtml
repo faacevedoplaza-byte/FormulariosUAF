@@ -8,67 +8,65 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+@{
+    var path = Context.Request.Path.Value?.ToLower() ?? "";
+    string ActiveIf(string prefix) => path.StartsWith(prefix.ToLower()) ? "active" : "";
+}
+<body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")">
 
 @if (User.Identity?.IsAuthenticated == true)
 {
-    <div class="d-flex" id="wrapper">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="d-flex flex-column p-3 text-white sidebar-nav">
-            <a href="/" class="d-flex align-items-center mb-3 text-white text-decoration-none">
-                <i class="fa-solid fa-shield-halved me-2 fs-4"></i>
-                <span class="fs-5 fw-bold">FormulariosUAF</span>
-            </a>
-            <hr />
-            <ul class="nav nav-pills flex-column mb-auto">
-                @if (User.IsInRole("Administrador") || User.IsInRole("Vendedor"))
-                {
-                    <li class="nav-item mb-1">
-                        <a href="/Vendedor" class="nav-link text-white">
-                            <i class="fa-solid fa-briefcase me-2"></i> Mis Solicitudes
-                        </a>
-                    </li>
-                    <li class="nav-item mb-1">
-                        <a href="/Vendedor/Crear" class="nav-link text-white">
-                            <i class="fa-solid fa-plus-circle me-2"></i> Nueva Solicitud
-                        </a>
-                    </li>
-                }
-                @if (User.IsInRole("Administrador") || User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
-                {
-                    <li class="nav-item mb-1">
-                        <a href="/Cumplimiento" class="nav-link text-white">
-                            <i class="fa-solid fa-magnifying-glass me-2"></i> Revisión
-                        </a>
-                    </li>
-                }
-                @if (User.IsInRole("Administrador"))
-                {
-                    <li class="nav-item mb-1">
-                        <a href="/Admin/Usuarios" class="nav-link text-white">
-                            <i class="fa-solid fa-users-cog me-2"></i> Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item mb-1">
-                        <a href="/Admin" class="nav-link text-white">
-                            <i class="fa-solid fa-gears me-2"></i> Administración
-                        </a>
-                    </li>
-                }
-                <li class="nav-item mb-1">
-                    <a href="/Interno/Notificaciones" class="nav-link text-white position-relative">
-                        <i class="fa-solid fa-bell me-2"></i> Notificaciones
-                        <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
-                    </a>
-                </li>
-            </ul>
-            <hr />
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fa-solid fa-circle-user me-2 fs-5"></i>
-                    <strong class="text-truncate" style="max-width:140px">@User.Identity?.Name</strong>
+    <aside class="uaf-sidebar" id="uafSidebar">
+        <a href="/" class="uaf-brand">
+            <span class="uaf-brand-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <span>
+                <span class="uaf-brand-name d-block">FormulariosUAF</span>
+                <span class="uaf-brand-sub">Declaración Digital Segura</span>
+            </span>
+        </a>
+
+        <nav class="uaf-nav">
+            @if (User.IsInRole("Administrador") || User.IsInRole("Vendedor"))
+            {
+                <div class="uaf-section-lbl">Solicitudes</div>
+                <a href="/Vendedor" class="uaf-nav-link @(path == "/vendedor" || path == "/" ? "active" : "")">
+                    <i class="fa-solid fa-briefcase"></i> Mis Solicitudes
                 </a>
-                <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                <a href="/Vendedor/Crear" class="uaf-nav-link @ActiveIf("/vendedor/crear")">
+                    <i class="fa-solid fa-plus-circle"></i> Nueva Solicitud
+                </a>
+            }
+            @if (User.IsInRole("Administrador") || User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
+            {
+                <div class="uaf-section-lbl">Cumplimiento</div>
+                <a href="/Cumplimiento" class="uaf-nav-link @ActiveIf("/cumplimiento")">
+                    <i class="fa-solid fa-magnifying-glass"></i> Revisión
+                </a>
+            }
+            @if (User.IsInRole("Administrador"))
+            {
+                <div class="uaf-section-lbl">Administración</div>
+                <a href="/Admin/Usuarios" class="uaf-nav-link @ActiveIf("/admin/usuarios")">
+                    <i class="fa-solid fa-users-cog"></i> Usuarios
+                </a>
+                <a href="/Admin" class="uaf-nav-link @(path == "/admin" ? "active" : "")">
+                    <i class="fa-solid fa-gears"></i> Administración
+                </a>
+            }
+            <div class="uaf-section-lbl">Cuenta</div>
+            <a href="/Interno/Notificaciones" class="uaf-nav-link position-relative @ActiveIf("/interno/notificaciones")">
+                <i class="fa-solid fa-bell"></i> Notificaciones
+                <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
+            </a>
+        </nav>
+
+        <div class="uaf-sidebar-footer">
+            <div class="dropdown">
+                <a href="#" class="uaf-user dropdown-toggle" data-bs-toggle="dropdown">
+                    <span class="uaf-avatar"><i class="fa-solid fa-user"></i></span>
+                    <span class="uaf-user-name text-truncate" style="max-width:130px">@User.Identity?.Name</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark shadow w-100">
                     <li>
                         <form asp-page="/Account/Logout" method="post">
                             <button type="submit" class="dropdown-item">
@@ -78,25 +76,24 @@
                     </li>
                 </ul>
             </div>
-        </nav>
+        </div>
+    </aside>
 
-        <!-- Contenido principal -->
-        <div id="page-content-wrapper" class="w-100">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4">
-                <button class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <span class="ms-3 text-muted small">@ViewData["Title"]</span>
-            </nav>
-            <div class="container-fluid p-4">
-                @RenderBody()
-            </div>
+    <div class="uaf-main">
+        <div class="uaf-topbar">
+            <button class="btn btn-sm btn-outline-secondary d-lg-none me-3" id="sidebarToggle">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <span class="uaf-crumb">@ViewData["Title"]</span>
+        </div>
+        <div class="uaf-body">
+            @RenderBody()
         </div>
     </div>
 }
 else
 {
-    <nav class="navbar navbar-dark" style="background-color:#1a3a5c;">
+    <nav class="navbar navbar-dark" style="background-color:#1a2b4a;">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
                 <i class="fa-solid fa-shield-halved me-2"></i>FormulariosUAF
@@ -110,6 +107,10 @@ else
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
+<script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', () =>
+        document.getElementById('uafSidebar')?.classList.toggle('show'));
+</script>
 
 @if (User.Identity?.IsAuthenticated == true)
 {

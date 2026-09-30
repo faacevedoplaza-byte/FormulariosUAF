@@ -1,9 +1,13 @@
 @page "{id:guid}"
 @model FormulariosUAF.Pages.Vendedor.DetalleModel
+@inject IConfiguration Config
 @{
     ViewData["Title"] = $"Solicitud {Model.Request?.RequestNumber}";
     var req = Model.Request;
-    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+    var configuredBase = Config["AppSettings:BaseUrl"];
+    var baseUrl = (!string.IsNullOrWhiteSpace(configuredBase) && !configuredBase.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+        ? configuredBase.TrimEnd('/')
+        : $"{Request.Scheme}://{Request.Host}";
     var link = req != null ? $"{baseUrl}/Cliente/Inicio?token={req.ClientToken}" : "";
 }
 
@@ -17,6 +21,12 @@
 {
     <div class="alert alert-success alert-dismissible fade show">
         @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show">
+        @TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 

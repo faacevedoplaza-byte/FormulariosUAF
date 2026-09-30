@@ -27,6 +27,10 @@ public class DeclaracionModel : PageModel
     public bool EsActualizacionSinCambios => RequestType == RequestType.ActualizacionSinCambios;
     public string? ErrorMessage { get; set; }
 
+    // Contacto del cliente (registrado por el vendedor) — para el botón "Usar datos del representante legal"
+    public string? ClientEmail { get; set; }
+    public string? ClientPhone { get; set; }
+
     [BindProperty] public InputModel Input { get; set; } = new();
 
     public class InputModel
@@ -118,6 +122,8 @@ public class DeclaracionModel : PageModel
 
         Declaration = req.LegalEntityDeclaration;
         RequestType = req.RequestType;
+        ClientEmail = req.ClientEmail;
+        ClientPhone = req.ClientPhone;
 
         // Pre-populate from existing saved data (para regresos al paso)
         if (req.DeclaredPersons.Any())
@@ -144,6 +150,13 @@ public class DeclaracionModel : PageModel
                 PepRelationship = p.PepRelationship,
                 PepObservation = p.PepObservation
             }).ToList();
+        }
+
+        // Mostrar una persona vacía por defecto al abrir el formulario (formulario nuevo).
+        // En OnPost las personas con RUT vacío se descartan, así que no afecta el guardado.
+        if (Input.Personas.Count == 0)
+        {
+            Input.Personas.Add(new PersonaInput());
         }
 
         if (req.Declarant is { } dec)
@@ -180,6 +193,8 @@ public class DeclaracionModel : PageModel
 
         Declaration = req.LegalEntityDeclaration;
         RequestType = req.RequestType;
+        ClientEmail = req.ClientEmail;
+        ClientPhone = req.ClientPhone;
 
         if (!ModelState.IsValid) return Page();
 

@@ -36,11 +36,12 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
   </ItemGroup>
 
-  <!-- La config vive SOLO en el servidor: estos archivos NO se publican para no sobrescribir
-       la conexion/correo de produccion al copiar la carpeta de publish al servidor -->
+  <!-- appsettings.json (base/QA) NO se publica para no pisar la config local de QA.
+       appsettings.Production.json SÍ se publica: lleva los valores reales de produccion
+       (conexion a FormularioUAF, SMTP, etc.) y solo se carga cuando el entorno es Production. -->
   <ItemGroup>
     <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
-    <Content Update="appsettings.Production.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Production.json" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

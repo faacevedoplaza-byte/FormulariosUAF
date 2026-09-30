@@ -18,7 +18,8 @@ public record NewRequestData(
     string LegalRepresentativeIdNumber,
     string LegalRepresentativeName,
     string? ClientEmail = null,
-    string? ClientPhone = null
+    string? ClientPhone = null,
+    string? NetcarBusinessNumber = null
 );
 
 public interface IRequestService
