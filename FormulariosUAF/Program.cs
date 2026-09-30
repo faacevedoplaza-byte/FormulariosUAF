@@ -25,21 +25,26 @@ builder.Host.UseSerilog();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
     options.UseSqlServer(builder.Configuration.GetConnectionString("LocalConnection")));
+    
 
 
 // ── Identity ───────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
-    options.Password.RequireUppercase = true;
+    // Contraseña sin restricciones fuertes (ej. permite "fa123").
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
     options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredUniqueChars = 1;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedAccount = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
+.AddClaimsPrincipalFactory<FormulariosUAF.Services.AppUserClaimsPrincipalFactory>()
 .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -79,6 +84,9 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 // ── Carpeta tributaria ─────────────────────────────────────────────────────
 builder.Services.AddScoped<ITaxFolderTextExtractor, PdfTextExtractorService>();
 builder.Services.AddScoped<ITaxFolderAnalysisService, TaxFolderAnalysisService>();
+
+// ── Búsqueda de empresa en base de producción (SP, solo lectura) ────────────
+builder.Services.AddScoped<IEmpresaProduccionService, EmpresaProduccionService>();
 
 // ── Proveedor de datos de empresa (configurable) ───────────────────────────
 var companyProvider = builder.Configuration["CompanyDataProvider:Provider"] ?? "Manual";

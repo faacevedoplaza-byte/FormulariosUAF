@@ -17,6 +17,7 @@ public class Request
     public string? InternalNotes { get; set; }
     public string? ClientEmail { get; set; }
     public string? ClientPhone { get; set; }
+    public string? NetcarBusinessNumber { get; set; }
     public int CurrentStep { get; set; } = 1;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string CreatedBy { get; set; } = string.Empty;

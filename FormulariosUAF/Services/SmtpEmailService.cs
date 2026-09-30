@@ -65,7 +65,10 @@ public class SmtpEmailService : IEmailService
             message.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = htmlBody };
 
             using var client = new SmtpClient();
-            var secureOption = _options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
+            // Puerto 465 = SSL implícito (SslOnConnect); 587 = STARTTLS; sin SSL = None.
+            var secureOption = _options.Port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : (_options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
             await client.ConnectAsync(_options.Host, _options.Port, secureOption);
 
             if (!string.IsNullOrEmpty(_options.Username))
