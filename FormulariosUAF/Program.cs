@@ -150,7 +150,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Cumplimiento", "CumplimientoPolicy");
     options.Conventions.AuthorizeFolder("/Admin",        "AdminPolicy");
     options.Conventions.AuthorizeFolder("/Interno",      "InternoPolicy");
-    options.Conventions.AuthorizeFolder("/Regcheq",      "CumplimientoPolicy");
+    options.Conventions.AuthorizeFolder("/Regcheq",      "RegcheqPolicy");
     options.Conventions.AllowAnonymousToFolder("/Cliente");
     options.Conventions.AllowAnonymousToFolder("/Account");
     options.Conventions.AllowAnonymousToPage("/Index");
@@ -164,6 +164,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CumplimientoPolicy", p => p.RequireRole("Administrador", "Cumplimiento", "Revisor"));
     options.AddPolicy("InternoPolicy",      p => p.RequireRole("Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura"));
     options.AddPolicy("ExportPolicy",       p => p.RequireRole("Administrador", "Cumplimiento"));
+    options.AddPolicy("RegcheqPolicy",      p => p.RequireRole("Administrador", "Call Center"));
 });
 
 var app = builder.Build();

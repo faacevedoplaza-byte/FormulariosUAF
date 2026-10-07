@@ -19,8 +19,8 @@ public class GestionModel : PageModel
 
     private const int TamanoPagina = 25;
     private const int LargoMaximoNota = 2000;
-    /// <summary>Roles que pueden tomar y gestionar operaciones. Revisor entra a la vista solo en lectura.</summary>
-    private static readonly string[] RolesGestion = ["Administrador", "Cumplimiento"];
+    /// <summary>Roles que pueden tomar y gestionar operaciones (los mismos que entran al módulo, ver RegcheqPolicy).</summary>
+    private static readonly string[] RolesGestion = ["Administrador", "Call Center"];
 
     private readonly IRegcheqService _regcheq;
     private readonly IGestionSincronizador _sincronizador;
@@ -493,7 +493,7 @@ public class GestionModel : PageModel
         var destino = string.IsNullOrWhiteSpace(usuarioId) ? null : await _userManager.FindByIdAsync(usuarioId);
         if (destino is null || !destino.IsActive || !(await _userManager.GetRolesAsync(destino)).Any(RolesGestion.Contains))
         {
-            TempData["Error"] = "Seleccione un usuario activo de Cumplimiento o Administrador.";
+            TempData["Error"] = "Seleccione un usuario activo de Call Center o Administrador.";
             return null;
         }
         return destino;

@@ -25,6 +25,9 @@
         if (currentUser != null && !string.IsNullOrWhiteSpace(currentUser.FullName))
             displayName = currentUser.FullName;
     }
+
+    // Roles de InternoPolicy (Program.cs): Call Center no tiene acceso a /Interno ni /Api.
+    var esInterno = new[] { "Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura" }.Any(User.IsInRole);
 }
 <body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")">
 
@@ -67,12 +70,15 @@
                     <i class="fa-solid fa-gears"></i> Administración
                 </a>
             }
-            <div class="uaf-section-lbl">Cuenta</div>
-            <a href="/Interno/Notificaciones" class="uaf-nav-link position-relative @ActiveIf("/interno/notificaciones")">
-                <i class="fa-solid fa-bell"></i> Notificaciones
-                <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
-            </a>
-            @if (User.IsInRole("Administrador") || User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
+            @if (esInterno)
+            {
+                <div class="uaf-section-lbl">Cuenta</div>
+                <a href="/Interno/Notificaciones" class="uaf-nav-link position-relative @ActiveIf("/interno/notificaciones")">
+                    <i class="fa-solid fa-bell"></i> Notificaciones
+                    <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
+                </a>
+            }
+            @if (User.IsInRole("Administrador") || User.IsInRole("Call Center"))
             {
                 <div class="uaf-section-lbl">RegCheq</div>
                 <a href="/Regcheq" class="uaf-nav-link @(path.StartsWith("/regcheq") && !path.StartsWith("/regcheq/gestion") ? "active" : "")">
@@ -136,7 +142,7 @@ else
         document.getElementById('uafSidebar')?.classList.toggle('show'));
 </script>
 
-@if (User.Identity?.IsAuthenticated == true)
+@if (User.Identity?.IsAuthenticated == true && esInterno)
 {
     <!-- SignalR — Fase 2 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>

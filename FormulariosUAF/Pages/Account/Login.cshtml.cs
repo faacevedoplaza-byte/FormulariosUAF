@@ -89,6 +89,7 @@ public class LoginModel : PageModel
         if (await _userManager.IsInRoleAsync(user, "Vendedor"))      return "/Vendedor";
         if (await _userManager.IsInRoleAsync(user, "Cumplimiento"))  return "/Cumplimiento";
         if (await _userManager.IsInRoleAsync(user, "Revisor"))       return "/Cumplimiento";
+        if (await _userManager.IsInRoleAsync(user, "Call Center"))   return "/Regcheq";
         // SoloLectura u otros roles sin área propia.
         return "/Interno/Notificaciones";
     }
