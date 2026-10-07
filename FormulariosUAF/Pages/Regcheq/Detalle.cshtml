@@ -1,0 +1,474 @@
+@page
+@model FormulariosUAF.Pages.Regcheq.DetalleModel
+@using FormulariosUAF.Pages.Regcheq
+@{
+    var op = Model.Operacion;
+    ViewData["Title"] = op is null ? "Operación RegCheq" : $"Operación RegCheq {op.Codigo}";
+}
+
+<style>
+    /* JSON visual (detalle PEP) */
+    .rj-toggle { --bs-btn-padding-y: .05rem; --bs-btn-padding-x: .45rem; --bs-btn-font-size: .72rem; border-radius: 999px; }
+    .rj-toggle i { transition: transform .2s ease; }
+    .rj-toggle:not(.collapsed) i { transform: rotate(180deg); }
+    .rj-fila > td { background: var(--bs-body-bg) !important; padding: .5rem 0 1rem !important; }
+    .rj-panel { background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color-translucent); border-left: 4px solid var(--bs-primary); border-radius: .75rem; padding: 1rem 1.25rem; }
+    .rj-panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+    .rj-bloque + .rj-bloque { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--bs-border-color-translucent); }
+    .rj-bloque-titulo { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-secondary-color); margin-bottom: .6rem; }
+    .rj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem 1.5rem; margin: 0; }
+    .rj-item dt { font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--bs-secondary-color); margin-bottom: .15rem; }
+    .rj-item dd { margin: 0; font-size: .875rem; word-break: break-word; }
+    .rj-seccion { margin-top: 1rem; }
+    .rj-titulo { display: flex; align-items: center; gap: .45rem; font-size: .8rem; font-weight: 700; color: var(--bs-primary-text-emphasis); margin-bottom: .6rem; }
+    .rj-count { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); border-radius: 999px; padding: 0 .5rem; font-size: .7rem; }
+    .rj-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .75rem; }
+    .rj-card { position: relative; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color-translucent); border-radius: .6rem; padding: .85rem 1rem; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .rj-card-num { position: absolute; top: .45rem; right: .7rem; font-size: .7rem; font-weight: 600; color: var(--bs-secondary-color); }
+    .rj-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .rj-chip { background: var(--bs-secondary-bg); border-radius: 999px; padding: .15rem .65rem; font-size: .78rem; }
+    .rj-texto { font-size: .875rem; white-space: pre-wrap; }
+    .rj-pre { font-size: .75rem; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color-translucent); border-radius: .5rem; padding: .75rem; max-height: 320px; overflow: auto; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">
+        <i class="fa-solid fa-file-shield me-2 text-primary"></i>Operación @(op?.Codigo?.ToString() ?? "")
+        <small class="text-muted fs-6 ms-2">@(Model.EsNatural ? "Persona natural" : "Empresa")</small>
+    </h4>
+    <a asp-page="./Index" asp-route-tipo="@Model.Tipo" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Error</div>
+}
+else if (op is null)
+{
+    <div class="alert alert-warning">La operación no existe o la conexión <code>RegCheqConnection</code> no está configurada.</div>
+}
+else
+{
+    <!-- Resumen de cumplimiento -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted mb-1">PEP según RegCheq</div>@RegcheqUi.Pep(op.TienePep)
+                <div class="small text-muted mt-2 mb-1">Lista PEP (pepChile)</div>@RegcheqUi.ListaPep(op.CoincidenciaListaPep)
+            </div></div>
+        </div>
+        @if (Model.EsNatural)
+        {
+            <div class="col-6 col-lg">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <div class="small text-muted mb-1">Formulario PEP</div>
+                    @RegcheqUi.Firma(op.FirmoPep, op.FechaFirmaPep)
+                    <div class="small mt-1">@RegcheqUi.EnlaceOTexto(op.FormularioPep, "Ver formulario")</div>
+                </div></div>
+            </div>
+            <div class="col-6 col-lg">
+                <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                    <div class="small text-muted mb-1">Formulario DOF</div>
+                    @RegcheqUi.Firma(op.FirmoDof, op.FechaFirmaDof)
+                    <div class="small mt-1">@RegcheqUi.EnlaceOTexto(op.FormularioDof, "Ver formulario")</div>
+                </div></div>
+            </div>
+        }
+        <div class="col-6 col-lg">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted mb-1">Formularios</div>
+                <div>Requeridos: @RegcheqUi.SiNo(op.FormulariosRequeridos)</div>
+                <div>Enviados: @RegcheqUi.SiNo(op.FormulariosEnviados)</div>
+                <div>Firmados: @RegcheqUi.SiNo(op.FormulariosFirmados)</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted mb-1">Estado</div>
+                <div>@RegcheqUi.Texto(op.Estado)</div>
+                @if (Model.EsNatural)
+                {
+                    <div class="small text-muted mt-2 mb-1">Firmas</div>@RegcheqUi.EstadoFirmas(op.EstadoFirmas)
+                }
+                else
+                {
+                    <div class="mt-1">Finalizada: @RegcheqUi.SiNo(op.Finalizada)</div>
+                }
+            </div></div>
+        </div>
+    </div>
+
+    @if (Model.MostrarGestion)
+    {
+        var g = Model.Gestion;
+        var caso = Model.CasoPendiente;
+        var nombreToma = GestionModel.NombreDe(g?.Usuario);
+        <!-- Gestión (las acciones las procesa Regcheq/Gestion y vuelven aquí) -->
+        <div class="card border-0 shadow-sm mb-4" id="gestion" style="border-left: 4px solid @(g?.FechaCierre is not null ? "var(--bs-success)" : "var(--bs-primary)") !important">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-semibold">
+                    <i class="fa-solid fa-clipboard-check me-2 text-primary"></i>Gestión
+                    @if (g?.FechaCierre is not null)
+                    {
+                        <span class="badge bg-success ms-2"><i class="fa-solid fa-circle-check me-1"></i>Cerrada @g.FechaCierre.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                    }
+                    else if (caso is { } c)
+                    {
+                        var (casoTxt, casoCls) = GestionModel.Etiqueta(c);
+                        <span class="gs-caso @casoCls ms-2">@casoTxt</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success-subtle text-success-emphasis ms-2" title="La tarea automática la cerrará en su próxima ejecución (cada 15 min)">
+                            Firmas completas · se cerrará en la próxima sincronización
+                        </span>
+                    }
+                </span>
+                <a asp-page="./Gestion" class="btn btn-sm btn-link text-decoration-none p-0"><i class="fa-solid fa-arrow-left me-1"></i>Ir a Gestión</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="small text-muted mb-2">Tomada por</div>
+                        @if (g?.UsuarioId is not null)
+                        {
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="gs-avatar @(Model.TomadaPorMi ? "yo" : "")">@GestionModel.Iniciales(nombreToma)</span>
+                                <div class="lh-sm">
+                                    <div class="fw-semibold">@(Model.TomadaPorMi ? "Tú" : nombreToma)</div>
+                                    @if (g.FechaToma.HasValue) { <small class="text-muted">desde @g.FechaToma.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small> }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3"><span class="badge bg-secondary-subtle text-secondary-emphasis">Sin tomar</span></div>
+                        }
+
+                        <div class="small text-muted mb-1">Formularios requeridos</div>
+                        <div class="mb-3">
+                            @if (op.RequierePep == true) { <span class="gs-doc @(op.FirmoPep == true ? "ok" : "pend")"><i class="fa-solid @(op.FirmoPep == true ? "fa-check" : "fa-clock")"></i>PEP</span> }
+                            @if (op.RequiereDof == true) { <span class="gs-doc @(op.FirmoDof == true ? "ok" : "pend")"><i class="fa-solid @(op.FirmoDof == true ? "fa-check" : "fa-clock")"></i>DOF</span> }
+                        </div>
+
+                        @if (caso is not null && g?.UsuarioId is null && Model.PuedeGestionar)
+                        {
+                            <form method="post" asp-page="./Gestion" asp-page-handler="Tomar" asp-route-origen="detalle">
+                                <input type="hidden" name="id" value="@op.Id" />
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-hand me-1"></i>Tomar operación</button>
+                            </form>
+                        }
+                        else if (Model.PuedeOperar)
+                        {
+                            <form method="post" asp-page="./Gestion" asp-page-handler="Soltar" asp-route-origen="detalle"
+                                  onsubmit="return confirm('¿Liberar la operación @op.Codigo? Quedará sin tomar.');">
+                                <input type="hidden" name="id" value="@op.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-hand-point-left me-1"></i>Liberar</button>
+                            </form>
+                        }
+                        else if (!Model.PuedeGestionar)
+                        {
+                            <div class="small text-muted"><i class="fa-solid fa-eye me-1"></i>Solo lectura</div>
+                        }
+                    </div>
+                    <div class="col-lg-8" style="--gs-tl-fondo: var(--bs-body-bg)">
+                        @if (Model.PuedeOperar && caso is not null)
+                        {
+                            <form method="post" asp-page="./Gestion" asp-page-handler="Nota" asp-route-origen="detalle" class="mb-4">
+                                <input type="hidden" name="id" value="@op.Id" />
+                                <label class="form-label small fw-semibold"><i class="fa-solid fa-pen-to-square me-1 text-primary"></i>Registrar gestión</label>
+                                <textarea name="texto" class="form-control form-control-sm mb-2" rows="3" maxlength="2000" required
+                                          placeholder="Ej.: Llamé al cliente, se reenvió el formulario a su correo…"></textarea>
+                                <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar gestión</button>
+                            </form>
+                        }
+                        <h6 class="fw-semibold mb-3"><i class="fa-solid fa-timeline me-2 text-primary"></i>Bitácora</h6>
+                        <partial name="_Bitacora" model="Model.Notas" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Vehiculo is { } vo)
+    {
+        var v = vo.Vehiculo;
+        <!-- Vehículo de la cotización Netcar (ST_REFERENCENUMBER = N° de cotización) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-semibold"><i class="fa-solid fa-car-side me-2 text-primary"></i>Vehículo</span>
+                @if (vo.Cotizacion is not null)
+                {
+                    <small class="text-muted">Cotización <span class="font-monospace">@vo.Cotizacion</span>@(vo.Empresa is null ? "" : $" · Netcar {vo.Empresa}")</small>
+                }
+            </div>
+            <div class="card-body">
+                @if (v is null)
+                {
+                    <p class="text-muted small mb-0"><i class="fa-solid fa-circle-info me-1"></i>@vo.Motivo</p>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                        <div class="fs-5 fw-semibold">@(v.Resumen.Length > 0 ? v.Resumen : "Vehículo sin marca/modelo")</div>
+                        @if (v.EsNuevo is { } nuevo)
+                        {
+                            <span class="badge @(nuevo ? "bg-primary-subtle text-primary-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">@(nuevo ? "Nuevo" : "Usado")</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(v.EstadoCotizacion))
+                        {
+                            <span class="badge bg-light text-dark border">@v.EstadoCotizacion</span>
+                        }
+                    </div>
+                    <dl class="row small mb-0">
+                        <dt class="col-sm-3">Versión</dt><dd class="col-sm-3">@RegcheqUi.Texto(v.Version)</dd>
+                        <dt class="col-sm-3">Año</dt><dd class="col-sm-3">@(v.Anio?.ToString() ?? "—")</dd>
+                        <dt class="col-sm-3">Color</dt><dd class="col-sm-3">@RegcheqUi.Texto(v.Color)</dd>
+                        <dt class="col-sm-3">Patente</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(v.Patente)</dd>
+                        <dt class="col-sm-3">N° chasis</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(v.Chasis)</dd>
+                        <dt class="col-sm-3">Precio cotizado</dt><dd class="col-sm-3">@RegcheqUi.Pesos(v.Precio)</dd>
+                        <dt class="col-sm-3">Vendedor</dt><dd class="col-sm-3">@RegcheqUi.Texto(v.Vendedor)</dd>
+                        <dt class="col-sm-3">Fecha cotización</dt><dd class="col-sm-3">@RegcheqUi.Fecha(v.FechaCotizacion)</dd>
+                    </dl>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Datos de la operación -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold"><i class="fa-solid fa-receipt me-2"></i>Datos de la operación</div>
+        <div class="card-body">
+            <dl class="row mb-0 small">
+                <dt class="col-sm-3">Código</dt><dd class="col-sm-3 font-monospace">@(op.Codigo?.ToString() ?? "—")</dd>
+                <dt class="col-sm-3">N° referencia</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Referencia)</dd>
+                <dt class="col-sm-3">ID RegCheq</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(op.RegcheqId)</dd>
+                <dt class="col-sm-3">Empresa (company id)</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.CompanyId)</dd>
+                <dt class="col-sm-3">Tipo de transacción</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.TipoTransaccion)</dd>
+                <dt class="col-sm-3">Operación</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Operacion)</dd>
+                <dt class="col-sm-3">Fecha transacción</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.FechaTransaccion)</dd>
+                <dt class="col-sm-3">Monto total</dt><dd class="col-sm-3">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</dd>
+                <dt class="col-sm-3">Pago en efectivo</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.Efectivo, "bg-warning text-dark") @(op.MontoEfectivo.HasValue ? RegcheqUi.Monto(op.MontoEfectivo, null, op.Divisa) : "")</dd>
+                <dt class="col-sm-3">Divisa</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Divisa)</dd>
+                <dt class="col-sm-3">Valor dólar / UF</dt><dd class="col-sm-3">@(op.ValorDolar ?? "—") / @(op.ValorUf ?? "—")</dd>
+                <dt class="col-sm-3">ROS</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Ros)</dd>
+                <dt class="col-sm-3">Archivo requerido</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.ArchivoRequerido) <small>@op.EstadoArchivo</small></dd>
+                <dt class="col-sm-3">Leído</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.Leido)</dd>
+                <dt class="col-sm-3">Creada</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaCreacion, true) <small class="text-muted">@op.CreadoPor</small></dd>
+                <dt class="col-sm-3">Actualizada</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaActualizacion, true) <small class="text-muted">@op.ActualizadoPor</small></dd>
+                <dt class="col-sm-3">Recibida en integración</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaRecibido, true)</dd>
+                @if (!string.IsNullOrWhiteSpace(op.ComentariosTransaccion))
+                {
+                    <dt class="col-sm-3">Comentarios</dt><dd class="col-sm-9">@op.ComentariosTransaccion</dd>
+                }
+            </dl>
+        </div>
+    </div>
+
+    <!-- Asociados -->
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-users me-2"></i>Asociados (@op.Asociados.Count)</h5>
+    @if (!op.Asociados.Any())
+    {
+        <div class="alert alert-light border">La operación no tiene asociados registrados.</div>
+    }
+    <div class="accordion mb-4" id="asociados">
+        @foreach (var a in op.Asociados)
+        {
+            var f = a.Ficha;
+            var idAcc = $"asoc{a.Id}";
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button @(op.Asociados.Count > 1 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#@idAcc">
+                        <span class="me-3 fw-semibold">@(f?.NombreCompleto is { Length: > 0 } n ? n : "Sin ficha")</span>
+                        <span class="text-muted small me-3">@a.Rut</span>
+                        @if (a.Pep == true) { <span class="me-2">@RegcheqUi.Pep(true, a.NivelPep)</span> }
+                        @if (!string.IsNullOrWhiteSpace(a.Tipo)) { <span class="badge bg-light text-dark border">@a.Tipo</span> }
+                    </button>
+                </h2>
+                <div id="@idAcc" class="accordion-collapse collapse @(op.Asociados.Count == 1 ? "show" : "")" data-bs-parent="#asociados">
+                    <div class="accordion-body">
+                        <div class="row g-4">
+                            <div class="col-lg-5">
+                                <h6 class="fw-semibold">En la operación</h6>
+                                <dl class="row small mb-0">
+                                    <dt class="col-6">PEP</dt><dd class="col-6">@RegcheqUi.Pep(a.Pep, a.NivelPep)</dd>
+                                    <dt class="col-6">Formulario PEP</dt><dd class="col-6">@RegcheqUi.Texto(a.EstadoFormularioPep)</dd>
+                                    <dt class="col-6">Formulario DOF</dt><dd class="col-6">@RegcheqUi.Texto(a.EstadoFormularioDof)</dd>
+                                    <dt class="col-6">Formulario BF</dt><dd class="col-6">@RegcheqUi.Texto(a.EstadoFormularioBf)</dd>
+                                    <dt class="col-6">Estado ficha</dt><dd class="col-6">@RegcheqUi.Texto(a.EstadoFicha)</dd>
+                                    <dt class="col-6">Riesgo calculado</dt><dd class="col-6">@RegcheqUi.Texto(a.RiesgoCalculado)</dd>
+                                    <dt class="col-6">Monto</dt><dd class="col-6">@RegcheqUi.Monto(a.Monto, a.MontoFormateado, a.Moneda)</dd>
+                                    <dt class="col-6">Efectivo</dt><dd class="col-6">@RegcheqUi.SiNo(a.Efectivo, "bg-warning text-dark") @(a.MontoEfectivo.HasValue ? RegcheqUi.Monto(a.MontoEfectivo, null, a.Moneda) : "")</dd>
+                                    <dt class="col-6">ROE</dt><dd class="col-6">@RegcheqUi.SiNo(a.Roe)</dd>
+                                </dl>
+                            </div>
+                            <div class="col-lg-7">
+                                <h6 class="fw-semibold">Ficha del cliente</h6>
+                                @if (f is null)
+                                {
+                                    <p class="text-muted small mb-0">No hay ficha registrada para este asociado.</p>
+                                }
+                                else
+                                {
+                                    <dl class="row small mb-0">
+                                        @if (!string.IsNullOrWhiteSpace(f.NombreFantasia))
+                                        {
+                                            <dt class="col-sm-4">Nombre fantasía</dt><dd class="col-sm-8">@f.NombreFantasia</dd>
+                                        }
+                                        <dt class="col-sm-4">RUT / DNI</dt><dd class="col-sm-8">@(f.Rut ?? f.Dni ?? "—") <small class="text-muted">@f.PaisDni</small></dd>
+                                        <dt class="col-sm-4">Tipo persona</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.TipoPersona)</dd>
+                                        <dt class="col-sm-4">Nacionalidad / país</dt><dd class="col-sm-8">@(f.Nacionalidad ?? "—") / @(f.Pais ?? "—")</dd>
+                                        <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Email)</dd>
+                                        <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Telefono)</dd>
+                                        <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">@(f.Direccion ?? "—")@(f.Ciudad is null ? "" : $", {f.Ciudad}")@(f.Region is null ? "" : $", {f.Region}")</dd>
+                                        @if (Model.EsNatural)
+                                        {
+                                            <dt class="col-sm-4">Nacimiento</dt><dd class="col-sm-8">@RegcheqUi.Fecha(f.FechaNacimiento)</dd>
+                                            <dt class="col-sm-4">Estado civil</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.EstadoCivil)</dd>
+                                            <dt class="col-sm-4">Empleador / cargo</dt><dd class="col-sm-8">@(f.Empleador ?? "—") / @(f.Cargo ?? "—")</dd>
+                                            <dt class="col-sm-4">Ingresos</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Ingresos)</dd>
+                                        }
+                                        <dt class="col-sm-4">Riesgo</dt>
+                                        <dd class="col-sm-8">
+                                            @RegcheqUi.Texto(f.Riesgo)
+                                            <small class="text-muted d-block">Calculado: @(f.RiesgoCalculado ?? "—") · Efectivo: @(f.RiesgoEfectivo ?? "—")@(f.RiesgoSobrescrito is null ? "" : $" · Sobrescrito: {f.RiesgoSobrescrito}")</small>
+                                        </dd>
+                                        <dt class="col-sm-4">Nivel PEP</dt><dd class="col-sm-8">@(f.NivelPep?.ToString() ?? "—")</dd>
+                                        <dt class="col-sm-4">Última firma DOF</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.UltimaFechaDof)</dd>
+                                        <dt class="col-sm-4">Última firma PEP</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.UltimaFechaPep)</dd>
+                                        <dt class="col-sm-4">Estado ficha</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Estado)</dd>
+                                        @if (!string.IsNullOrWhiteSpace(f.Comentarios))
+                                        {
+                                            <dt class="col-sm-4">Comentarios</dt><dd class="col-sm-8">@f.Comentarios</dd>
+                                        }
+                                    </dl>
+                                }
+                            </div>
+                        </div>
+
+                        @if (f is not null)
+                        {
+                            <h6 class="fw-semibold mt-4">Revisión en listas (@f.Listas.Count)</h6>
+                            @if (!f.Listas.Any())
+                            {
+                                <p class="text-muted small mb-0">Sin registros de listas.</p>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle small mb-0">
+                                        <thead class="table-light">
+                                            <tr><th>Lista</th><th class="text-center">Coincidencia</th><th class="text-center">Resultado</th><th>Riesgo</th><th>Nivel PEP</th><th>Cargo</th><th>Revisada</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (var li = 0; li < f.Listas.Count; li++)
+                                            {
+                                                var l = f.Listas[li];
+                                                var idPep = $"pep{a.Id}_{li}";
+                                                <tr class="@(l.Coincidencia == true ? "table-danger" : "")">
+                                                    <td>
+                                                        @RegcheqUi.Texto(l.Tipo)
+                                                        @if (l.EsPep && l.TieneDetalle)
+                                                        {
+                                                            <button type="button" class="btn btn-sm btn-outline-primary rj-toggle collapsed ms-2" data-bs-toggle="collapse" data-bs-target="#@idPep" aria-expanded="false">
+                                                                <i class="fa-solid fa-chevron-down"></i> Ver detalle
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                    <td class="text-center">@RegcheqUi.SiNo(l.Coincidencia, "bg-danger", "bg-success")</td>
+                                                    <td class="text-center">@RegcheqUi.SiNo(l.Resultado, "bg-danger", "bg-success")</td>
+                                                    <td>@RegcheqUi.Texto(l.Riesgo)</td>
+                                                    <td>@(l.NivelPep?.ToString() ?? "—")</td>
+                                                    <td>@RegcheqUi.Texto(l.Cargo)</td>
+                                                    <td class="text-nowrap">@RegcheqUi.Fecha(l.UltimaRevision, true)</td>
+                                                </tr>
+                                                @if (l.EsPep && l.TieneDetalle)
+                                                {
+                                                    <tr class="collapse rj-fila" id="@idPep">
+                                                        <td colspan="7">
+                                                            <div class="rj-panel">
+                                                                <div class="rj-panel-header">
+                                                                    <div>
+                                                                        <i class="fa-solid fa-user-shield me-2 @(l.Coincidencia == true ? "text-danger" : "text-success")"></i>
+                                                                        <span class="fw-semibold">Detalle lista PEP</span>
+                                                                        <span class="ms-2">@RegcheqUi.ListaPep(l.Coincidencia)</span>
+                                                                        @if (l.NivelPep.HasValue) { <span class="badge bg-danger-subtle text-danger-emphasis ms-1">Nivel @l.NivelPep</span> }
+                                                                    </div>
+                                                                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" data-bs-toggle="collapse" data-bs-target="#@(idPep)_raw">
+                                                                        <i class="fa-solid fa-code me-1"></i>JSON original
+                                                                    </button>
+                                                                </div>
+                                                                @if (!string.IsNullOrWhiteSpace(l.InfoData))
+                                                                {
+                                                                    <div class="rj-bloque"><div class="rj-bloque-titulo">Información PEP</div>@RegcheqUi.JsonVisual(l.InfoData)</div>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(l.DatosAdicionales))
+                                                                {
+                                                                    <div class="rj-bloque"><div class="rj-bloque-titulo">Datos adicionales</div>@RegcheqUi.JsonVisual(l.DatosAdicionales)</div>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(l.InfoGeneral))
+                                                                {
+                                                                    <div class="rj-bloque"><div class="rj-bloque-titulo">Información general</div>@RegcheqUi.JsonVisual(l.InfoGeneral)</div>
+                                                                }
+                                                                <div class="collapse" id="@(idPep)_raw">
+                                                                    <pre class="rj-pre mt-3 mb-0">@RegcheqUi.JsonLegible(l.InfoData)@(string.IsNullOrWhiteSpace(l.DatosAdicionales) ? "" : "\n\n" + RegcheqUi.JsonLegible(l.DatosAdicionales))@(string.IsNullOrWhiteSpace(l.InfoGeneral) ? "" : "\n\n" + RegcheqUi.JsonLegible(l.InfoGeneral))</pre>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else if (!string.IsNullOrWhiteSpace(l.InfoGeneral) && l.Coincidencia == true)
+                                                {
+                                                    <tr class="table-danger"><td colspan="7"><small class="text-muted">@l.InfoGeneral</small></td></tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Datos técnicos -->
+    @if (!string.IsNullOrWhiteSpace(op.Firmas) || !string.IsNullOrWhiteSpace(op.RespuestaJson))
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold"><i class="fa-solid fa-code me-2"></i>Datos técnicos de RegCheq</div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(op.Firmas))
+                {
+                    <details class="mb-3">
+                        <summary class="small fw-semibold">Firmas (respuesta de RegCheq)</summary>
+                        <pre class="small bg-light p-2 mt-2 mb-0" style="max-height:320px;overflow:auto">@RegcheqUi.JsonLegible(op.Firmas)</pre>
+                    </details>
+                }
+                @if (!string.IsNullOrWhiteSpace(op.RespuestaJson))
+                {
+                    <details>
+                        <summary class="small fw-semibold">Respuesta completa (JSON)</summary>
+                        <pre class="small bg-light p-2 mt-2 mb-0" style="max-height:420px;overflow:auto">@RegcheqUi.JsonLegible(op.RespuestaJson)</pre>
+                    </details>
+                }
+            </div>
+        </div>
+    }
+}

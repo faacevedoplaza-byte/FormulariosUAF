@@ -278,11 +278,13 @@ public class PdfService : IPdfService
                             col.Item().Text($"Beneficiario {idx++}:").Bold().FontSize(9);
                             col.Item().InfoTable(table =>
                             {
+                                AddRow(table, "Tipo de documento:", p.TipoDocumento?.Nombre ?? "—");
                                 AddRow(table, "RUT / N° ID:", p.IdNumber);
                                 AddRow(table, "Nombre completo:", p.FullName);
+                                AddRow(table, "Nacionalidad:", p.Nacionalidad?.Nombre ?? "—");
                                 AddRow(table, "Domicilio:", p.Address ?? "—");
                                 AddRow(table, "Ciudad:", p.City ?? "—");
-                                AddRow(table, "País:", p.Country);
+                                AddRow(table, "País de residencia:", p.PaisResidencia?.Nombre ?? p.Country ?? "—");
                                 AddRow(table, "Participación:", $"{p.ParticipationPercentage:F2}%");
                                 AddRow(table, "Tipo de relación:", p.RelationshipType.ToDisplayString());
                                 AddRow(table, "≥10% participación:", p.HasMinTenPercentParticipation ? "Sí" : "No");

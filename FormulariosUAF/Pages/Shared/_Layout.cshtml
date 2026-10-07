@@ -72,6 +72,16 @@
                 <i class="fa-solid fa-bell"></i> Notificaciones
                 <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
             </a>
+            @if (User.IsInRole("Administrador") || User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
+            {
+                <div class="uaf-section-lbl">RegCheq</div>
+                <a href="/Regcheq" class="uaf-nav-link @(path.StartsWith("/regcheq") && !path.StartsWith("/regcheq/gestion") ? "active" : "")">
+                    <i class="fa-solid fa-list-check"></i> Operaciones
+                </a>
+                <a href="/Regcheq/Gestion" class="uaf-nav-link @ActiveIf("/regcheq/gestion")">
+                    <i class="fa-solid fa-clipboard-check"></i> Gestión
+                </a>
+            }
         </nav>
 
         <div class="uaf-sidebar-footer">

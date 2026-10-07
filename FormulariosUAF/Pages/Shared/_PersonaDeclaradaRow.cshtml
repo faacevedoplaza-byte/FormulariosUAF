@@ -1,117 +1,160 @@
+@using FormulariosUAF.Models.Domain
 @using FormulariosUAF.Models.Enums
 @using FormulariosUAF.Pages.Cliente
-@model (int Index, DeclaracionModel.PersonaInput Data)
+@*
+    Fila "Persona" de la declaración. Se usa para las filas ya guardadas (Index = "0", "1"...)
+    y para el <template> de "Agregar persona" (Index = "__IDX__", que el JS reemplaza).
+    Tipo de documento, nacionalidad y país salen de T_TIPODOCUMENTO / T_NACIONALIDAD / T_PAIS.
+*@
+@model (string Index, DeclaracionModel.PersonaInput Data, DeclaracionModel.CatalogosPersona Catalogos)
 @{
     var i = Model.Index;
     var p = Model.Data;
+    var cat = Model.Catalogos;
+    var n = $"Input.Personas[{i}]";
+    var esRut = p.TipoDocumentoId == TipoDocumento.IdRut;
 }
 <div class="persona-row decl-persona mb-3" data-idx="@i">
     <div class="decl-persona-head d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <span class="decl-persona-badge"><span class="persona-num">@(i + 1)</span></span>
-            <span class="fw-semibold small">Persona</span>
+            <span class="decl-persona-badge"><span class="persona-num">@(int.TryParse(i, out var num) ? num + 1 : null)</span></span>
+            <span class="fw-semibold">Persona</span>
         </span>
-        <button type="button" class="btn btn-sm decl-remove-btn btn-remove-persona">
-            <i class="fa-solid fa-trash me-1"></i>Eliminar
-        </button>
+        <button type="button" class="btn btn-sm decl-remove-btn btn-remove-persona">Eliminar</button>
     </div>
     <div class="decl-persona-body">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <label class="form-label small">RUT / N° ID <span class="text-danger">*</span></label>
-                <input name="Input.Personas[@i].IdNumber" value="@p.IdNumber" class="form-control form-control-sm rut-input" required />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" data-help="Use RUT si la persona tiene RUT chileno (aunque sea extranjera). Si no, elija pasaporte u otro documento.">Tipo de documento <span class="req">*</span></label>
+                <select name="@(n).TipoDocumentoId" class="form-select sel-tipodoc">
+                    @foreach (var t in cat.TiposDocumento)
+                    {
+                        <option value="@t.Id" selected="@(t.Id == p.TipoDocumentoId)">@t.Nombre</option>
+                    }
+                </select>
             </div>
-            <div class="col-md-5">
-                <label class="form-label small">Nombre completo <span class="text-danger">*</span></label>
-                <input name="Input.Personas[@i].FullName" value="@p.FullName" class="form-control form-control-sm name-input" required />
+            <div class="col-md-6">
+                <label class="form-label">RUT / N° ID <span class="req">*</span></label>
+                <input name="@(n).IdNumber" value="@p.IdNumber" class="form-control inp-idnumber @(esRut ? "rut-input" : "")"
+                       placeholder="@(esRut ? "12.345.678-9" : "N° de documento")" required />
             </div>
-            <div class="col-md-4">
-                <label class="form-label small">Tipo de relación <span class="text-danger">*</span></label>
-                <select name="Input.Personas[@i].RelationshipType" class="form-select form-select-sm">
+
+            <div class="col-12">
+                <label class="form-label" data-help="Nombres y apellidos tal como aparecen en su documento de identidad. Debe ser una persona natural, no una empresa.">Nombre completo <span class="req">*</span></label>
+                <input name="@(n).FullName" value="@p.FullName" class="form-control name-input" placeholder="Nombre y apellidos" required />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" data-help="Vínculo principal de esta persona con la empresa: socio, accionista, representante legal, apoderado, etc.">Tipo de relación <span class="req">*</span></label>
+                <select name="@(n).RelationshipType" class="form-select">
                     @foreach (var rt in Enum.GetValues<RelationshipType>())
                     {
                         <option value="@((int)rt)" selected="@(rt == p.RelationshipType)">@rt.ToDisplayString()</option>
                     }
                 </select>
             </div>
-            <div class="col-md-5">
-                <label class="form-label small">Domicilio</label>
-                <input name="Input.Personas[@i].Address" value="@p.Address" class="form-control form-control-sm" />
+            <div class="col-md-6">
+                <label class="form-label">Nacionalidad <span class="req">*</span></label>
+                <select name="@(n).NacionalidadId" class="form-select" required>
+                    <option value="" selected="@(p.NacionalidadId is null)">— Seleccione —</option>
+                    @foreach (var nac in cat.Nacionalidades)
+                    {
+                        <option value="@nac.Id" selected="@(nac.Id == p.NacionalidadId)">@nac.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Domicilio</label>
+                <input name="@(n).Address" value="@p.Address" class="form-control" placeholder="Calle, número" />
             </div>
             <div class="col-md-3">
-                <label class="form-label small">Ciudad</label>
-                <input name="Input.Personas[@i].City" value="@p.City" class="form-control form-control-sm" />
+                <label class="form-label">Ciudad</label>
+                <input name="@(n).City" value="@p.City" class="form-control" placeholder="Ciudad" />
             </div>
-            <div class="col-md-2">
-                <label class="form-label small">País</label>
-                <input name="Input.Personas[@i].Country" value="@(string.IsNullOrEmpty(p.Country) ? "Chile" : p.Country)" class="form-control form-control-sm" />
+            <div class="col-md-3">
+                <label class="form-label" data-help="País donde la persona vive actualmente (puede ser distinto de su nacionalidad).">País de residencia</label>
+                <select name="@(n).PaisResidenciaId" class="form-select">
+                    <option value="" selected="@(p.PaisResidenciaId is null)">— Seleccione —</option>
+                    @foreach (var pa in cat.Paises)
+                    {
+                        <option value="@pa.Id" selected="@(pa.Id == p.PaisResidenciaId)">@pa.Nombre</option>
+                    }
+                </select>
+                @if (!string.IsNullOrWhiteSpace(p.PaisTextoAnterior))
+                {
+                    <input type="hidden" name="@(n).PaisTextoAnterior" value="@p.PaisTextoAnterior" />
+                    <div class="decl-help">Registrado antes como: “@p.PaisTextoAnterior”</div>
+                }
             </div>
-            <div class="col-md-2">
-                <label class="form-label small">% Participación</label>
-                <input name="Input.Personas[@i].ParticipationPercentage" value="@p.ParticipationPercentage" type="number" min="0" max="100" step="0.01" class="form-control form-control-sm pct-input" />
+
+            @* Participación: se mantiene igual que en el formulario actual *@
+            <div class="col-md-3">
+                <label class="form-label" data-help="Porcentaje de la empresa que pertenece a esta persona, sumando lo que tiene directamente y a través de otras sociedades. Si solo ejerce control (sin propiedad), puede dejarlo en 0.">% Participación</label>
+                <input name="@(n).ParticipationPercentage" value="@p.ParticipationPercentage" type="number" min="0" max="100" step="0.01" class="form-control pct-input" />
             </div>
-            <div class="col-12 border-top pt-2 mt-1">
+        </div>
+
+        <div class="decl-persona-sep">
+            <div class="d-flex flex-wrap gap-4">
+                <div class="form-check">
+                    <input type="checkbox" name="@(n).HasMinTenPercentParticipation" value="true" class="form-check-input chk-10pct" @(p.HasMinTenPercentParticipation ? "checked" : "") />
+                    <label class="form-check-label" data-help="Se marca solo al ingresar un % de participación de 10 o más. Con 10% o más, la persona es beneficiario final.">Participación ≥ 10%</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" name="@(n).IsEffectiveController" value="true" class="form-check-input chk-control" @(p.IsEffectiveController ? "checked" : "") />
+                    <label class="form-check-label" data-help-title="Control efectivo" data-help="Marque si la persona toma o influye de forma decisiva en las decisiones de la empresa, aunque tenga menos del 10%. Ej.: gerente general con amplios poderes, controlador por pacto de accionistas, quien designa al directorio.">Ejerce control efectivo</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" name="@(n).HandlesCashOrFunds" value="true" class="form-check-input" @(p.HandlesCashOrFunds ? "checked" : "") />
+                    <label class="form-check-label" data-help="Marque si la persona puede disponer del dinero de la empresa: autorizar pagos o transferencias, firmar cheques o manejar efectivo.">Maneja fondos/efectivo</label>
+                </div>
+            </div>
+            <div class="desc-control decl-control-panel" style="display:@(p.IsEffectiveController ? "block" : "none")">
+                <label class="form-label">Cargo o mecanismo de control <span class="req">*</span></label>
+                <input name="@(n).EffectiveControlDescription" value="@p.EffectiveControlDescription" class="form-control"
+                       placeholder="Ej.: gerente general, controlador por pacto de accionistas, apoderado con poderes amplios" />
+                <div class="decl-help">Obligatorio cuando se marca “Ejerce control efectivo”.</div>
+            </div>
+        </div>
+
+        <div class="decl-persona-sep">
+            <div class="form-check decl-pep-toggle">
+                <input type="checkbox" name="@(n).IsPEP" value="true" class="form-check-input chk-pep" @(p.IsPEP ? "checked" : "") />
+                <label class="form-check-label" data-help-title="Persona Expuesta Políticamente (PEP)"
+                       data-help="Persona que desempeña o desempeñó en el último año una función pública destacada en Chile o el extranjero: Presidente, ministros, subsecretarios, parlamentarios, alcaldes, gobernadores, jueces de tribunales superiores, embajadores, altos mandos de las FF.AA. y de Orden, directivos de empresas del Estado, entre otros. También marque si es cónyuge o familiar cercano de un PEP, o tiene un acuerdo para actuar en conjunto con uno.">¿Es Persona Expuesta Políticamente (PEP)?</label>
+            </div>
+            <div class="pep-detail decl-pep-panel mt-2" style="display:@(p.IsPEP ? "block" : "none")">
                 <div class="row g-2">
                     <div class="col-md-3">
-                        <div class="form-check">
-                            <input type="checkbox" name="Input.Personas[@i].HasMinTenPercentParticipation" value="true" class="form-check-input chk-10pct" @(p.HasMinTenPercentParticipation ? "checked" : "") />
-                            <label class="form-check-label small">Participación ≥ 10%</label>
-                        </div>
+                        <label class="form-label small" data-help="Titular: la persona misma tiene o tuvo el cargo. Cónyuge/conviviente o Parentesco: es familiar de un PEP. Pacto de actuación conjunta: tiene un acuerdo con un PEP para decidir juntos en una sociedad. Asociado: tiene una relación cercana de negocios con un PEP.">Tipo PEP <span class="req">*</span></label>
+                        <select name="@(n).PepType" class="form-select form-select-sm">
+                            <option value="">— Seleccione —</option>
+                            @foreach (var pt in Enum.GetValues<PepType>())
+                            {
+                                <option value="@((int)pt)" selected="@(p.PepType == pt)">@pt.ToDisplayString()</option>
+                            }
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-check">
-                            <input type="checkbox" name="Input.Personas[@i].IsEffectiveController" value="true" class="form-check-input chk-control" @(p.IsEffectiveController ? "checked" : "") />
-                            <label class="form-check-label small">Ejerce control efectivo</label>
-                        </div>
+                        <label class="form-label small" data-help="Nombre de quien tiene o tuvo el cargo público. Si la persona declarada es el titular, es su mismo nombre (se completa solo).">Nombre PEP</label>
+                        <input name="@(n).PepTypeName" value="@p.PepTypeName" class="form-control form-control-sm" />
                     </div>
                     <div class="col-md-3">
-                        <div class="form-check">
-                            <input type="checkbox" name="Input.Personas[@i].HandlesCashOrFunds" value="true" class="form-check-input" @(p.HandlesCashOrFunds ? "checked" : "") />
-                            <label class="form-check-label small">Maneja fondos/efectivo</label>
-                        </div>
+                        <label class="form-label small" data-help="Organismo donde se ejerce o ejerció el cargo. Ej.: Ministerio de Hacienda, Municipalidad de Temuco, Senado.">Institución</label>
+                        <input name="@(n).PepInstitution" value="@p.PepInstitution" class="form-control form-control-sm" />
                     </div>
-                    <div class="col-12 desc-control" style="display:@(p.IsEffectiveController ? "block" : "none")">
-                        <input name="Input.Personas[@i].EffectiveControlDescription" value="@p.EffectiveControlDescription" class="form-control form-control-sm" placeholder="Describa el control efectivo ejercido..." />
+                    <div class="col-md-3">
+                        <label class="form-label small" data-help="Cargo público que se ejerce o ejerció. Ej.: alcalde, diputado, subsecretario.">Cargo / Motivo</label>
+                        <input name="@(n).PepPosition" value="@p.PepPosition" class="form-control form-control-sm" />
                     </div>
-                </div>
-            </div>
-            <div class="col-12 border-top pt-2 mt-1">
-                <div class="form-check decl-pep-toggle">
-                    <input type="checkbox" name="Input.Personas[@i].IsPEP" value="true" class="form-check-input chk-pep" @(p.IsPEP ? "checked" : "") />
-                    <label class="form-check-label small fw-semibold">¿Es Persona Expuesta Políticamente (PEP)?</label>
-                </div>
-                <div class="pep-detail decl-pep-panel mt-2" style="display:@(p.IsPEP ? "block" : "none")">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label small">Tipo PEP <span class="text-danger">*</span></label>
-                            <select name="Input.Personas[@i].PepType" class="form-select form-select-sm">
-                                <option value="">— Seleccione —</option>
-                                @foreach (var pt in Enum.GetValues<PepType>())
-                                {
-                                    <option value="@((int)pt)" selected="@(p.PepType == pt)">@pt.ToDisplayString()</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Nombre PEP</label>
-                            <input name="Input.Personas[@i].PepTypeName" value="@p.PepTypeName" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Institución</label>
-                            <input name="Input.Personas[@i].PepInstitution" value="@p.PepInstitution" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Cargo / Motivo</label>
-                            <input name="Input.Personas[@i].PepPosition" value="@p.PepPosition" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small">Relación con el PEP</label>
-                            <input name="Input.Personas[@i].PepRelationship" value="@p.PepRelationship" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label small">Observación</label>
-                            <input name="Input.Personas[@i].PepObservation" value="@p.PepObservation" class="form-control form-control-sm" />
-                        </div>
+                    <div class="col-md-4">
+                        <label class="form-label small" data-help="Si la persona no es el titular, indique su vínculo con él. Ej.: hijo, cónyuge, socio.">Relación con el PEP</label>
+                        <input name="@(n).PepRelationship" value="@p.PepRelationship" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small">Observación</label>
+                        <input name="@(n).PepObservation" value="@p.PepObservation" class="form-control form-control-sm" />
                     </div>
                 </div>
             </div>

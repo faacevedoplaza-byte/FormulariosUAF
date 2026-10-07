@@ -74,6 +74,10 @@ builder.Services.AddScoped<IExpedienteExportService, ExpedienteExportService>();
 // ── Notificaciones (preparado para SignalR) ────────────────────────────────
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+
+// ── Ver compilacion de vista ────────────────────────────────
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
 // ── Otros servicios core ───────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPdfService, PdfService>();
@@ -87,6 +91,15 @@ builder.Services.AddScoped<ITaxFolderAnalysisService, TaxFolderAnalysisService>(
 
 // ── Búsqueda de empresa en base de producción (SP, solo lectura) ────────────
 builder.Services.AddScoped<IEmpresaProduccionService, EmpresaProduccionService>();
+
+// ── Operaciones RegCheq (IntegracionesNetCar, solo lectura) ─────────────────
+builder.Services.AddScoped<IRegcheqService, RegcheqService>();
+// Vehículo de la cotización Netcar (Siglo 21 / VyD) de cada operación RegCheq (solo lectura, con caché)
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IVehiculoOperacionService, VehiculoOperacionService>();
+// Cierre automático de gestiones cuando RegCheq registra las firmas (cada GestionRegcheq:IntervaloMinutos)
+builder.Services.AddScoped<IGestionSincronizador, GestionSincronizador>();
+builder.Services.AddHostedService<GestionSincronizacionWorker>();
 
 // ── Proveedor de datos de empresa (configurable) ───────────────────────────
 var companyProvider = builder.Configuration["CompanyDataProvider:Provider"] ?? "Manual";
@@ -137,6 +150,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Cumplimiento", "CumplimientoPolicy");
     options.Conventions.AuthorizeFolder("/Admin",        "AdminPolicy");
     options.Conventions.AuthorizeFolder("/Interno",      "InternoPolicy");
+    options.Conventions.AuthorizeFolder("/Regcheq",      "CumplimientoPolicy");
     options.Conventions.AllowAnonymousToFolder("/Cliente");
     options.Conventions.AllowAnonymousToFolder("/Account");
     options.Conventions.AllowAnonymousToPage("/Index");

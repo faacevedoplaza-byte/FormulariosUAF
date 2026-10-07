@@ -1,4 +1,5 @@
 using FormulariosUAF.Data;
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,22 @@ public class RequestService : IRequestService
         await _db.SaveChangesAsync();
 
         return request;
+    }
+
+    public async Task<List<SolicitudPrevia>> GetSolicitudesPreviasAsync(string? rut)
+    {
+        var norm = RutHelper.Normalizar(rut);
+        if (norm.Length < 2) return [];
+
+        // El RUT del cliente puede haberse guardado con o sin formato: se compara normalizado.
+        var previas = await _db.Requests.AsNoTracking()
+            .Where(r => !r.IsDeleted
+                        && r.Client.RUT.Replace(".", "").Replace("-", "").Replace(" ", "").ToUpper() == norm)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new SolicitudPrevia(r.Id, r.RequestNumber, r.RequestType, r.Status, r.CreatedAt))
+            .ToListAsync();
+
+        return previas.Select(p => p with { CreatedAtUtc = DateTime.SpecifyKind(p.CreatedAtUtc, DateTimeKind.Utc) }).ToList();
     }
 
     public async Task<Request?> GetByTokenAsync(string token)

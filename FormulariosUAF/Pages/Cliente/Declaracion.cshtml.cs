@@ -27,9 +27,22 @@ public class DeclaracionModel : PageModel
     public bool EsActualizacionSinCambios => RequestType == RequestType.ActualizacionSinCambios;
     public string? ErrorMessage { get; set; }
 
+    // Selector "Automática (asistente) / Manual": solo al iniciar una declaración nueva.
+    // Si el cliente vuelve al paso o el POST falla, se muestra directo el formulario manual.
+    public bool MostrarSelectorModo { get; set; }
+
     // Contacto del cliente (registrado por el vendedor) — para el botón "Usar datos del representante legal"
     public string? ClientEmail { get; set; }
     public string? ClientPhone { get; set; }
+
+    // Opciones de los selects de persona (T_TIPODOCUMENTO, T_NACIONALIDAD, T_PAIS)
+    public CatalogosPersona Catalogos { get; set; } = CatalogosPersona.Vacio;
+
+    public record OpcionCatalogo(int Id, string Nombre);
+    public record CatalogosPersona(List<OpcionCatalogo> TiposDocumento, List<OpcionCatalogo> Nacionalidades, List<OpcionCatalogo> Paises)
+    {
+        public static readonly CatalogosPersona Vacio = new([], [], []);
+    }
 
     [BindProperty] public InputModel Input { get; set; } = new();
 
@@ -85,11 +98,15 @@ public class DeclaracionModel : PageModel
 
     public class PersonaInput
     {
+        public int TipoDocumentoId { get; set; } = TipoDocumento.IdRut;
         [MaxLength(50)]  public string IdNumber { get; set; } = string.Empty;
         [MaxLength(500)] public string FullName { get; set; } = string.Empty;
+        public int? NacionalidadId { get; set; } = Nacionalidad.IdChilena;
         [MaxLength(500)] public string? Address { get; set; }
         [MaxLength(200)] public string? City { get; set; }
-        [MaxLength(200)] public string Country { get; set; } = "Chile";
+        public int? PaisResidenciaId { get; set; } = Pais.IdChile;
+        // País en texto libre de registros antiguos que no calzó con T_PAIS (solo informativo)
+        [MaxLength(200)] public string? PaisTextoAnterior { get; set; }
         [Range(0, 100)]  public decimal ParticipationPercentage { get; set; }
         public RelationshipType RelationshipType { get; set; }
         [MaxLength(200)] public string? RelationshipTypeOther { get; set; }
@@ -124,17 +141,22 @@ public class DeclaracionModel : PageModel
         RequestType = req.RequestType;
         ClientEmail = req.ClientEmail;
         ClientPhone = req.ClientPhone;
+        MostrarSelectorModo = !req.DeclaredPersons.Any() && req.Declarant is null;
+        Catalogos = await CargarCatalogosAsync();
 
         // Pre-populate from existing saved data (para regresos al paso)
         if (req.DeclaredPersons.Any())
         {
             Input.Personas = req.DeclaredPersons.Select(p => new PersonaInput
             {
+                TipoDocumentoId = p.TipoDocumentoId,
                 IdNumber = p.IdNumber,
                 FullName = p.FullName,
+                NacionalidadId = p.NacionalidadId,
                 Address = p.Address,
                 City = p.City,
-                Country = p.Country,
+                PaisResidenciaId = p.PaisResidenciaId,
+                PaisTextoAnterior = p.PaisResidenciaId is null ? p.Country : null,
                 ParticipationPercentage = p.ParticipationPercentage,
                 RelationshipType = p.RelationshipType,
                 RelationshipTypeOther = p.RelationshipTypeOther,
@@ -195,6 +217,7 @@ public class DeclaracionModel : PageModel
         RequestType = req.RequestType;
         ClientEmail = req.ClientEmail;
         ClientPhone = req.ClientPhone;
+        Catalogos = await CargarCatalogosAsync();
 
         if (!ModelState.IsValid) return Page();
 
@@ -210,6 +233,23 @@ public class DeclaracionModel : PageModel
         // Validar campos PEP por persona
         foreach (var (p, i) in personasValidas.Select((p, i) => (p, i)))
         {
+            if (string.IsNullOrWhiteSpace(p.FullName) || p.NacionalidadId is null)
+            {
+                ErrorMessage = $"Complete el nombre completo y la nacionalidad de la persona {i + 1}.";
+                return Page();
+            }
+            if (!Catalogos.TiposDocumento.Any(t => t.Id == p.TipoDocumentoId)
+                || !Catalogos.Nacionalidades.Any(n => n.Id == p.NacionalidadId)
+                || (p.PaisResidenciaId is not null && !Catalogos.Paises.Any(x => x.Id == p.PaisResidenciaId)))
+            {
+                ErrorMessage = $"Revise tipo de documento, nacionalidad y país de residencia de la persona {i + 1}.";
+                return Page();
+            }
+            if (p.IsEffectiveController && string.IsNullOrWhiteSpace(p.EffectiveControlDescription))
+            {
+                ErrorMessage = $"Indique el cargo o mecanismo de control de la persona {i + 1} ({p.FullName}).";
+                return Page();
+            }
             if (p.IsPEP && p.PepType is null)
             {
                 ModelState.AddModelError($"Input.Personas[{i}].PepType", "Debe indicar el tipo PEP.");
@@ -255,11 +295,15 @@ public class DeclaracionModel : PageModel
             _db.DeclaredPersons.Add(new DeclaredPerson
             {
                 RequestId = requestId,
+                TipoDocumentoId = p.TipoDocumentoId,
                 IdNumber = p.IdNumber,
                 FullName = p.FullName,
+                NacionalidadId = p.NacionalidadId,
                 Address = p.Address,
                 City = p.City,
-                Country = p.Country,
+                PaisResidenciaId = p.PaisResidenciaId,
+                // Conserva el texto antiguo solo si aún no se eligió un país del catálogo
+                Country = p.PaisResidenciaId is null ? p.PaisTextoAnterior : null,
                 ParticipationPercentage = p.ParticipationPercentage,
                 RelationshipType = p.RelationshipType,
                 RelationshipTypeOther = p.RelationshipTypeOther,
@@ -309,6 +353,14 @@ public class DeclaracionModel : PageModel
 
         return RedirectToPage("/Cliente/Adjuntos");
     }
+
+    private async Task<CatalogosPersona> CargarCatalogosAsync() => new(
+        await _db.TiposDocumento.AsNoTracking().Where(t => t.Activo).OrderBy(t => t.Orden).ThenBy(t => t.Nombre)
+            .Select(t => new OpcionCatalogo(t.Id, t.Nombre)).ToListAsync(),
+        await _db.Nacionalidades.AsNoTracking().Where(n => n.Activo).OrderBy(n => n.Orden).ThenBy(n => n.Nombre)
+            .Select(n => new OpcionCatalogo(n.Id, n.Nombre)).ToListAsync(),
+        await _db.Paises.AsNoTracking().Where(p => p.Activo).OrderBy(p => p.Orden).ThenBy(p => p.Nombre)
+            .Select(p => new OpcionCatalogo(p.Id, p.Nombre)).ToListAsync());
 
     private Guid GetRequestId()
     {

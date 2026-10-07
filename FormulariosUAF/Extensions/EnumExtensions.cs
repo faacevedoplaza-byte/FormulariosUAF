@@ -29,6 +29,41 @@ public static class EnumExtensions
         _ => type.ToString()
     };
 
+    // Ayuda para el vendedor al elegir el tipo en /Vendedor/Crear.
+    public static string ToDescription(this RequestType type) => type switch
+    {
+        RequestType.ClienteNuevo => "La empresa compra por primera vez o inicia una relación comercial con nosotros. Debe declarar a todos sus beneficiarios finales desde cero.",
+        RequestType.TransaccionUnica => "Operación puntual, sin relación comercial permanente (por ejemplo, una empresa que compra un solo vehículo). La declaración aplica solo a esta operación.",
+        RequestType.ActualizacionDatos => "El cliente ya declaró antes, pero algo cambió: socios, porcentajes de propiedad, representante o condición PEP. Debe declarar nuevamente con la información corregida.",
+        RequestType.ActualizacionSinCambios => "El cliente ya declaró antes y no ha cambiado nada. Podrá reiterar su declaración anterior (indicando su N° y fecha) sin volver a ingresar los beneficiarios.",
+        _ => string.Empty
+    };
+
+    // Caso típico, para que el vendedor elija el tipo correcto.
+    public static string ToEjemplo(this RequestType type) => type switch
+    {
+        RequestType.ClienteNuevo => "Una empresa que nunca nos ha comprado y empezará a hacerlo.",
+        RequestType.TransaccionUnica => "Una empresa que compra un solo vehículo y no se espera que vuelva.",
+        RequestType.ActualizacionDatos => "Un cliente habitual que cambió de socios o de representante legal.",
+        RequestType.ActualizacionSinCambios => "Un cliente habitual que vuelve a comprar y sigue con los mismos dueños.",
+        _ => string.Empty
+    };
+
+    public static string ToIcon(this RequestType type) => type switch
+    {
+        RequestType.ClienteNuevo => "fa-user-plus",
+        RequestType.TransaccionUnica => "fa-receipt",
+        RequestType.ActualizacionDatos => "fa-pen-to-square",
+        RequestType.ActualizacionSinCambios => "fa-rotate",
+        _ => "fa-file"
+    };
+
+    /// <summary>
+    /// Si la empresa ya tiene una solicitud previa, solo corresponde actualizar su declaración.
+    /// </summary>
+    public static bool PermitidoConSolicitudPrevia(this RequestType type) =>
+        type is RequestType.ActualizacionDatos or RequestType.ActualizacionSinCambios;
+
     public static string ToDisplayString(this EntityType type) => type switch
     {
         EntityType.Anonima => "Sociedad Anónima Cerrada (S.A.)",

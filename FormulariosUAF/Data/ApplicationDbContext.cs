@@ -30,6 +30,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SignatureRecord> SignatureRecords => Set<SignatureRecord>();
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    // Gestión de operaciones RegCheq con firma pendiente
+    public DbSet<GestionOperacion> GestionesOperacion => Set<GestionOperacion>();
+    public DbSet<GestionOperacionNota> GestionesOperacionNotas => Set<GestionOperacionNota>();
+
+    // Catálogos de la declaración
+    public DbSet<TipoDocumento> TiposDocumento => Set<TipoDocumento>();
+    public DbSet<Pais> Paises => Set<Pais>();
+    public DbSet<Nacionalidad> Nacionalidades => Set<Nacionalidad>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -157,11 +166,40 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<DeclaredPerson>(e =>
         {
             e.Property(d => d.ParticipationPercentage).HasPrecision(5, 2);
+            e.Property(d => d.TipoDocumentoId).HasDefaultValue(TipoDocumento.IdRut);
             e.HasIndex(d => d.RequestId);
             e.HasOne(d => d.Request)
                 .WithMany(r => r.DeclaredPersons)
                 .HasForeignKey(d => d.RequestId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(d => d.TipoDocumento).WithMany().HasForeignKey(d => d.TipoDocumentoId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(d => d.Nacionalidad).WithMany().HasForeignKey(d => d.NacionalidadId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(d => d.PaisResidencia).WithMany().HasForeignKey(d => d.PaisResidenciaId).OnDelete(DeleteBehavior.Restrict);
+            // Catálogos chicos: se cargan siempre junto a la persona (PDF, Envío, exportación)
+            e.Navigation(d => d.TipoDocumento).AutoInclude();
+            e.Navigation(d => d.Nacionalidad).AutoInclude();
+            e.Navigation(d => d.PaisResidencia).AutoInclude();
+        });
+
+        builder.Entity<TipoDocumento>(e =>
+        {
+            e.Property(t => t.Id).ValueGeneratedNever();
+            e.Property(t => t.Nombre).HasMaxLength(100);
+            e.HasData(CatalogosSeed.TiposDocumento);
+        });
+        builder.Entity<Pais>(e =>
+        {
+            e.Property(p => p.Id).ValueGeneratedNever();
+            e.Property(p => p.Nombre).HasMaxLength(100);
+            e.HasIndex(p => p.Nombre).IsUnique();
+            e.HasData(CatalogosSeed.Paises);
+        });
+        builder.Entity<Nacionalidad>(e =>
+        {
+            e.Property(n => n.Id).ValueGeneratedNever();
+            e.Property(n => n.Nombre).HasMaxLength(100);
+            e.HasIndex(n => n.Nombre).IsUnique();
+            e.HasData(CatalogosSeed.Nacionalidades);
         });
 
         builder.Entity<TaxFolderAnalysis>(e =>
@@ -181,7 +219,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Renombrar tablas Identity a nombres amigables
+        builder.Entity<GestionOperacion>(e =>
+        {
+            e.HasIndex(g => g.OperacionId).IsUnique();
+            e.HasIndex(g => g.UsuarioId);
+            e.HasIndex(g => g.FechaCierre);
+            e.Property(g => g.ClienteRut).HasMaxLength(20);
+            e.Property(g => g.ClienteNombre).HasMaxLength(300);
+            e.HasOne(g => g.Usuario)
+                .WithMany()
+                .HasForeignKey(g => g.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<GestionOperacionNota>(e =>
+        {
+            e.HasIndex(n => n.GestionOperacionId);
+            e.Property(n => n.UsuarioId).HasMaxLength(450);
+            e.Property(n => n.UsuarioNombre).HasMaxLength(200);
+            e.Property(n => n.Texto).HasMaxLength(2000);
+            e.HasOne(n => n.GestionOperacion)
+                .WithMany(g => g.Notas)
+                .HasForeignKey(n => n.GestionOperacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Nombres lógicos de las tablas Identity (DatabaseNaming los traduce a T_*)
         builder.Entity<ApplicationUser>().ToTable("Usuarios");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>().ToTable("Roles");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>().ToTable("UsuariosRoles");
@@ -189,5 +252,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<string>>().ToTable("UsuariosLogins");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>>().ToTable("RolesClaims");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<string>>().ToTable("UsuariosTokens");
+
+        // Convención de nombres física (T_ENTIDAD / PREFIJO_DESCRIPCION_ENTIDAD). Debe ir al final.
+        DatabaseNaming.Apply(builder);
     }
 }

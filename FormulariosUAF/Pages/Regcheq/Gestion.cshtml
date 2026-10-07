@@ -1,0 +1,648 @@
+﻿@page
+@model FormulariosUAF.Pages.Regcheq.GestionModel
+@using FormulariosUAF.Pages.Regcheq
+@using FormulariosUAF.Models.Domain
+@using FormulariosUAF.Services
+@using Microsoft.AspNetCore.Routing
+@{
+    ViewData["Title"] = "Gestión de operaciones";
+    var t = Model.Totales;
+    bool Sel(string? actual, string valor) => string.Equals(actual, valor, StringComparison.OrdinalIgnoreCase);
+    string Hora(DateTime utc) => utc.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+
+    // Encabezado ordenable: clic = ordenar por la columna; otro clic = invertir.
+    void ThOrden(string columna, string texto, string? clase = null)
+    {
+        var activa = Model.OrdenActual == columna;
+        var icono = !activa ? "fa-sort" : Model.Ascendente ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
+        <th class="@clase">
+            <a class="gs-orden @(activa ? "activa" : "")" href="@Url.Page("./Gestion", new RouteValueDictionary(Model.RutaOrden(columna).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => (object?)kv.Value)))"
+               title="@(activa ? (Model.Ascendente ? "Orden ascendente: clic para invertir" : "Orden descendente: clic para invertir") : $"Ordenar por {texto.ToLower()}")">
+                @texto <i class="fa-solid @icono ms-1"></i>
+            </a>
+        </th>
+    }
+}
+
+<style>
+    .gs-kpi { display: block; text-decoration: none; color: inherit; border-radius: .75rem; transition: transform .15s ease, box-shadow .15s ease; }
+    .gs-kpi:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important; color: inherit; }
+    .gs-kpi.activo { outline: 2px solid var(--bs-primary); }
+    .gs-kpi .gs-kpi-valor { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+    .gs-kpi .gs-kpi-lbl { font-size: .78rem; color: var(--bs-secondary-color); }
+    /* gs-caso, gs-doc, gs-avatar y gs-timeline están en site.css (compartidos con Detalle) */
+    .gs-ultima { font-size: .8rem; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gs-fila > td { background: var(--bs-tertiary-bg) !important; padding: 0 !important; }
+    .gs-panel { padding: 1.25rem 1.5rem; border-left: 4px solid var(--bs-primary); --gs-tl-fondo: var(--bs-tertiary-bg); }
+    .gs-toggle i { transition: transform .2s ease; }
+    .gs-toggle:not(.collapsed) i.fa-chevron-down { transform: rotate(180deg); }
+    .gs-barra { position: fixed; left: 50%; bottom: 1.25rem; transform: translate(-50%, 150%); z-index: 1040; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+                background: #1f2937; color: #fff; border-radius: .9rem; padding: .6rem 1rem; transition: transform .2s ease; max-width: calc(100% - 2rem); }
+    .gs-barra.visible { transform: translate(-50%, 0); }
+    .gs-switch { display: inline-flex; align-items: center; gap: .5rem; text-decoration: none; color: var(--bs-secondary-color); }
+    .gs-switch:hover { color: var(--bs-body-color); }
+    .gs-switch-track { width: 36px; height: 20px; border-radius: 999px; background: var(--bs-secondary-bg); border: 1px solid var(--bs-border-color); position: relative; transition: background .15s ease; }
+    .gs-switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left .15s ease; }
+    .gs-switch.on { color: var(--bs-primary-text-emphasis); }
+    .gs-switch.on .gs-switch-track { background: var(--bs-primary); border-color: var(--bs-primary); }
+    .gs-switch.on .gs-switch-thumb { left: 18px; }
+</style>
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class="fa-solid fa-clipboard-check me-2 text-primary"></i>Gestión de operaciones
+            @if (!Model.PuedeGestionar)
+            {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis fs-6 align-middle ms-2" title="Su perfil puede ver las gestiones, pero no tomar operaciones ni registrar gestiones">
+                    <i class="fa-solid fa-eye me-1"></i>Solo lectura
+                </span>
+            }
+        </h4>
+        <div class="text-muted small">
+            Operaciones de persona natural desde @GestionModel.InicioSeguimiento.ToString("dd/MM/yyyy") con formulario PEP o DOF requerido y sin firmar.
+            La gestión se cierra sola cuando RegCheq registra la firma.
+        </div>
+    </div>
+    <a href="/Regcheq" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list-check me-1"></i>Todas las operaciones</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (!Model.Configurado && Model.Error is null)
+{
+    <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>La conexión <code>RegCheqConnection</code> no está configurada en este ambiente.</div>
+}
+else if (Model.Error is not null)
+{
+    <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Error</div>
+}
+
+<!-- Indicadores (clic = filtrar) -->
+<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
+    @{
+        var kpis = new[]
+        {
+            (Valor: t.Pendientes, Lbl: "Pendientes", Clase: "text-primary", Caso: (string?)null, Asig: (string?)null),
+            (Valor: t.SoloPep, Lbl: "Caso 1 · Solo PEP", Clase: "text-danger", Caso: (string?)"pep", Asig: (string?)null),
+            (Valor: t.SoloDof, Lbl: "Caso 2 · Solo DOF", Clase: "text-warning", Caso: (string?)"dof", Asig: (string?)null),
+            (Valor: t.PepYDof, Lbl: "Caso 3 · PEP y DOF", Clase: "text-purple", Caso: (string?)"ambos", Asig: (string?)null),
+            (Valor: t.SinTomar, Lbl: "Sin tomar", Clase: "text-secondary", Caso: (string?)null, Asig: (string?)"sin"),
+            (Valor: t.Mias, Lbl: "Mis operaciones", Clase: "text-success", Caso: (string?)null, Asig: (string?)"mias"),
+        };
+    }
+    @foreach (var k in kpis)
+    {
+        var activo = !Model.EsCerradas && Sel(Model.Caso ?? "", k.Caso ?? "") && Sel(Model.Asignacion ?? "", k.Asig ?? "") && (k.Caso != null || k.Asig != null);
+        <div class="col">
+            <a class="gs-kpi card border-0 shadow-sm text-center @(activo ? "activo" : "")" asp-page="./Gestion" asp-route-caso="@k.Caso" asp-route-asignacion="@k.Asig">
+                <div class="card-body py-3">
+                    <div class="gs-kpi-valor @k.Clase" style="@(k.Clase == "text-purple" ? "color:#6f42c1" : "")">@k.Valor.ToString("N0")</div>
+                    <div class="gs-kpi-lbl">@k.Lbl</div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Abiertas / cerradas -->
+@{
+    // Al cambiar de pestaña se conserva "Mis operaciones" y el usuario filtrado; el resto de filtros se reinicia.
+    var asigTab = Model.SoloMias ? "mias" : null;
+    var abiertasCount = Model.SoloMias ? t.Mias : t.Pendientes;
+}
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3 border-bottom">
+    <ul class="nav nav-tabs border-0">
+        <li class="nav-item">
+            <a class="nav-link @(!Model.EsCerradas ? "active" : "")" asp-page="./Gestion" asp-route-asignacion="@asigTab" asp-route-usuario="@Model.Usuario">
+                <i class="fa-solid fa-folder-open me-1"></i>Abiertas <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis ms-1">@abiertasCount.ToString("N0")</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.EsCerradas ? "active" : "")" asp-page="./Gestion" asp-route-vista="cerradas" asp-route-asignacion="@asigTab" asp-route-usuario="@Model.Usuario">
+                <i class="fa-solid fa-circle-check me-1"></i>Cerradas <span class="badge rounded-pill bg-success-subtle text-success-emphasis ms-1">@Model.TotalCerradas.ToString("N0")</span>
+            </a>
+        </li>
+    </ul>
+    @if (Model.PuedeGestionar)
+    {
+        <a class="gs-switch mb-2 @(Model.SoloMias ? "on" : "")" asp-page="./Gestion"
+           asp-route-vista="@(Model.EsCerradas ? "cerradas" : null)" asp-route-asignacion="@(Model.SoloMias ? null : "mias")"
+           title="@(Model.SoloMias ? "Ver las de todos" : "Ver solo las operaciones que tengo o tuve tomadas")">
+            <span class="gs-switch-track"><span class="gs-switch-thumb"></span></span>
+            <span class="small fw-semibold"><i class="fa-solid fa-user me-1"></i>Solo mis operaciones</span>
+        </a>
+    }
+</div>
+
+@if (Model.EsAdmin && !Model.EsCerradas && Model.Carga.Any())
+{
+    var maxCarga = Math.Max(1, Model.Carga.Max(c => c.Total));
+    var ocultarCarga = !string.IsNullOrEmpty(Model.Usuario);
+    <!-- Carga por usuario (administrador) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="fa-solid fa-people-group me-2 text-primary"></i>Carga por usuario</span>
+            <button type="button" class="btn btn-sm btn-link text-decoration-none gs-toggle @(ocultarCarga ? "collapsed" : "")" data-bs-toggle="collapse" data-bs-target="#gsCarga">
+                <span class="small">Mostrar / ocultar</span> <i class="fa-solid fa-chevron-down ms-1"></i>
+            </button>
+        </div>
+        <div id="gsCarga" class="collapse @(ocultarCarga ? "" : "show")">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Usuario</th>
+                                <th style="min-width:180px">Operaciones abiertas</th>
+                                <th class="text-center">Solo PEP</th>
+                                <th class="text-center">Solo DOF</th>
+                                <th class="text-center">PEP y DOF</th>
+                                <th class="text-center" title="Tomadas sin ninguna gestión escrita">Sin gestiones</th>
+                                <th>Tomada hace más tiempo</th>
+                                <th class="text-end">Traspasar todas a</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.Carga)
+                            {
+                                var dias = c.TomaMasAntigua.HasValue ? (int)(DateTime.UtcNow - c.TomaMasAntigua.Value).TotalDays : (int?)null;
+                                <tr class="@(Model.Usuario == c.UsuarioId ? "table-primary" : "")">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="gs-avatar">@GestionModel.Iniciales(c.Nombre)</span>
+                                            <div class="lh-sm">
+                                                @if (c.Total > 0)
+                                                {
+                                                    <a asp-page="./Gestion" asp-route-usuario="@c.UsuarioId" class="fw-semibold text-decoration-none" title="Ver sus operaciones">@c.Nombre</a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="fw-semibold">@c.Nombre</span>
+                                                }
+                                                @if (!c.PuedeGestionar)
+                                                {
+                                                    <div><span class="badge bg-warning-subtle text-warning-emphasis" title="Usuario inactivo o sin rol Cumplimiento/Administrador: no puede gestionar estas operaciones">
+                                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>No puede gestionar</span></div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height:8px">
+                                                <div class="progress-bar" style="width:@((c.Total * 100 / maxCarga))%"></div>
+                                            </div>
+                                            <span class="fw-semibold" style="min-width:2.5rem">@c.Total.ToString("N0")</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">@(c.SoloPep > 0 ? c.SoloPep.ToString("N0") : "—")</td>
+                                    <td class="text-center">@(c.SoloDof > 0 ? c.SoloDof.ToString("N0") : "—")</td>
+                                    <td class="text-center">@(c.PepYDof > 0 ? c.PepYDof.ToString("N0") : "—")</td>
+                                    <td class="text-center">
+                                        @if (c.SinGestiones > 0) { <span class="badge bg-danger-subtle text-danger-emphasis">@c.SinGestiones</span> } else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td>
+                                        @if (dias.HasValue)
+                                        {
+                                            <span class="@(dias > 30 ? "text-danger fw-semibold" : dias > 7 ? "text-warning-emphasis" : "")">hace @dias día@(dias == 1 ? "" : "s")</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (c.Total > 0)
+                                        {
+                                            <form method="post" asp-page-handler="MoverTodas" asp-all-route-data="Model.Ruta(Model.Pagina)" class="d-inline-flex"
+                                                  onsubmit="return confirm('¿Traspasar las @c.Total operaciones abiertas de @c.Nombre al usuario seleccionado?');">
+                                                <input type="hidden" name="origenId" value="@c.UsuarioId" />
+                                                <div class="input-group input-group-sm" style="width:260px">
+                                                    <select name="usuarioId" class="form-select" required>
+                                                        <option value="">Seleccione…</option>
+                                                        @foreach (var u in Model.UsuariosGestion.Where(u => u.Id != c.UsuarioId))
+                                                        {
+                                                            <option value="@u.Id">@u.Nombre</option>
+                                                        }
+                                                    </select>
+                                                    <button type="submit" class="btn btn-outline-primary" title="Traspasar todas"><i class="fa-solid fa-right-left"></i></button>
+                                                </div>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(Model.Usuario))
+        {
+            var sinUsuario = Model.Ruta();
+            sinUsuario["usuario"] = null;
+            <div class="mb-2">
+                <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis border border-primary-subtle py-2 px-3">
+                    <i class="fa-solid fa-user me-1"></i>Operaciones de @Model.NombreUsuarioFiltro
+                    <a asp-page="./Gestion" asp-all-route-data="sinUsuario" class="ms-2 text-reset" title="Quitar filtro"><i class="fa-solid fa-xmark"></i></a>
+                </span>
+            </div>
+        }
+        <form method="get" class="row g-2 align-items-end">
+            @if (Model.EsCerradas) { <input type="hidden" name="vista" value="cerradas" /> }
+            @if (Model.EsCerradas && Model.SoloMias) { <input type="hidden" name="asignacion" value="mias" /> }
+            @if (!string.IsNullOrEmpty(Model.Orden)) { <input type="hidden" name="orden" value="@Model.Orden" /> }
+            @if (!string.IsNullOrEmpty(Model.Dir)) { <input type="hidden" name="dir" value="@Model.Dir" /> }
+            @if (!string.IsNullOrEmpty(Model.Usuario)) { <input type="hidden" name="usuario" value="@Model.Usuario" /> }
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Buscar</label>
+                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="N° operación, referencia, RUT o nombre" />
+            </div>
+            @if (!Model.EsCerradas)
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Caso</label>
+                    <select name="caso" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="pep" selected="@Sel(Model.Caso, "pep")">1 · Solo PEP</option>
+                        <option value="dof" selected="@Sel(Model.Caso, "dof")">2 · Solo DOF</option>
+                        <option value="ambos" selected="@Sel(Model.Caso, "ambos")">3 · PEP y DOF</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Asignación</label>
+                    <select name="asignacion" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        <option value="sin" selected="@Sel(Model.Asignacion, "sin")">Sin tomar</option>
+                        <option value="mias" selected="@Sel(Model.Asignacion, "mias")">Mis operaciones</option>
+                        <option value="tomadas" selected="@Sel(Model.Asignacion, "tomadas")">Tomadas</option>
+                    </select>
+                </div>
+            }
+            <div class="col-6 col-md-1">
+                <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="fa-solid fa-filter me-1"></i>Filtrar</button>
+            </div>
+            <div class="col-6 col-md-auto">
+                <a asp-page="./Gestion" asp-route-vista="@(Model.EsCerradas ? "cerradas" : null)" class="btn btn-link btn-sm">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!Model.EsCerradas)
+{
+    var columnas = Model.EsAdmin ? 8 : 7;
+    if (Model.EsAdmin)
+    {
+        <!-- Acción masiva sobre las filas marcadas (los checkbox usan form="gsSeleccion") -->
+        <form id="gsSeleccion" method="post" asp-page-handler="Seleccion" asp-all-route-data="Model.Ruta(Model.Pagina)"
+              class="gs-barra shadow" onsubmit="return gsConfirmar(event);">
+            <span class="fw-semibold"><span id="gsCuenta">0</span> seleccionada(s)</span>
+            <div class="input-group input-group-sm" style="max-width:320px">
+                <select name="usuarioId" id="gsDestino" class="form-select">
+                    <option value="">Asignar a…</option>
+                    @foreach (var u in Model.UsuariosGestion)
+                    {
+                        <option value="@u.Id">@u.Nombre</option>
+                    }
+                </select>
+                <button type="submit" name="accion" value="asignar" class="btn btn-primary"><i class="fa-solid fa-user-check me-1"></i>Asignar</button>
+            </div>
+            <button type="submit" name="accion" value="liberar" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-hand-point-left me-1"></i>Liberar</button>
+            <button type="button" class="btn btn-sm btn-link text-white-50 text-decoration-none" onclick="gsLimpiar()">Cancelar</button>
+        </form>
+    }
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            @if (Model.EsAdmin)
+                            {
+                                <th style="width:36px"><input type="checkbox" class="form-check-input" id="gsTodas" title="Marcar todas las de esta página" /></th>
+                            }
+                            @{
+                                ThOrden("fecha", "Fecha");
+                                ThOrden("codigo", "N° operación");
+                                ThOrden("cliente", "Cliente");
+                                ThOrden("caso", "Pendiente");
+                                ThOrden("tomada", "Tomada por");
+                                ThOrden("gestion", "Última gestión");
+                            }
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Filas.Any())
+                        {
+                            <tr><td colspan="@columnas" class="text-center text-muted py-5">
+                                <i class="fa-regular fa-face-smile fs-3 d-block mb-2"></i>No hay operaciones pendientes con estos filtros
+                            </td></tr>
+                        }
+                        @foreach (var f in Model.Filas)
+                        {
+                            var op = f.Operacion;
+                            var g = f.Gestion;
+                            var (casoTxt, casoCls) = GestionModel.Etiqueta(op.Caso);
+                            var tomadaPorMi = g?.UsuarioId is { } uid && uid == Model.UsuarioActualId;
+                            var puedeGestionar = Model.PuedeGestionar && (tomadaPorMi || (g?.UsuarioId is not null && Model.EsAdmin));
+                            var nombreToma = GestionModel.NombreDe(g?.Usuario);
+                            var notasUsuario = g?.Notas.Where(n => !n.EsSistema).ToList() ?? new List<GestionOperacionNota>();
+                            var ultima = notasUsuario.FirstOrDefault();
+                            var idPanel = $"gs{op.Id}";
+                            var abierto = Model.Abrir == op.Id;
+                            <tr>
+                                @if (Model.EsAdmin)
+                                {
+                                    <td><input type="checkbox" class="form-check-input gs-check" name="ids" value="@op.Id" form="gsSeleccion" /></td>
+                                }
+                                <td class="text-nowrap"><small>@RegcheqUi.Fecha(op.FechaCreacion, conHora: true)</small></td>
+                                <td>
+                                    <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="font-monospace fw-semibold text-decoration-none" title="Ver detalle de la operación">@(op.Codigo?.ToString() ?? "—")</a>
+                                    @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted">Ref. @op.Referencia</div> }
+                                </td>
+                                <td>
+                                    <div>@(op.Nombre ?? "—")</div>
+                                    <small class="text-muted">@op.Rut</small>
+                                    @RegcheqUi.VehiculoCorto(Model.Vehiculos.GetValueOrDefault(op.Id))
+                                </td>
+                                <td>
+                                    <span class="gs-caso @casoCls">@casoTxt</span>
+                                    <div class="mt-1">
+                                        @if (op.RequierePep) { <span class="gs-doc @(op.FirmoPep ? "ok" : "pend")"><i class="fa-solid @(op.FirmoPep ? "fa-check" : "fa-clock")"></i>PEP</span> }
+                                        @if (op.RequiereDof) { <span class="gs-doc @(op.FirmoDof ? "ok" : "pend")"><i class="fa-solid @(op.FirmoDof ? "fa-check" : "fa-clock")"></i>DOF</span> }
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (g?.UsuarioId is not null)
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="gs-avatar @(tomadaPorMi ? "yo" : "")">@GestionModel.Iniciales(nombreToma)</span>
+                                            <div class="lh-sm">
+                                                <div class="small fw-semibold">@(tomadaPorMi ? "Tú" : nombreToma)</div>
+                                                @if (g.FechaToma.HasValue) { <small class="text-muted">@Hora(g.FechaToma.Value)</small> }
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">Sin tomar</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (ultima is not null)
+                                    {
+                                        <div class="gs-ultima" title="@ultima.Texto">@ultima.Texto</div>
+                                        <small class="text-muted">@Hora(ultima.CreatedAt) · @notasUsuario.Count @(notasUsuario.Count == 1 ? "gestión" : "gestiones")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">Sin gestiones</small>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (g?.UsuarioId is null && Model.PuedeGestionar)
+                                    {
+                                        <form method="post" asp-page-handler="Tomar" asp-all-route-data="Model.Ruta(Model.Pagina)" class="d-inline">
+                                            <input type="hidden" name="id" value="@op.Id" />
+                                            <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-hand me-1"></i>Tomar</button>
+                                        </form>
+                                    }
+                                    <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="btn btn-sm btn-outline-primary" title="Ver el desglose completo y la bitácora">
+                                        <i class="fa-solid fa-eye"></i><span class="d-none d-xl-inline ms-1">Detalle</span>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary gs-toggle @(abierto ? "" : "collapsed")" data-bs-toggle="collapse" data-bs-target="#@idPanel" aria-expanded="@(abierto ? "true" : "false")">
+                                        <i class="fa-solid fa-comments me-1"></i>Gestión <i class="fa-solid fa-chevron-down ms-1"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse gs-fila @(abierto ? "show" : "")" id="@idPanel">
+                                <td colspan="@columnas">
+                                    <div class="gs-panel">
+                                        <div class="row g-4">
+                                            <div class="col-lg-7">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <h6 class="fw-semibold mb-0"><i class="fa-solid fa-timeline me-2 text-primary"></i>Bitácora</h6>
+                                                    <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="btn btn-sm btn-link text-decoration-none p-0">
+                                                        <i class="fa-solid fa-magnifying-glass me-1"></i>Ver desglose completo
+                                                    </a>
+                                                </div>
+                                                <partial name="_Bitacora" model="@(g?.Notas ?? new List<GestionOperacionNota>())" />
+                                            </div>
+                                            <div class="col-lg-5">
+                                                @if (puedeGestionar)
+                                                {
+                                                    <h6 class="fw-semibold mb-2"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Registrar gestión</h6>
+                                                    <form method="post" asp-page-handler="Nota" asp-all-route-data="Model.Ruta(Model.Pagina)">
+                                                        <input type="hidden" name="id" value="@op.Id" />
+                                                        <textarea name="texto" class="form-control form-control-sm mb-2" rows="3" maxlength="2000" required
+                                                                  placeholder="Ej.: Llamé al cliente, se reenvió el formulario @(op.Caso == CasoGestion.Dof ? "DOF" : op.Caso == CasoGestion.Pep ? "PEP" : "PEP y DOF") a su correo…"></textarea>
+                                                        <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar gestión</button>
+                                                    </form>
+                                                    <hr class="my-3" />
+                                                    <form method="post" asp-page-handler="Soltar" asp-all-route-data="Model.Ruta(Model.Pagina)" class="d-inline"
+                                                          onsubmit="return confirm('¿Liberar la operación @op.Codigo? Quedará sin tomar.');">
+                                                        <input type="hidden" name="id" value="@op.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-hand-point-left me-1"></i>Liberar</button>
+                                                    </form>
+                                                }
+                                                else if (!Model.PuedeGestionar)
+                                                {
+                                                    <div class="alert alert-light border small mb-0">
+                                                        <i class="fa-solid fa-eye me-1 text-secondary"></i>Solo lectura: su perfil puede revisar la bitácora, pero no tomar ni registrar gestiones.
+                                                        @if (g?.UsuarioId is not null) { <div class="mt-1">La está gestionando <strong>@nombreToma</strong>.</div> }
+                                                    </div>
+                                                }
+                                                else if (g?.UsuarioId is null)
+                                                {
+                                                    <div class="alert alert-light border small mb-0">
+                                                        <i class="fa-solid fa-circle-info me-1 text-primary"></i>Toma la operación para registrar la gestión que realizarás.
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="alert alert-light border small mb-0">
+                                                        <i class="fa-solid fa-lock me-1 text-secondary"></i>La está gestionando <strong>@nombreToma</strong>.
+                                                    </div>
+                                                }
+                                                @if (Model.EsAdmin)
+                                                {
+                                                    <form method="post" asp-page-handler="Reasignar" asp-all-route-data="Model.Ruta(Model.Pagina)" class="mt-3">
+                                                        <input type="hidden" name="id" value="@op.Id" />
+                                                        <label class="form-label small text-muted mb-1">Asignar a</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <select name="usuarioId" class="form-select" required>
+                                                                <option value="">Seleccione…</option>
+                                                                @foreach (var u in Model.UsuariosGestion)
+                                                                {
+                                                                    <option value="@u.Id" selected="@(u.Id == g?.UsuarioId)">@u.Nombre</option>
+                                                                }
+                                                            </select>
+                                                            <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-user-check me-1"></i>Asignar</button>
+                                                        </div>
+                                                    </form>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if (Model.TotalPaginas > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <small class="text-muted">Página @Model.Pagina de @Model.TotalPaginas · @Model.TotalFiltrado.ToString("N0") operaciones</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.Pagina <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Gestion" asp-all-route-data="Model.Ruta(Model.Pagina - 1)">Anterior</a>
+                        </li>
+                        <li class="page-item @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Gestion" asp-all-route-data="Model.Ruta(Model.Pagina + 1)">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            @{
+                                ThOrden("codigo", "N° operación");
+                                ThOrden("cliente", "Cliente");
+                                ThOrden("gestor", "Gestionada por");
+                                ThOrden("cierre", "Cerrada");
+                                ThOrden("gestiones", "Gestiones");
+                            }
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Cerradas.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-5">No hay gestiones cerradas</td></tr>
+                        }
+                        @foreach (var g in Model.Cerradas)
+                        {
+                            var idPanel = $"gc{g.Id}";
+                            var notasUsuario = g.Notas.Count(n => !n.EsSistema);
+                            var gestor = g.Usuario is not null
+                                ? GestionModel.NombreDe(g.Usuario)
+                                : g.Notas.Where(n => !n.EsSistema).Select(n => n.UsuarioNombre).FirstOrDefault();
+                            <tr>
+                                <td>
+                                    <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@g.OperacionId" class="font-monospace fw-semibold text-decoration-none">@(g.CodigoOperacion?.ToString() ?? "—")</a>
+                                </td>
+                                <td>
+                                    <div>@(g.ClienteNombre ?? "—")</div>
+                                    <small class="text-muted">@g.ClienteRut</small>
+                                </td>
+                                <td>
+                                    @if (gestor is not null)
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="gs-avatar">@GestionModel.Iniciales(gestor)</span><span class="small">@gestor</span>
+                                        </div>
+                                    }
+                                    else { <span class="text-muted small">—</span> }
+                                </td>
+                                <td class="text-nowrap">
+                                    <span class="badge bg-success-subtle text-success-emphasis"><i class="fa-solid fa-signature me-1"></i>Firmado</span>
+                                    <div><small class="text-muted">@Hora(g.FechaCierre!.Value)</small></div>
+                                </td>
+                                <td><small>@notasUsuario @(notasUsuario == 1 ? "gestión" : "gestiones")</small></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary gs-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#@idPanel">
+                                        <i class="fa-solid fa-timeline me-1"></i>Bitácora <i class="fa-solid fa-chevron-down ms-1"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse gs-fila" id="@idPanel">
+                                <td colspan="6">
+                                    <div class="gs-panel" style="border-left-color: var(--bs-success)">
+                                        <partial name="_Bitacora" model="g.Notas" />
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if (Model.TotalPaginas > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <small class="text-muted">Página @Model.Pagina de @Model.TotalPaginas · @Model.TotalFiltrado.ToString("N0") gestiones</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.Pagina <= 1 ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Gestion" asp-all-route-data="Model.Ruta(Model.Pagina - 1)">Anterior</a>
+                        </li>
+                        <li class="page-item @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Gestion" asp-all-route-data="Model.Ruta(Model.Pagina + 1)">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Tras una acción, llevar a la vista la operación cuyo panel quedó abierto.
+        document.querySelector('.gs-fila.show')?.scrollIntoView({ block: 'center' });
+
+        // Selección para acciones masivas (solo administrador)
+        const gsBarra = document.getElementById('gsSeleccion');
+        const gsChecks = () => Array.from(document.querySelectorAll('.gs-check'));
+        function gsActualizar() {
+            if (!gsBarra) return;
+            const n = gsChecks().filter(c => c.checked).length;
+            document.getElementById('gsCuenta').textContent = n;
+            gsBarra.classList.toggle('visible', n > 0);
+            const todas = document.getElementById('gsTodas');
+            if (todas) {
+                todas.checked = n > 0 && n === gsChecks().length;
+                todas.indeterminate = n > 0 && n < gsChecks().length;
+            }
+        }
+        function gsLimpiar() { gsChecks().forEach(c => c.checked = false); gsActualizar(); }
+        function gsConfirmar(e) {
+            const n = gsChecks().filter(c => c.checked).length;
+            const accion = e.submitter?.value;
+            if (accion === 'liberar') return confirm(`¿Liberar ${n} operación(es)? Quedarán sin tomar.`);
+            const destino = document.getElementById('gsDestino');
+            if (!destino.value) { alert('Seleccione a quién asignar.'); destino.focus(); return false; }
+            return confirm(`¿Asignar ${n} operación(es) a ${destino.options[destino.selectedIndex].text}?`);
+        }
+        document.getElementById('gsTodas')?.addEventListener('change', e => { gsChecks().forEach(c => c.checked = e.target.checked); gsActualizar(); });
+        document.addEventListener('change', e => { if (e.target.classList?.contains('gs-check')) gsActualizar(); });
+    </script>
+}

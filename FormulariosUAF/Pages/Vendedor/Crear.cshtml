@@ -15,13 +15,16 @@
                 <div class="form-card-header">
                     <span class="form-card-icon"><i class="fa-solid fa-building"></i></span>
                     <span class="form-card-title">Datos de la Empresa</span>
+                    <i class="fa-regular fa-circle-question section-help" data-bs-toggle="tooltip"
+                       data-bs-title="Identifican a la empresa que compra. Encabezan la Declaración Jurada de Beneficiario Final que exige la UAF y aparecen en el PDF."></i>
                 </div>
                 <div class="form-card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="RUT de la empresa que compra (no el del representante). Con la lupa se buscan sus datos para completar el formulario automáticamente.">
                                 <input asp-for="Input.RutCliente" class="form-control rut-input" id="rutInput" placeholder="76.123.456-7" style="padding-right:44px" />
-                                <label asp-for="Input.RutCliente">RUT Empresa <span class="text-danger">*</span></label>
+                                <label asp-for="Input.RutCliente">RUT Empresa <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                                 <button type="button" class="input-btn" id="btnBuscarRut" title="Buscar datos en SII/API">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                 </button>
@@ -30,60 +33,68 @@
                             <div id="rutLookupMsg" class="form-text"></div>
                         </div>
                         <div class="col-md-8">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Nombre legal completo de la empresa, tal como aparece en la escritura o en el SII. No use el nombre de fantasía.">
                                 <input asp-for="Input.RazonSocial" class="form-control" placeholder="Nombre oficial de la empresa" />
-                                <label asp-for="Input.RazonSocial">Razón Social <span class="text-danger">*</span></label>
+                                <label asp-for="Input.RazonSocial">Razón Social <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.RazonSocial" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Dirección legal de la empresa (calle, número y comuna). Es parte de la identificación del cliente en la declaración.">
                                 <input asp-for="Input.Address" class="form-control" placeholder="Calle, número, comuna" />
-                                <label asp-for="Input.Address">Domicilio <span class="text-danger">*</span></label>
+                                <label asp-for="Input.Address">Domicilio <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.Address" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Ciudad del domicilio legal de la empresa.">
                                 <input asp-for="Input.City" class="form-control" placeholder="Ciudad" />
-                                <label asp-for="Input.City">Ciudad <span class="text-danger">*</span></label>
+                                <label asp-for="Input.City">Ciudad <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.City" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="País donde se constituyó legalmente la empresa (normalmente Chile).">
                                 <input asp-for="Input.CountryOfIncorporation" class="form-control" />
-                                <label asp-for="Input.CountryOfIncorporation">País de Constitución <span class="text-danger">*</span></label>
+                                <label asp-for="Input.CountryOfIncorporation">País de Constitución <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.CountryOfIncorporation" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Teléfono de la empresa. Opcional.">
                                 <input asp-for="Input.Phone" class="form-control" placeholder="+56 2 XXXX XXXX" />
-                                <label asp-for="Input.Phone">Teléfono</label>
+                                <label asp-for="Input.Phone">Teléfono <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Forma jurídica de la empresa (S.A., Ltda., SpA, etc.), según su escritura de constitución. Si no está en la lista, elija «Otra» y especifíquela.">
                                 <select asp-for="Input.EntityType" class="form-select" id="entityTypeSelect">
                                     @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.EntityType>())
                                     {
                                         <option value="@((int)t)">@t.ToDisplayString()</option>
                                     }
                                 </select>
-                                <label asp-for="Input.EntityType">Tipo de Entidad <span class="text-danger">*</span></label>
+                                <label asp-for="Input.EntityType">Tipo de Entidad <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                         </div>
                         <div class="col-md-4" id="entityTypeOtherDiv" style="display:none">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Indique la forma jurídica de la empresa cuando no aparece en la lista.">
                                 <input asp-for="Input.EntityTypeOther" class="form-control" placeholder="Especifique" />
-                                <label asp-for="Input.EntityTypeOther">Especifique tipo de entidad</label>
+                                <label asp-for="Input.EntityTypeOther">Especifique tipo de entidad <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Número del negocio en Netcar correspondiente a esta venta. Queda guardado como referencia interna. Opcional.">
                                 <input asp-for="Input.NetcarBusinessNumber" class="form-control" placeholder="N° de negocio" />
-                                <label asp-for="Input.NetcarBusinessNumber">Número de negocio en Netcar</label>
+                                <label asp-for="Input.NetcarBusinessNumber">Número de negocio en Netcar <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.NetcarBusinessNumber" class="text-danger small"></span>
                         </div>
@@ -96,20 +107,24 @@
                 <div class="form-card-header">
                     <span class="form-card-icon"><i class="fa-solid fa-user-tie"></i></span>
                     <span class="form-card-title">Representante Legal</span>
+                    <i class="fa-regular fa-circle-question section-help" data-bs-toggle="tooltip"
+                       data-bs-title="Persona facultada para actuar en nombre de la empresa. Es quien suscribe la declaración jurada."></i>
                 </div>
                 <div class="form-card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="RUT del representante legal. Si es extranjero sin RUT, ingrese su N° de pasaporte o documento.">
                                 <input asp-for="Input.LegalRepresentativeIdNumber" class="form-control rut-input" placeholder="12.345.678-9" />
-                                <label asp-for="Input.LegalRepresentativeIdNumber">RUT / N° Identificación <span class="text-danger">*</span></label>
+                                <label asp-for="Input.LegalRepresentativeIdNumber">RUT / N° Identificación <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.LegalRepresentativeIdNumber" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Nombres y apellidos completos del representante legal, tal como aparecen en su cédula.">
                                 <input asp-for="Input.LegalRepresentativeName" class="form-control name-input" placeholder="Nombre Apellido" />
-                                <label asp-for="Input.LegalRepresentativeName">Nombre completo <span class="text-danger">*</span></label>
+                                <label asp-for="Input.LegalRepresentativeName">Nombre completo <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.LegalRepresentativeName" class="text-danger small"></span>
                         </div>
@@ -122,21 +137,25 @@
                 <div class="form-card-header">
                     <span class="form-card-icon"><i class="fa-solid fa-envelope"></i></span>
                     <span class="form-card-title">Contacto del Cliente</span>
+                    <i class="fa-regular fa-circle-question section-help" data-bs-toggle="tooltip"
+                       data-bs-title="Datos para hacer llegar al cliente el enlace donde completará la declaración y para hacerle seguimiento."></i>
                 </div>
                 <div class="form-card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Al crear la solicitud se envía automáticamente a este correo el enlace seguro para completar la declaración. Verifique que esté bien escrito.">
                                 <input asp-for="Input.ClientEmail" type="email" class="form-control" placeholder="cliente@empresa.cl" />
-                                <label asp-for="Input.ClientEmail">Correo electrónico del cliente <span class="text-danger">*</span></label>
+                                <label asp-for="Input.ClientEmail">Correo electrónico del cliente <span class="text-danger">*</span> <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <span asp-validation-for="Input.ClientEmail" class="text-danger small"></span>
                             <div class="form-text">Se usará para enviar el enlace de declaración.</div>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Teléfono de la persona de contacto, por si hay que hacer seguimiento. Opcional.">
                                 <input asp-for="Input.ClientPhone" class="form-control" placeholder="+56 9 XXXX XXXX" />
-                                <label asp-for="Input.ClientPhone">Teléfono del cliente</label>
+                                <label asp-for="Input.ClientPhone">Teléfono del cliente <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                         </div>
                     </div>
@@ -148,32 +167,61 @@
                 <div class="form-card-header">
                     <span class="form-card-icon"><i class="fa-solid fa-gear"></i></span>
                     <span class="form-card-title">Configuración de la Solicitud</span>
+                    <i class="fa-regular fa-circle-question section-help" data-bs-toggle="tooltip"
+                       data-bs-title="Define en qué contexto se pide la declaración, cuánto tiempo tiene el cliente para completarla y notas para el equipo interno. Si la empresa ya tiene una solicitud previa, solo se permiten actualizaciones."></i>
                 </div>
                 <div class="form-card-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="uaf-field">
-                                <select asp-for="Input.TipoSolicitud" class="form-select">
-                                    @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
-                                    {
-                                        <option value="@((int)t)">@t.ToDisplayString()</option>
-                                    }
-                                </select>
-                                <label asp-for="Input.TipoSolicitud">Tipo de Solicitud <span class="text-danger">*</span></label>
+                        <div class="col-12">
+                            <div class="tipo-sol-head">
+                                <span class="tipo-sol-label">Tipo de Solicitud <span class="text-danger">*</span></span>
+                                <span class="tipo-sol-sub">Elija la opción que mejor describa la situación del cliente. Queda registrada en la solicitud y en el PDF.</span>
                             </div>
-                            <span asp-validation-for="Input.TipoSolicitud" class="text-danger small"></span>
+
+                            @* Se completa por JS al ingresar el RUT (handler SolicitudesPrevias) *@
+                            <div id="previasAlert" class="previas-alert" hidden>
+                                <div class="previas-alert-head">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                    <div>
+                                        <strong id="previasTitulo"></strong>
+                                        <div class="previas-alert-sub">Como ya existe una solicitud previa, solo puede enviar una <strong>Actualización de Datos</strong> o una <strong>Actualización sin Cambios</strong>.</div>
+                                    </div>
+                                </div>
+                                <ul id="previasLista" class="previas-list"></ul>
+                            </div>
+
+                            <div class="tipo-sol-grid" role="radiogroup" aria-label="Tipo de Solicitud">
+                                @foreach (var t in Enum.GetValues<FormulariosUAF.Models.Enums.RequestType>())
+                                {
+                                    <label class="tipo-sol-card" data-tipo="@((int)t)">
+                                        <input type="radio" name="Input.TipoSolicitud" value="@((int)t)" class="tipo-sol-radio"
+                                               checked="@(t == Model.Input.TipoSolicitud)" />
+                                        <span class="tipo-sol-icon"><i class="fa-solid @t.ToIcon()"></i></span>
+                                        <span class="tipo-sol-body">
+                                            <span class="tipo-sol-title">@t.ToDisplayString()</span>
+                                            <span class="tipo-sol-desc">@t.ToDescription()</span>
+                                            <span class="tipo-sol-ej"><i class="fa-regular fa-lightbulb"></i>Ej.: @t.ToEjemplo()</span>
+                                            <span class="tipo-sol-lock"><i class="fa-solid fa-lock"></i>No disponible: la empresa ya tiene una solicitud previa</span>
+                                        </span>
+                                        <span class="tipo-sol-check"><i class="fa-solid fa-check"></i></span>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="Input.TipoSolicitud" class="text-danger small d-block mt-1"></span>
                         </div>
                         <div class="col-md-4">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Días durante los cuales funciona el enlace enviado al cliente. Pasado ese plazo, el enlace deja de funcionar. Máximo 90.">
                                 <input asp-for="Input.DiasVigencia" type="number" class="form-control" min="1" max="90" placeholder="30" />
-                                <label asp-for="Input.DiasVigencia">Días de vigencia del enlace</label>
+                                <label asp-for="Input.DiasVigencia">Días de vigencia del enlace <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                             <div class="form-text">Máximo 90 días.</div>
                         </div>
                         <div class="col-12">
-                            <div class="uaf-field">
+                            <div class="uaf-field" data-bs-toggle="tooltip"
+                                 data-bs-title="Notas para Cumplimiento y el equipo interno (por ejemplo, contexto de la venta). El cliente no las ve.">
                                 <textarea asp-for="Input.Observaciones" class="form-control" rows="3" placeholder="Notas internas (no visibles para el cliente)"></textarea>
-                                <label asp-for="Input.Observaciones">Observaciones internas</label>
+                                <label asp-for="Input.Observaciones">Observaciones internas <i class="fa-regular fa-circle-question field-help"></i></label>
                             </div>
                         </div>
                     </div>
@@ -205,6 +253,10 @@
                 <li><span class="step-num">5</span>El área de cumplimiento revisa y aprueba internamente.</li>
             </ul>
             <div class="info-note">
+                <i class="fa-solid fa-circle-question mt-1"></i>
+                <span>Pase el mouse sobre cualquier campo o sobre el <i class="fa-regular fa-circle-question"></i> de cada sección para ver para qué se usa.</span>
+            </div>
+            <div class="info-note">
                 <i class="fa-solid fa-triangle-exclamation mt-1"></i>
                 <span>La información declarada será utilizada para procesos de debida diligencia y conocimiento del cliente.</span>
             </div>
@@ -215,6 +267,69 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+    // Ayudas al pasar el mouse (tooltips de Bootstrap)
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el =>
+        new bootstrap.Tooltip(el, { trigger: 'hover', placement: 'top', container: 'body' }));
+
+    // ── Tipo de solicitud: si la empresa (RUT) ya tiene solicitudes, solo se permiten actualizaciones
+    const rutInput = document.getElementById('rutInput');
+    const previasAlert = document.getElementById('previasAlert');
+    const tipoCards = document.querySelectorAll('.tipo-sol-card');
+    const urlPrevias = '@Html.Raw(Url.Page("/Vendedor/Crear", "SolicitudesPrevias"))';
+    let rutConsultado = null, consultaSeq = 0;
+
+    function aplicarTiposPermitidos(data) {
+        const hayPrevias = !!data && data.total > 0;
+        const permitidos = hayPrevias ? data.tiposPermitidos.map(String) : null;
+        tipoCards.forEach(card => {
+            const bloqueado = hayPrevias && !permitidos.includes(card.dataset.tipo);
+            card.classList.toggle('is-locked', bloqueado);
+            card.querySelector('input').disabled = bloqueado;
+        });
+        // Si la opción elegida quedó bloqueada, pasar a la primera permitida
+        const elegido = document.querySelector('.tipo-sol-radio:checked');
+        if (!elegido || elegido.disabled)
+            document.querySelector('.tipo-sol-radio:not(:disabled)')?.click();
+
+        previasAlert.hidden = !hayPrevias;
+        if (!hayPrevias) return;
+        document.getElementById('previasTitulo').textContent = data.total === 1
+            ? 'Esta empresa ya tiene 1 solicitud registrada'
+            : `Esta empresa ya tiene ${data.total} solicitudes registradas`;
+        const lista = document.getElementById('previasLista');
+        lista.replaceChildren(...data.solicitudes.map(s => {
+            const li = document.createElement('li');
+            const num = document.createElement('strong'); num.textContent = s.numero;
+            const det = document.createElement('span'); det.textContent = ` · ${s.tipo} · ${s.fecha}`;
+            const est = document.createElement('span'); est.className = `badge ${s.badge} ms-auto`; est.textContent = s.estado;
+            li.append(num, det, est);
+            return li;
+        }));
+        if (data.total > data.solicitudes.length) {
+            const li = document.createElement('li');
+            li.className = 'text-muted';
+            li.textContent = `y ${data.total - data.solicitudes.length} más…`;
+            lista.append(li);
+        }
+    }
+
+    async function verificarSolicitudesPrevias() {
+        const norm = rutInput.value.replace(/[^0-9kK]/g, '').toUpperCase();
+        if (norm === rutConsultado) return;
+        rutConsultado = norm;
+        if (norm.length < 2) { aplicarTiposPermitidos(null); return; }
+        const seq = ++consultaSeq;
+        try {
+            const resp = await fetch(`${urlPrevias}&rut=${encodeURIComponent(norm)}`);
+            if (!resp.ok || seq !== consultaSeq) return;
+            aplicarTiposPermitidos(await resp.json());
+        } catch { /* si falla, el servidor igual valida al guardar */ }
+    }
+
+    rutInput.addEventListener('change', verificarSolicitudesPrevias);
+    rutInput.addEventListener('focusout', () => setTimeout(verificarSolicitudesPrevias, 0));
+    if (rutInput.value.trim()) verificarSolicitudesPrevias();
+
     // EntityType other toggle (usa el valor real de "Otra", no un número fijo)
     const sel = document.getElementById('entityTypeSelect');
     const otherDiv = document.getElementById('entityTypeOtherDiv');
@@ -247,6 +362,7 @@
 
             msg.textContent = 'Datos completados automáticamente. Verifique antes de guardar.';
             msg.className = 'form-text text-success';
+            verificarSolicitudesPrevias();
         } catch (e) {
             msg.textContent = 'Error al consultar. Complete los datos manualmente.';
             msg.className = 'form-text text-danger';

@@ -234,7 +234,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 }
 #formDeclaracion .decl-persona-head {
     background: #f8fafc;
-    padding: .6rem 1rem;
+    padding: .75rem 1.25rem;
     border-bottom: 1px solid #eef2f7;
 }
 #formDeclaracion .decl-persona-badge {
@@ -251,14 +251,24 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     flex-shrink: 0;
 }
 #formDeclaracion .decl-remove-btn {
-    color: #f87171;
+    color: #c2410c;
     border: none;
     background: transparent;
-    font-weight: 600;
-    font-size: .8rem;
+    font-weight: 500;
+    font-size: .85rem;
 }
 #formDeclaracion .decl-remove-btn:hover { color: #dc2626; background: #fef2f2; }
-#formDeclaracion .decl-persona-body { padding: 1rem; }
+#formDeclaracion .decl-persona-body { padding: 1.25rem; }
+#formDeclaracion .decl-persona-body .form-label { font-size: .85rem; font-weight: 500; color: #334155; margin-bottom: .35rem; }
+#formDeclaracion .decl-persona-body .form-check-label { font-size: .9rem; color: #334155; }
+#formDeclaracion .decl-persona .req { color: #dc2626; }
+#formDeclaracion .decl-persona-sep { border-top: 1px solid #eef2f7; margin-top: 1.25rem; padding-top: 1rem; }
+#formDeclaracion .decl-control-panel {
+    border-left: 3px solid #c7d2fe;
+    padding: .25rem 0 .25rem .9rem;
+    margin-top: .75rem;
+}
+#formDeclaracion .decl-help { font-size: .78rem; color: #64748b; margin-top: .35rem; }
 
 /* ---- Panel PEP ---- */
 #formDeclaracion .decl-pep-panel {
@@ -279,6 +289,240 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     padding: .6rem 1rem;
 }
 #formDeclaracion .decl-add-btn:hover { background: #fff3e0; color: #b35e10; }
+
+/* ================================================
+   DECLARACIÓN — rediseño v3 (más moderno y ancho)
+   Solo presentación; sobrescribe lo anterior dentro de #formDeclaracion.
+   ================================================ */
+
+/* Encabezado de página */
+.decl-page-head h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; color: #0f172a; }
+.decl-page-head p { font-size: .95rem; color: #64748b; }
+
+/* Tarjetas de sección: más aire, esquinas más redondas, sombra suave */
+#formDeclaracion .decl-card {
+    border: 1px solid #e8edf3;
+    border-radius: 20px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .05);
+    overflow: hidden;
+}
+#formDeclaracion .decl-card-header {
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+#formDeclaracion .decl-card .card-body { padding: 1.75rem 2rem !important; }
+#formDeclaracion .decl-sec-title { font-size: 1.08rem; font-weight: 700; color: #0f172a; }
+#formDeclaracion .decl-sec-num {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b 0%, #e07b20 60%, #c2410c 100%);
+    box-shadow: 0 4px 10px rgba(224, 123, 32, .3);
+    font-size: .8rem;
+}
+
+/* Campos: más altos, bordes suaves, foco naranja */
+#formDeclaracion .form-label { font-size: .85rem; font-weight: 600; color: #334155; margin-bottom: .4rem; }
+#formDeclaracion .form-control,
+#formDeclaracion .form-select {
+    min-height: 2.75rem;
+    border-radius: 10px;
+    border: 1px solid #dbe3ec;
+    background-color: #fff;
+    font-size: .95rem;
+    color: #0f172a;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+#formDeclaracion .form-control-sm,
+#formDeclaracion .form-select-sm { min-height: 2.4rem; font-size: .9rem; }
+#formDeclaracion .form-control:hover,
+#formDeclaracion .form-select:hover { border-color: #c3cfdc; }
+#formDeclaracion .form-control::placeholder { color: #a0aec0; }
+#formDeclaracion .form-control[readonly],
+#formDeclaracion .form-control.bg-light { background-color: #f8fafc !important; color: #64748b; }
+#formDeclaracion .form-check-input { width: 1.15em; height: 1.15em; margin-top: .15em; border-color: #cbd5e1; }
+
+/* Datos de empresa */
+#formDeclaracion .decl-info-tile {
+    background: #fff;
+    border: 1px solid #e8edf3;
+    border-radius: 14px;
+    padding: .9rem 1.1rem;
+    transition: border-color .15s;
+}
+#formDeclaracion .decl-info-tile:hover { border-color: #fcd9b0; }
+#formDeclaracion .decl-info-val { font-size: .95rem; color: #0f172a; }
+
+/* Aviso */
+#formDeclaracion .decl-warn { border-radius: 14px; padding: 1rem 1.25rem; font-size: .9rem; }
+
+/* Persona */
+#formDeclaracion .decl-persona {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+    transition: box-shadow .2s, border-color .2s;
+}
+#formDeclaracion .decl-persona:focus-within {
+    border-color: #fcd9b0;
+    box-shadow: 0 8px 24px rgba(224, 123, 32, .08);
+}
+#formDeclaracion .decl-persona-head {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: .9rem 1.5rem;
+}
+#formDeclaracion .decl-persona-badge { width: 1.75rem; height: 1.75rem; font-size: .78rem; }
+#formDeclaracion .decl-persona-body { padding: 1.5rem; }
+#formDeclaracion .decl-remove-btn { border-radius: 8px; padding: .3rem .7rem; }
+
+/* Casillas como "chips" (control efectivo, fondos, ≥10%) */
+#formDeclaracion .decl-persona-sep .d-flex > .form-check {
+    margin: 0;
+    padding: .55rem .9rem .55rem 2.3rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    transition: border-color .15s, background-color .15s;
+}
+#formDeclaracion .decl-persona-sep .d-flex > .form-check:has(.form-check-input:checked) {
+    border-color: #f4a84a;
+    background: #fff7ed;
+}
+#formDeclaracion .decl-persona-sep .d-flex { gap: .6rem !important; }
+#formDeclaracion .decl-control-panel { border-left-color: #f4a84a; }
+#formDeclaracion .decl-pep-panel { background: #fffaf3; border-radius: 14px; }
+
+/* Botón agregar persona */
+#formDeclaracion .decl-add-btn { padding: .75rem 1.25rem; border-radius: 14px; width: 100%; }
+
+/* Barra de acciones fija abajo mientras se completa el formulario */
+#formDeclaracion .decl-actions {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 10;
+    padding: .9rem 1.25rem !important;
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #e8edf3;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .1);
+}
+#formDeclaracion .decl-submit { padding: .75rem 1.75rem; }
+
+@media (max-width: 767.98px) {
+    #formDeclaracion .decl-card-header { padding: 1rem 1.25rem; }
+    #formDeclaracion .decl-card .card-body { padding: 1.25rem !important; }
+    #formDeclaracion .decl-persona-body { padding: 1.1rem; }
+    #formDeclaracion .decl-actions { flex-direction: column; gap: .75rem; align-items: stretch !important; }
+}
+
+/* ================================================
+   DECLARACIÓN — ayudas para el cliente
+   [data-help] → botón (i) con popover; .decl-term → término con definición;
+   details.decl-why → "¿Por qué le pedimos esto?" desplegable.
+   ================================================ */
+.decl-help-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .85rem;
+    padding: .45rem .9rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #fde2c4;
+    color: #7c4a16;
+    font-size: .82rem;
+}
+.decl-help-hint > i:first-child { color: #e07b20; }
+
+.decl-help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-left: .3rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #b6c2d1;
+    font-size: .8rem;
+    line-height: 1;
+    vertical-align: -.1em;
+    cursor: help;
+    transition: color .15s, transform .15s;
+}
+.decl-help-btn:hover,
+.decl-help-btn:focus-visible,
+.decl-help-btn[aria-describedby] { color: #e07b20; transform: scale(1.15); outline: none; }
+.decl-info-label .decl-help-btn { font-size: .72rem; width: 1rem; height: 1rem; }
+
+.decl-term {
+    text-decoration: underline dotted #e07b20;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    cursor: help;
+    font-weight: 600;
+}
+.decl-term:focus-visible { outline: 2px solid #fcd9b0; border-radius: 4px; }
+
+.decl-popover {
+    --bs-popover-max-width: 320px;
+    --bs-popover-border-color: #fde2c4;
+    --bs-popover-border-radius: 14px;
+    --bs-popover-inner-border-radius: 13px;
+    --bs-popover-header-bg: #fff7ed;
+    --bs-popover-header-color: #9a4d0c;
+    --bs-popover-header-font-size: .85rem;
+    --bs-popover-header-padding-y: .6rem;
+    --bs-popover-header-padding-x: .9rem;
+    --bs-popover-body-color: #334155;
+    --bs-popover-body-padding-y: .7rem;
+    --bs-popover-body-padding-x: .9rem;
+    --bs-popover-box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
+    box-shadow: var(--bs-popover-box-shadow);
+    font-size: .84rem;
+    line-height: 1.5;
+}
+.decl-popover .popover-header { font-weight: 700; border-bottom-color: #fde2c4; }
+.decl-popover .popover-header:empty { display: none; }
+
+.decl-why {
+    margin-bottom: 1.1rem;
+    border: 1px solid #fde2c4;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fffaf3 0%, #fff 100%);
+    overflow: hidden;
+}
+.decl-why > summary {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .65rem 1rem;
+    font-size: .88rem;
+    font-weight: 600;
+    color: #9a4d0c;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+.decl-why > summary::-webkit-details-marker { display: none; }
+.decl-why > summary::after {
+    content: "\f078"; /* fa-chevron-down */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: .7rem;
+    margin-left: auto;
+    transition: transform .2s;
+}
+.decl-why[open] > summary::after { transform: rotate(180deg); }
+.decl-why > summary:hover { background: #fff3e0; }
+.decl-why > p { padding: 0 1rem; margin: 0 0 .75rem; font-size: .88rem; color: #475569; line-height: 1.6; }
+.decl-why > p:first-of-type { padding-top: .1rem; }
+.decl-why > p:last-child { margin-bottom: .9rem; }
 
 /* ================================================
    _ClientLayout — sidebar de pasos (rediseño v2)
@@ -342,9 +586,12 @@ body.decl-shell { background: #f0f4f9; }
 .decl-progress-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; }
 .decl-progress-fill { height: 100%; border-radius: 4px; background: #f4a84a; }
 
-.decl-main { flex: 1; min-width: 0; padding: 2rem 1rem; }
-.decl-main-inner { max-width: 56rem; margin: 0 auto; }
+.decl-main { flex: 1; min-width: 0; padding: 2.5rem 2.5rem; }
+.decl-main-inner { max-width: 82rem; margin: 0 auto; }
 
+@media (max-width: 1199.98px) {
+    .decl-main { padding: 2rem 1.5rem; }
+}
 @media (max-width: 991.98px) {
     .decl-sidebar { display: none; }
     .decl-main { padding: 1.5rem 1rem; }
@@ -408,6 +655,58 @@ body.decl-shell { background: #f0f4f9; }
     transition: background .15s;
 }
 .decl-welcome-btn:hover { background: #2b2b2b; color: #fff; }
+
+/* ---- Declaración: selector de modo (automática / manual) ---- */
+.decl-modo-intro { font-weight: 600; color: #1e293b; margin-bottom: .75rem; }
+.decl-modo-card {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #eef2f7;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+    padding: 1.5rem;
+    transition: border-color .15s, box-shadow .15s;
+}
+.decl-modo-card:not(.is-disabled):hover { border-color: #e07b20; box-shadow: 0 6px 18px rgba(224, 123, 32, .15); }
+.decl-modo-card h5 { font-weight: 700; color: #1e293b; margin: .75rem 0 .4rem; }
+.decl-modo-card p { color: #64748b; font-size: .9rem; flex-grow: 1; }
+.decl-modo-card.is-disabled { background: #f8fafc; }
+.decl-modo-card.is-disabled .decl-modo-icon { background: #e2e8f0; color: #94a3b8; }
+.decl-modo-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 12px;
+    background: rgba(224, 123, 32, .12);
+    color: #e07b20;
+    font-size: 1.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.decl-modo-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: .72rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .2rem .65rem;
+}
+.decl-modo-btn {
+    align-self: flex-start;
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    background: #fff;
+}
+.decl-modo-btn.is-primary { background: #3a3a3a; border-color: #3a3a3a; color: #fff; }
+.decl-modo-btn.is-primary:hover { background: #2b2b2b; color: #fff; }
 
 /* ---- Tema UAF: foco y checkboxes en naranja (solo en el formulario) ---- */
 #formDeclaracion .form-control:focus,
@@ -603,6 +902,75 @@ body.uaf-shell { background: var(--uaf-bg); }
 .form-card-title { font-size: .85rem; font-weight: 700; color: #1e293b; }
 .form-card-body { padding: 20px; }
 
+/* ── Ayudas al pasar el mouse (tooltips) ── */
+.section-help { font-size: .8rem; color: #94a3b8; cursor: help; }
+.section-help:hover { color: var(--uaf-blue); }
+.uaf-field > label .field-help { font-size: .62rem; color: #cbd5e1; margin-left: 2px; }
+.uaf-field:hover > label .field-help { color: var(--uaf-blue); }
+.tooltip-inner { max-width: 300px; text-align: left; font-size: .76rem; line-height: 1.4; padding: 8px 10px; }
+
+/* ── /Vendedor/Crear: tipo de solicitud en tarjetas ── */
+.tipo-sol-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.tipo-sol-label { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
+.tipo-sol-sub { font-size: .78rem; color: #64748b; }
+.tipo-sol-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 767.98px) { .tipo-sol-grid { grid-template-columns: 1fr; } }
+
+.tipo-sol-card {
+    position: relative; display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 40px 14px 14px; margin: 0;
+    border: 1.5px solid #e2e8f0; border-radius: 12px; background: #f8fafc;
+    cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s, opacity .15s;
+}
+.tipo-sol-card:hover { border-color: #bfd3ea; background: #fff; }
+.tipo-sol-radio { position: absolute; opacity: 0; pointer-events: none; }
+.tipo-sol-icon {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: .85rem;
+    background: #e2e8f0; color: #64748b; transition: background .15s, color .15s;
+}
+.tipo-sol-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tipo-sol-title { font-size: .86rem; font-weight: 700; color: #1e293b; }
+.tipo-sol-desc { font-size: .76rem; color: #64748b; line-height: 1.45; }
+.tipo-sol-ej { font-size: .72rem; color: #94a3b8; font-style: italic; }
+.tipo-sol-ej i, .tipo-sol-lock i { margin-right: 5px; }
+.tipo-sol-lock { display: none; font-size: .72rem; font-weight: 600; color: #b45309; }
+.tipo-sol-check {
+    position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: .6rem;
+    border: 1.5px solid #cbd5e1; color: transparent; background: #fff; transition: all .15s;
+}
+
+/* Seleccionada */
+.tipo-sol-card:has(.tipo-sol-radio:checked) {
+    border-color: var(--uaf-blue); background: #fff; box-shadow: 0 0 0 3px rgba(21,101,192,.1);
+}
+.tipo-sol-card:has(.tipo-sol-radio:checked) .tipo-sol-icon { background: var(--uaf-blue); color: #fff; }
+.tipo-sol-card:has(.tipo-sol-radio:checked) .tipo-sol-check { background: var(--uaf-blue); border-color: var(--uaf-blue); color: #fff; }
+.tipo-sol-card:has(.tipo-sol-radio:focus-visible) { outline: 2px solid var(--uaf-blue); outline-offset: 2px; }
+
+/* Bloqueada (la empresa ya tiene solicitud previa) */
+.tipo-sol-card.is-locked { cursor: not-allowed; opacity: .55; background: #f1f5f9; border-style: dashed; }
+.tipo-sol-card.is-locked:hover { border-color: #e2e8f0; background: #f1f5f9; }
+.tipo-sol-card.is-locked .tipo-sol-ej { display: none; }
+.tipo-sol-card.is-locked .tipo-sol-lock { display: block; }
+.tipo-sol-card.is-locked .tipo-sol-check { display: none; }
+
+/* Aviso de solicitudes previas */
+.previas-alert {
+    margin-bottom: 12px; padding: 12px 14px; border-radius: 12px;
+    background: #fffbeb; border: 1px solid #fde68a; color: #78350f;
+}
+.previas-alert-head { display: flex; gap: 10px; align-items: flex-start; font-size: .82rem; }
+.previas-alert-head > i { margin-top: 3px; color: #d97706; }
+.previas-alert-sub { font-size: .76rem; color: #92400e; margin-top: 2px; }
+.previas-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.previas-list li {
+    display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    padding: 6px 10px; border-radius: 8px; background: #fff; border: 1px solid #fef3c7; font-size: .76rem; color: #475569;
+}
+.previas-list li strong { color: #1e293b; }
+
 /* ── Floating inputs ── */
 .uaf-field { position: relative; }
 .uaf-field .form-control, .uaf-field .form-select {
@@ -725,3 +1093,26 @@ body.uaf-shell { background: var(--uaf-bg); }
     .login-left { display: none; }
     .login-mobile-brand { display: flex; }
 }
+
+/* ── Gestión RegCheq (compartido por Regcheq/Gestion y Regcheq/Detalle) ── */
+.gs-caso { display: inline-block; font-size: .72rem; font-weight: 600; border-radius: 999px; padding: .2rem .6rem; white-space: nowrap; }
+.gs-caso-pep { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.gs-caso-dof { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.gs-caso-ambos { background: #ede2fe; color: #5a2ca0; }
+.gs-doc { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; border-radius: .35rem; padding: .1rem .4rem; border: 1px solid var(--bs-border-color); margin-right: .2rem; white-space: nowrap; }
+.gs-doc.pend { border-color: var(--bs-danger-border-subtle); color: var(--bs-danger-text-emphasis); background: var(--bs-danger-bg-subtle); }
+.gs-doc.ok { border-color: var(--bs-success-border-subtle); color: var(--bs-success-text-emphasis); background: var(--bs-success-bg-subtle); }
+.gs-avatar { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); flex-shrink: 0; }
+.gs-avatar.yo { background: var(--bs-primary); color: #fff; }
+.gs-timeline { list-style: none; margin: 0; padding: 0 0 0 1.1rem; border-left: 2px solid var(--bs-border-color); max-height: 340px; overflow: auto; }
+.gs-timeline li { position: relative; padding: 0 0 .9rem .6rem; }
+.gs-timeline li::before { content: ""; position: absolute; left: -1.48rem; top: .3rem; width: 11px; height: 11px; border-radius: 50%; background: var(--bs-primary); border: 2px solid var(--gs-tl-fondo, var(--bs-body-bg)); }
+.gs-timeline li.sistema::before { background: var(--bs-secondary-color); }
+.gs-timeline .gs-meta { font-size: .72rem; color: var(--bs-secondary-color); }
+.gs-timeline .gs-texto { font-size: .875rem; white-space: pre-wrap; word-break: break-word; }
+.gs-timeline li.sistema .gs-texto { font-style: italic; color: var(--bs-secondary-color); }
+/* Encabezados ordenables (Regcheq/Index y Regcheq/Gestion) */
+.gs-orden { color: inherit; text-decoration: none; white-space: nowrap; }
+.gs-orden i { font-size: .75em; opacity: .35; }
+.gs-orden:hover i, .gs-orden.activa i { opacity: 1; }
+.gs-orden.activa { color: var(--bs-primary); }

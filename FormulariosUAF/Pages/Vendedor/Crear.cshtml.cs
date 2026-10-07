@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using FormulariosUAF.Extensions;
 using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Enums;
 using FormulariosUAF.Services;
@@ -92,9 +93,44 @@ public class CrearModel : PageModel
 
     public void OnGet() { }
 
+    // GET /Vendedor/Crear?handler=SolicitudesPrevias&rut=... → solicitudes ya registradas para esa empresa.
+    public async Task<IActionResult> OnGetSolicitudesPreviasAsync(string? rut)
+    {
+        var previas = await _requestService.GetSolicitudesPreviasAsync(rut);
+        return new JsonResult(new
+        {
+            total = previas.Count,
+            tiposPermitidos = Enum.GetValues<RequestType>()
+                .Where(t => previas.Count == 0 || t.PermitidoConSolicitudPrevia())
+                .Select(t => (int)t),
+            solicitudes = previas.Take(5).Select(p => new
+            {
+                numero = p.RequestNumber,
+                fecha = p.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy"),
+                tipo = p.Tipo.ToDisplayString(),
+                estado = p.Estado.ToDisplayString(),
+                badge = p.Estado.ToBadgeClass()
+            })
+        });
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid) return Page();
+
+        // Regla: si la empresa ya tiene una solicitud, solo se permite una actualización.
+        // (La vista ya bloquea las otras opciones; esto evita saltársela.)
+        if (!Input.TipoSolicitud.PermitidoConSolicitudPrevia())
+        {
+            var previas = await _requestService.GetSolicitudesPreviasAsync(Input.RutCliente);
+            if (previas.Count > 0)
+            {
+                ModelState.AddModelError("Input.TipoSolicitud",
+                    $"Esta empresa ya tiene {previas.Count} solicitud(es) (la última es {previas[0].RequestNumber}). " +
+                    $"Solo puede crear una {RequestType.ActualizacionDatos.ToDisplayString()} o una {RequestType.ActualizacionSinCambios.ToDisplayString()}.");
+                return Page();
+            }
+        }
 
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (userId is null) return Challenge();

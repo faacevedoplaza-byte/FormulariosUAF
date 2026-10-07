@@ -1,0 +1,18 @@
+@model IEnumerable<FormulariosUAF.Models.Domain.GestionOperacionNota>
+@* Bitácora de una gestión (más reciente primero). Usada en Regcheq/Gestion y Regcheq/Detalle. *@
+@if (!Model.Any())
+{
+    <p class="text-muted small mb-0">Todavía no hay movimientos en esta operación.</p>
+}
+else
+{
+    <ul class="gs-timeline">
+        @foreach (var n in Model)
+        {
+            <li class="@(n.EsSistema ? "sistema" : "")">
+                <div class="gs-meta"><strong>@n.UsuarioNombre</strong> · @n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                <div class="gs-texto">@n.Texto</div>
+            </li>
+        }
+    </ul>
+}

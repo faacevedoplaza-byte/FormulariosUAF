@@ -8,11 +8,22 @@ public class DeclaredPerson
     public Guid RequestId { get; set; }
     public Request Request { get; set; } = null!;
 
+    public int TipoDocumentoId { get; set; } = TipoDocumento.IdRut;
+    public TipoDocumento TipoDocumento { get; set; } = null!;
     public string IdNumber { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public int? NacionalidadId { get; set; }
+    public Nacionalidad? Nacionalidad { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
-    public string Country { get; set; } = "Chile";
+    public int? PaisResidenciaId { get; set; }
+    public Pais? PaisResidencia { get; set; }
+
+    /// <summary>
+    /// Histórico: país de residencia en texto libre (antes de T_PAIS). Ya no se escribe;
+    /// solo se muestra en registros antiguos que no se pudieron asociar a T_PAIS.
+    /// </summary>
+    public string? Country { get; set; }
 
     public decimal ParticipationPercentage { get; set; }
     public RelationshipType RelationshipType { get; set; }

@@ -1,0 +1,291 @@
+﻿@page
+@model FormulariosUAF.Pages.Regcheq.IndexModel
+@using FormulariosUAF.Pages.Regcheq
+@using Microsoft.AspNetCore.Routing
+@{
+    ViewData["Title"] = "Operaciones RegCheq";
+    var t = Model.Listado.Totales;
+    bool Sel(string? actual, string valor) => string.Equals(actual, valor, StringComparison.OrdinalIgnoreCase);
+
+    // Encabezado ordenable (en el servidor: ordena todas las operaciones filtradas, no solo la página).
+    void ThOrden(string columna, string texto, string? clase = null, string? ayuda = null)
+    {
+        var activa = Model.OrdenActual == columna;
+        var icono = !activa ? "fa-sort" : Model.Ascendente ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
+        var ruta = new RouteValueDictionary(Model.RutaOrden(columna).Where(kv => kv.Value != null).ToDictionary(kv => kv.Key, kv => (object?)kv.Value));
+        <th class="@clase" title="@ayuda">
+            <a class="gs-orden @(activa ? "activa" : "")" href="@Url.Page("./Index", ruta)">
+                @texto <i class="fa-solid @icono ms-1"></i>
+            </a>
+        </th>
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Operaciones RegCheq</h4>
+</div>
+
+<!-- Pestañas: personas naturales / empresas -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(Model.EsNatural ? "active" : "")" asp-page="./Index" asp-all-route-data='Model.Ruta(tipo: "natural")'>
+            <i class="fa-solid fa-user me-1"></i>Personas naturales
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(!Model.EsNatural ? "active" : "")" asp-page="./Index" asp-all-route-data='Model.Ruta(tipo: "empresa")'>
+            <i class="fa-solid fa-building me-1"></i>Empresas
+        </a>
+    </li>
+</ul>
+
+@if (!Model.Listado.Configurado)
+{
+    <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>La conexión <code>RegCheqConnection</code> no está configurada en este ambiente.</div>
+}
+else if (Model.Listado.Error is not null)
+{
+    <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Listado.Error</div>
+}
+
+<!-- Totales (según filtros) -->
+<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+            <div class="fs-3 fw-bold text-primary">@t.Total.ToString("N0")</div><small class="text-muted">Operaciones</small>
+        </div></div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+            <div class="fs-3 fw-bold text-danger">@t.ConPep.ToString("N0")</div><small class="text-muted">PEP según RegCheq</small>
+        </div></div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+            <div class="fs-3 fw-bold text-danger">@t.CoincidenciaListaPep.ToString("N0")</div><small class="text-muted">Coinciden en lista PEP</small>
+        </div></div>
+    </div>
+    @if (Model.EsNatural)
+    {
+        <div class="col">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+                <div class="fs-3 fw-bold text-success">@t.FirmoPep.ToString("N0")</div><small class="text-muted">Firmaron PEP</small>
+            </div></div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+                <div class="fs-3 fw-bold text-success">@t.FirmoDof.ToString("N0")</div><small class="text-muted">Firmaron DOF</small>
+            </div></div>
+        </div>
+    }
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+            <div class="fs-3 fw-bold text-info">@t.FormulariosFirmados.ToString("N0")</div><small class="text-muted">Formularios firmados</small>
+        </div></div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+            @if (Model.EsNatural)
+            {
+                <div class="fs-3 fw-bold text-success">@t.FirmasCompletas.ToString("N0")</div><small class="text-muted" title="Todos los formularios requeridos (PEP/DOF) firmados">Firmas completas</small>
+            }
+            else
+            {
+                <div class="fs-3 fw-bold text-dark">@t.Finalizadas.ToString("N0")</div><small class="text-muted">Finalizadas</small>
+            }
+        </div></div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <input type="hidden" name="tipo" value="@Model.Tipo" />
+            @if (!string.IsNullOrEmpty(Model.Orden)) { <input type="hidden" name="orden" value="@Model.Orden" /> }
+            @if (!string.IsNullOrEmpty(Model.Dir)) { <input type="hidden" name="dir" value="@Model.Dir" /> }
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">Buscar</label>
+                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="RUT, nombre, referencia o código" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted mb-1">Desde</label>
+                <input type="date" name="desde" value="@Model.Desde?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted mb-1">Hasta</label>
+                <input type="date" name="hasta" value="@Model.Hasta?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-6 col-md-1">
+                <label class="form-label small text-muted mb-1" title="Campo hasPep: conclusión de RegCheq sobre la operación">PEP (RegCheq)</label>
+                <select name="pep" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="si" selected="@Sel(Model.Pep, "si")">Sí</option>
+                    <option value="no" selected="@Sel(Model.Pep, "no")">No</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-1">
+                <label class="form-label small text-muted mb-1" title="Lista pepChile: BT_COINCIDENCE de algún asociado">Lista PEP</label>
+                <select name="listaPep" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="si" selected="@Sel(Model.ListaPep, "si")">Coincide (true)</option>
+                    <option value="no" selected="@Sel(Model.ListaPep, "no")">No coincide (false)</option>
+                </select>
+            </div>
+            @if (Model.EsNatural)
+            {
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1">Firmó PEP</label>
+                    <select name="firmoPep" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="si" selected="@Sel(Model.FirmoPep, "si")">Sí</option>
+                        <option value="no" selected="@Sel(Model.FirmoPep, "no")">No</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1">Firmó DOF</label>
+                    <select name="firmoDof" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="si" selected="@Sel(Model.FirmoDof, "si")">Sí</option>
+                        <option value="no" selected="@Sel(Model.FirmoDof, "no")">No</option>
+                    </select>
+                </div>
+            }
+            @if (Model.EsNatural)
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1" title="Misma regla que la vista Gestión">Firmas</label>
+                    <select name="firmas" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        <option value="completa" selected="@Sel(Model.Firmas, "completa")">Completa</option>
+                        <option value="pep" selected="@Sel(Model.Firmas, "pep")">Caso 1 · Falta PEP</option>
+                        <option value="dof" selected="@Sel(Model.Firmas, "dof")">Caso 2 · Falta DOF</option>
+                        <option value="ambos" selected="@Sel(Model.Firmas, "ambos")">Caso 3 · PEP y DOF</option>
+                        <option value="norequiere" selected="@Sel(Model.Firmas, "norequiere")">No requiere</option>
+                        <option value="sinseguimiento" selected="@Sel(Model.Firmas, "sinseguimiento")">Sin seguimiento (antes de 2026)</option>
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1">Finalizada</label>
+                    <select name="fin" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        <option value="si" selected="@Sel(Model.Fin, "si")">Sí</option>
+                        <option value="no" selected="@Sel(Model.Fin, "no")">No</option>
+                    </select>
+                </div>
+            }
+            <div class="col-6 col-md-1">
+                <button type="submit" class="btn btn-secondary btn-sm w-100"><i class="fa-solid fa-filter me-1"></i>Filtrar</button>
+            </div>
+            <div class="col-6 col-md-auto">
+                <a asp-page="./Index" asp-route-tipo="@Model.Tipo" class="btn btn-link btn-sm">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        @{
+                            ThOrden("fecha", "Fecha");
+                            ThOrden("codigo", "Código / Referencia");
+                            ThOrden("cliente", Model.EsNatural ? "Cliente" : "Empresa");
+                            ThOrden("monto", "Monto", "text-end");
+                            ThOrden("efectivo", "Efectivo", "text-center");
+                            ThOrden("pep", "PEP", "text-center", "hasPep de RegCheq");
+                            ThOrden("listapep", "Lista PEP", "text-center", "Lista pepChile (BT_COINCIDENCE)");
+                            if (Model.EsNatural)
+                            {
+                                ThOrden("firmapep", "Firma PEP", "text-center");
+                                ThOrden("firmadof", "Firma DOF", "text-center");
+                            }
+                            ThOrden("formularios", "Formularios firmados", "text-center");
+                            ThOrden("estado", "Estado");
+                            if (Model.EsNatural)
+                                ThOrden("firmas", "Firmas", null, "Misma regla que la vista Gestión");
+                            else
+                                ThOrden("finalizada", "Finalizada", "text-center");
+                        }
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Listado.Operaciones.Any())
+                    {
+                        <tr><td colspan="@(Model.EsNatural ? 13 : 11)" class="text-center text-muted py-4">No hay operaciones para mostrar</td></tr>
+                    }
+                    @foreach (var op in Model.Listado.Operaciones)
+                    {
+                        <tr>
+                            <td><small>@RegcheqUi.Fecha(op.FechaCreacion, conHora: true)</small></td>
+                            <td>
+                                <span class="font-monospace small">@(op.Codigo?.ToString() ?? "—")</span>
+                                @if (!string.IsNullOrWhiteSpace(op.Referencia))
+                                {
+                                    <div class="small text-muted">Ref. @op.Referencia</div>
+                                }
+                            </td>
+                            <td>
+                                <div>@(op.AsociadoNombre ?? "—")</div>
+                                <small class="text-muted">@op.AsociadoRut</small>
+                                @if (op.CantidadAsociados > 1)
+                                {
+                                    <span class="badge bg-light text-dark border ms-1" title="Asociados en la operación">+@(op.CantidadAsociados - 1)</span>
+                                }
+                                @RegcheqUi.VehiculoCorto(Model.Vehiculos.GetValueOrDefault(op.Id))
+                            </td>
+                            <td class="text-end text-nowrap">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</td>
+                            <td class="text-center">@RegcheqUi.SiNo(op.Efectivo, "bg-warning text-dark")</td>
+                            <td class="text-center">@RegcheqUi.Pep(op.TienePep)</td>
+                            <td class="text-center">@RegcheqUi.ListaPep(op.CoincidenciaListaPep)</td>
+                            @if (Model.EsNatural)
+                            {
+                                <td class="text-center">@RegcheqUi.Firma(op.FirmoPep, op.FechaFirmaPep)</td>
+                                <td class="text-center">@RegcheqUi.Firma(op.FirmoDof, op.FechaFirmaDof)</td>
+                            }
+                            <td class="text-center">@RegcheqUi.SiNo(op.FormulariosFirmados)</td>
+                            <td><small>@RegcheqUi.Texto(op.Estado)</small></td>
+                            @if (Model.EsNatural)
+                            {
+                                <td class="text-nowrap">@RegcheqUi.EstadoFirmas(op.EstadoFirmas)</td>
+                            }
+                            else
+                            {
+                                <td class="text-center">@RegcheqUi.SiNo(op.Finalizada)</td>
+                            }
+                            <td>
+                                <a asp-page="./Detalle" asp-route-tipo="@Model.Tipo" asp-route-id="@op.Id" class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-eye me-1"></i>Ver
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (Model.TotalPaginas > 1)
+    {
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted">Página @Model.Pagina de @Model.TotalPaginas · @t.Total.ToString("N0") operaciones</small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.Pagina <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index" asp-all-route-data="Model.Ruta(Model.Pagina - 1)">Anterior</a>
+                    </li>
+                    <li class="page-item @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index" asp-all-route-data="Model.Ruta(Model.Pagina + 1)">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
