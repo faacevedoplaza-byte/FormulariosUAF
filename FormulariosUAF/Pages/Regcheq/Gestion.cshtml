@@ -275,7 +275,7 @@ else if (Model.Error is not null)
             @if (!string.IsNullOrEmpty(Model.Usuario)) { <input type="hidden" name="usuario" value="@Model.Usuario" /> }
             <div class="col-md-4">
                 <label class="form-label small text-muted mb-1">Buscar</label>
-                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="N° operación, referencia, RUT o nombre" />
+                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="N° operación, cotización, RUT o nombre" />
             </div>
             @if (!Model.EsCerradas)
             {
@@ -363,7 +363,7 @@ else if (Model.Error is not null)
                         {
                             var op = f.Operacion;
                             var g = f.Gestion;
-                            var (casoTxt, casoCls) = GestionModel.Etiqueta(op.Caso);
+                            var (casoTxt, _) = GestionModel.Etiqueta(op.Caso);
                             var tomadaPorMi = g?.UsuarioId is { } uid && uid == Model.UsuarioActualId;
                             // Solo quien la tomó escribe en la bitácora; el administrador solo la reasigna o libera.
                             var puedeGestionar = Model.PuedeGestionar && tomadaPorMi;
@@ -383,19 +383,20 @@ else if (Model.Error is not null)
                                 </td>
                                 <td>
                                     <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="font-monospace fw-semibold text-decoration-none" title="Ver detalle de la operación">@(op.Codigo?.ToString() ?? "—")</a>
-                                    @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted">Ref. @op.Referencia</div> }
+                                    @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted" title="N° de cotización Netcar (referencia en RegCheq)">Cotización @op.Referencia</div> }
                                 </td>
                                 <td>
-                                    <div>@(op.Nombre ?? "—")</div>
-                                    <small class="text-muted">@op.Rut</small>
+                                    <div class="fw-semibold">@RegcheqUi.NombrePropio(op.Nombre)</div>
+                                    <small class="text-muted font-monospace">@RegcheqUi.Rut(op.Rut)</small>
                                     @RegcheqUi.VehiculoCorto(Model.Vehiculos.GetValueOrDefault(op.Id))
                                 </td>
                                 <td>
-                                    <span class="gs-caso @casoCls">@casoTxt</span>
-                                    <div class="mt-1">
-                                        @if (op.RequierePep) { <span class="gs-doc @(op.FirmoPep ? "ok" : "pend")"><i class="fa-solid @(op.FirmoPep ? "fa-check" : "fa-clock")"></i>PEP</span> }
-                                        @if (op.RequiereDof) { <span class="gs-doc @(op.FirmoDof ? "ok" : "pend")"><i class="fa-solid @(op.FirmoDof ? "fa-check" : "fa-clock")"></i>DOF</span> }
+                                    @* Las etiquetas ya dicen qué falta (reloj) o está firmado (check); el caso va como referencia. *@
+                                    <div class="text-nowrap">
+                                        @if (op.RequierePep) { <span class="gs-doc @(op.FirmoPep ? "ok" : "pend")" title="@(op.FirmoPep ? "PEP firmado" : "Falta firmar PEP")"><i class="fa-solid @(op.FirmoPep ? "fa-check" : "fa-clock")"></i>PEP</span> }
+                                        @if (op.RequiereDof) { <span class="gs-doc @(op.FirmoDof ? "ok" : "pend")" title="@(op.FirmoDof ? "DOF firmado" : "Falta firmar DOF")"><i class="fa-solid @(op.FirmoDof ? "fa-check" : "fa-clock")"></i>DOF</span> }
                                     </div>
+                                    <small class="text-muted" title="@casoTxt">@casoTxt.Split(" · ")[0]</small>
                                 </td>
                                 <td>
                                     @if (g?.UsuarioId is not null)
@@ -577,8 +578,8 @@ else
                                     <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@g.OperacionId" class="font-monospace fw-semibold text-decoration-none">@(g.CodigoOperacion?.ToString() ?? "—")</a>
                                 </td>
                                 <td>
-                                    <div>@(g.ClienteNombre ?? "—")</div>
-                                    <small class="text-muted">@g.ClienteRut</small>
+                                    <div class="fw-semibold">@RegcheqUi.NombrePropio(g.ClienteNombre)</div>
+                                    <small class="text-muted font-monospace">@RegcheqUi.Rut(g.ClienteRut)</small>
                                 </td>
                                 <td>
                                     @if (gestor is not null)

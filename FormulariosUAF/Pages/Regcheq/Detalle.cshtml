@@ -88,12 +88,13 @@ else
             <span class="rq-cliente-icono"><i class="fa-solid @(Model.EsNatural ? "fa-user" : "fa-building")"></i></span>
             <div class="flex-grow-1 min-w-0">
                 <div class="rq-cliente-lbl">@(Model.EsNatural ? "Cliente" : "Empresa")</div>
-                <div class="rq-cliente-nombre">@(nombreCliente ?? "Sin nombre en la ficha")</div>
+                <div class="rq-cliente-nombre">@(nombreCliente is null ? "Sin nombre en la ficha" : RegcheqUi.NombrePropio(nombreCliente))</div>
                 <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
                     @if (!string.IsNullOrWhiteSpace(titular?.Rut))
                     {
-                        <span class="rq-cliente-rut"><i class="fa-regular fa-id-card me-1"></i>@titular.Rut</span>
+                        <span class="rq-cliente-rut font-monospace"><i class="fa-regular fa-id-card me-1"></i>@RegcheqUi.Rut(titular.Rut)</span>
                     }
+                    @RegcheqUi.Efectivo(op.Efectivo, op.MontoEfectivo, op.Divisa)
                     @if (titular?.Pep == true) { @RegcheqUi.Pep(true, titular.NivelPep) }
                     @if (op.Asociados.Count > 1)
                     {
@@ -101,10 +102,9 @@ else
                     }
                 </div>
                 @{
-                    var telefono = titular?.Ficha?.Telefono?.Trim();
-                    var correo = titular?.Ficha?.Email?.Trim();
-                    // Para el enlace tel: solo dígitos y '+' (la ficha puede traer espacios, guiones o paréntesis).
-                    var telefonoLink = telefono is null ? null : new string(telefono.Where(c => char.IsDigit(c) || c == '+').ToArray());
+                    // Teléfono agrupado para leerlo ("+56 9 1234 5678") y solo dígitos para el enlace tel:.
+                    var (telefono, telefonoLink) = RegcheqUi.Telefono(titular?.Ficha?.Telefono);
+                    var correo = titular?.Ficha?.Email?.Trim().ToLowerInvariant();
                 }
                 <div class="rq-contacto mt-2">
                     @if (!string.IsNullOrEmpty(telefonoLink))
@@ -133,8 +133,16 @@ else
             </div>
             <div class="text-end small text-muted">
                 <div>Operación <span class="font-monospace fw-semibold text-body">@(op.Codigo?.ToString() ?? "—")</span></div>
-                @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div>Ref. @op.Referencia</div> }
-                <div>@RegcheqUi.Fecha(op.FechaCreacion, true)</div>
+                @if (!string.IsNullOrWhiteSpace(op.Referencia))
+                {
+                    <div title="N° de cotización Netcar (referencia en RegCheq)">Cotización <span class="font-monospace fw-semibold text-body">@op.Referencia</span></div>
+                }
+                <div>Monto <span class="fw-semibold text-body">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</span></div>
+                <div>
+                    @RegcheqUi.Fecha(op.FechaCreacion, true)
+                    @* La antigüedad en ámbar/rojo solo tiene sentido mientras falta una firma. *@
+                    @if (Model.CasoPendiente is not null) { <span>· @RegcheqUi.Antiguedad(op.FechaCreacion)</span> }
+                </div>
             </div>
         </div>
     </div>
@@ -307,7 +315,7 @@ else
                 else
                 {
                     <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-                        <div class="fs-5 fw-semibold">@(v.Resumen.Length > 0 ? v.Resumen : "Vehículo sin marca/modelo")</div>
+                        <div class="fs-5 fw-semibold">@(v.Resumen.Length > 0 ? RegcheqUi.Modelo(v.Resumen) : "Vehículo sin marca/modelo")</div>
                         @if (v.EsNuevo is { } nuevo)
                         {
                             <span class="badge @(nuevo ? "bg-primary-subtle text-primary-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">@(nuevo ? "Nuevo" : "Usado")</span>
@@ -324,7 +332,7 @@ else
                         <dt class="col-sm-3">Patente</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(v.Patente)</dd>
                         <dt class="col-sm-3">N° chasis</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(v.Chasis)</dd>
                         <dt class="col-sm-3">Precio cotizado</dt><dd class="col-sm-3">@RegcheqUi.Pesos(v.Precio)</dd>
-                        <dt class="col-sm-3">Vendedor</dt><dd class="col-sm-3">@RegcheqUi.Texto(v.Vendedor)</dd>
+                        <dt class="col-sm-3">Vendedor</dt><dd class="col-sm-3 fw-semibold">@(string.IsNullOrWhiteSpace(v.Vendedor) ? "—" : RegcheqUi.NombrePropio(v.Vendedor))</dd>
                         <dt class="col-sm-3">Fecha cotización</dt><dd class="col-sm-3">@RegcheqUi.Fecha(v.FechaCotizacion)</dd>
                     </dl>
                 }
@@ -336,24 +344,41 @@ else
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white fw-semibold"><i class="fa-solid fa-receipt me-2"></i>Datos de la operación</div>
         <div class="card-body">
+            @* Solo lo que sirve para gestionar y con dato; lo técnico (IDs, valor dólar/UF, leído, integración) está en "Datos técnicos". *@
             <dl class="row mb-0 small">
-                <dt class="col-sm-3">Código</dt><dd class="col-sm-3 font-monospace">@(op.Codigo?.ToString() ?? "—")</dd>
-                <dt class="col-sm-3">N° referencia</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Referencia)</dd>
-                <dt class="col-sm-3">ID RegCheq</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(op.RegcheqId)</dd>
-                <dt class="col-sm-3">Empresa (company id)</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.CompanyId)</dd>
-                <dt class="col-sm-3">Tipo de transacción</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.TipoTransaccion)</dd>
-                <dt class="col-sm-3">Operación</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Operacion)</dd>
-                <dt class="col-sm-3">Fecha transacción</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.FechaTransaccion)</dd>
-                <dt class="col-sm-3">Monto total</dt><dd class="col-sm-3">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</dd>
-                <dt class="col-sm-3">Pago en efectivo</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.Efectivo, "bg-warning text-dark") @(op.MontoEfectivo.HasValue ? RegcheqUi.Monto(op.MontoEfectivo, null, op.Divisa) : "")</dd>
-                <dt class="col-sm-3">Divisa</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Divisa)</dd>
-                <dt class="col-sm-3">Valor dólar / UF</dt><dd class="col-sm-3">@(op.ValorDolar ?? "—") / @(op.ValorUf ?? "—")</dd>
-                <dt class="col-sm-3">ROS</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Ros)</dd>
-                <dt class="col-sm-3">Archivo requerido</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.ArchivoRequerido) <small>@op.EstadoArchivo</small></dd>
-                <dt class="col-sm-3">Leído</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.Leido)</dd>
+                <dt class="col-sm-3">N° operación</dt><dd class="col-sm-3 font-monospace">@(op.Codigo?.ToString() ?? "—")</dd>
+                @if (!string.IsNullOrWhiteSpace(op.Referencia))
+                {
+                    <dt class="col-sm-3">N° cotización</dt><dd class="col-sm-3 font-monospace">@op.Referencia</dd>
+                }
+                <dt class="col-sm-3">Monto total</dt><dd class="col-sm-3 fw-semibold">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</dd>
+                <dt class="col-sm-3">Pago en efectivo</dt>
+                <dd class="col-sm-3">@if (op.Efectivo == true) { @RegcheqUi.Efectivo(true, op.MontoEfectivo, op.Divisa) } else { @RegcheqUi.SiNo(op.Efectivo) }</dd>
+                @if (!string.IsNullOrWhiteSpace(op.TipoTransaccion))
+                {
+                    <dt class="col-sm-3">Tipo de transacción</dt><dd class="col-sm-3">@op.TipoTransaccion</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(op.Operacion))
+                {
+                    <dt class="col-sm-3">Operación</dt><dd class="col-sm-3">@op.Operacion</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(op.FechaTransaccion))
+                {
+                    <dt class="col-sm-3">Fecha transacción</dt><dd class="col-sm-3">@op.FechaTransaccion</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(op.Ros))
+                {
+                    <dt class="col-sm-3">ROS</dt><dd class="col-sm-3">@op.Ros</dd>
+                }
+                @if (op.ArchivoRequerido == true)
+                {
+                    <dt class="col-sm-3">Archivo requerido</dt><dd class="col-sm-3">@RegcheqUi.SiNo(true) <small>@op.EstadoArchivo</small></dd>
+                }
                 <dt class="col-sm-3">Creada</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaCreacion, true) <small class="text-muted">@op.CreadoPor</small></dd>
-                <dt class="col-sm-3">Actualizada</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaActualizacion, true) <small class="text-muted">@op.ActualizadoPor</small></dd>
-                <dt class="col-sm-3">Recibida en integración</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaRecibido, true)</dd>
+                @if (op.FechaActualizacion.HasValue)
+                {
+                    <dt class="col-sm-3">Actualizada</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaActualizacion, true) <small class="text-muted">@op.ActualizadoPor</small></dd>
+                }
                 @if (!string.IsNullOrWhiteSpace(op.ComentariosTransaccion))
                 {
                     <dt class="col-sm-3">Comentarios</dt><dd class="col-sm-9">@op.ComentariosTransaccion</dd>
@@ -376,8 +401,8 @@ else
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button @(op.Asociados.Count > 1 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#@idAcc">
-                        <span class="me-3 fw-bold fs-6">@(f?.NombreCompleto is { Length: > 0 } n ? n : "Sin ficha")</span>
-                        <span class="text-muted small me-3">@a.Rut</span>
+                        <span class="me-3 fw-bold fs-6">@(f?.NombreCompleto is { Length: > 0 } n ? RegcheqUi.NombrePropio(n) : "Sin ficha")</span>
+                        <span class="text-muted small me-3 font-monospace">@RegcheqUi.Rut(a.Rut)</span>
                         @if (a.Pep == true) { <span class="me-2">@RegcheqUi.Pep(true, a.NivelPep)</span> }
                         @if (!string.IsNullOrWhiteSpace(a.Tipo)) { <span class="badge bg-light text-dark border">@a.Tipo</span> }
                     </button>
@@ -412,11 +437,11 @@ else
                                         {
                                             <dt class="col-sm-4">Nombre fantasía</dt><dd class="col-sm-8">@f.NombreFantasia</dd>
                                         }
-                                        <dt class="col-sm-4">RUT / DNI</dt><dd class="col-sm-8">@(f.Rut ?? f.Dni ?? "—") <small class="text-muted">@f.PaisDni</small></dd>
+                                        <dt class="col-sm-4">RUT / DNI</dt><dd class="col-sm-8">@RegcheqUi.Rut(f.Rut ?? f.Dni) <small class="text-muted">@f.PaisDni</small></dd>
                                         <dt class="col-sm-4">Tipo persona</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.TipoPersona)</dd>
                                         <dt class="col-sm-4">Nacionalidad / país</dt><dd class="col-sm-8">@(f.Nacionalidad ?? "—") / @(f.Pais ?? "—")</dd>
                                         <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Email)</dd>
-                                        <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">@RegcheqUi.Texto(f.Telefono)</dd>
+                                        <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">@RegcheqUi.Texto(RegcheqUi.Telefono(f.Telefono).Texto)</dd>
                                         <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">@(f.Direccion ?? "—")@(f.Ciudad is null ? "" : $", {f.Ciudad}")@(f.Region is null ? "" : $", {f.Region}")</dd>
                                         @if (Model.EsNatural)
                                         {
@@ -530,12 +555,24 @@ else
         }
     </div>
 
-    <!-- Datos técnicos -->
-    @if (!string.IsNullOrWhiteSpace(op.Firmas) || !string.IsNullOrWhiteSpace(op.RespuestaJson))
-    {
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold"><i class="fa-solid fa-code me-2"></i>Datos técnicos de RegCheq</div>
+    <!-- Datos técnicos (colapsados: rara vez los necesita quien gestiona) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="fa-solid fa-code me-2"></i>Datos técnicos de RegCheq</span>
+            <button type="button" class="btn btn-sm btn-link text-decoration-none gs-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#rqTecnicos">
+                <span class="small">Mostrar / ocultar</span> <i class="fa-solid fa-chevron-down ms-1"></i>
+            </button>
+        </div>
+        <div id="rqTecnicos" class="collapse">
             <div class="card-body">
+                <dl class="row small mb-3">
+                    <dt class="col-sm-3">ID RegCheq</dt><dd class="col-sm-3 font-monospace">@RegcheqUi.Texto(op.RegcheqId)</dd>
+                    <dt class="col-sm-3">Empresa (company id)</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.CompanyId)</dd>
+                    <dt class="col-sm-3">Divisa</dt><dd class="col-sm-3">@RegcheqUi.Texto(op.Divisa)</dd>
+                    <dt class="col-sm-3">Valor dólar / UF</dt><dd class="col-sm-3">@(op.ValorDolar ?? "—") / @(op.ValorUf ?? "—")</dd>
+                    <dt class="col-sm-3">Leído</dt><dd class="col-sm-3">@RegcheqUi.SiNo(op.Leido)</dd>
+                    <dt class="col-sm-3">Recibida en integración</dt><dd class="col-sm-3">@RegcheqUi.Fecha(op.FechaRecibido, true)</dd>
+                </dl>
                 @if (!string.IsNullOrWhiteSpace(op.Firmas))
                 {
                     <details class="mb-3">
@@ -552,7 +589,7 @@ else
                 }
             </div>
         </div>
-    }
+    </div>
 }
 
 @section Scripts {

@@ -110,7 +110,7 @@ else if (Model.Listado.Error is not null)
             @if (!string.IsNullOrEmpty(Model.Dir)) { <input type="hidden" name="dir" value="@Model.Dir" /> }
             <div class="col-md-2">
                 <label class="form-label small text-muted mb-1">Buscar</label>
-                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="RUT, nombre, referencia o código" />
+                <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="RUT, nombre, cotización o código" />
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label small text-muted mb-1">Desde</label>
@@ -200,7 +200,7 @@ else if (Model.Listado.Error is not null)
                     <tr>
                         @{
                             ThOrden("fecha", "Fecha");
-                            ThOrden("codigo", "Código / Referencia");
+                            ThOrden("codigo", "Operación / Cotización");
                             ThOrden("cliente", Model.EsNatural ? "Cliente" : "Empresa");
                             ThOrden("monto", "Monto", "text-end");
                             ThOrden("efectivo", "Efectivo", "text-center");
@@ -234,19 +234,21 @@ else if (Model.Listado.Error is not null)
                                 <span class="font-monospace small">@(op.Codigo?.ToString() ?? "—")</span>
                                 @if (!string.IsNullOrWhiteSpace(op.Referencia))
                                 {
-                                    <div class="small text-muted">Ref. @op.Referencia</div>
+                                    <div class="small text-muted" title="N° de cotización Netcar (referencia en RegCheq)">Cotización @op.Referencia</div>
                                 }
                             </td>
                             <td>
-                                <div>@(op.AsociadoNombre ?? "—")</div>
-                                <small class="text-muted">@op.AsociadoRut</small>
+                                <div class="fw-semibold">@RegcheqUi.NombrePropio(op.AsociadoNombre)</div>
+                                <small class="text-muted font-monospace">@RegcheqUi.Rut(op.AsociadoRut)</small>
                                 @if (op.CantidadAsociados > 1)
                                 {
                                     <span class="badge bg-light text-dark border ms-1" title="Asociados en la operación">+@(op.CantidadAsociados - 1)</span>
                                 }
                                 @RegcheqUi.VehiculoCorto(Model.Vehiculos.GetValueOrDefault(op.Id))
                             </td>
-                            <td class="text-end text-nowrap">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</td>
+                            <td class="text-end text-nowrap @(op.Efectivo == true ? "fw-semibold text-warning-emphasis" : "")">
+                                @if (op.Efectivo == true) { <i class="fa-solid fa-money-bill-wave me-1" title="Con pago en efectivo"></i> }@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)
+                            </td>
                             <td class="text-center">@RegcheqUi.SiNo(op.Efectivo, "bg-warning text-dark")</td>
                             <td class="text-center">@RegcheqUi.Pep(op.TienePep)</td>
                             <td class="text-center">@RegcheqUi.ListaPep(op.CoincidenciaListaPep)</td>

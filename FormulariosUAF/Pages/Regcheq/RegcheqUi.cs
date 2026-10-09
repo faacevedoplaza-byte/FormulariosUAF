@@ -81,21 +81,109 @@ public static class RegcheqUi
             ? new HtmlString("<span class=\"text-muted\">—</span>")
             : new HtmlString(WebUtility.HtmlEncode(valor));
 
+    /// <summary>
+    /// Monto con el mismo formato en todas las vistas: "$12.490.000" en pesos, "12.490 USD" en otra divisa.
+    /// Se prefiere el número; el texto formateado de RegCheq solo si no viene el número.
+    /// </summary>
     public static string Monto(int? monto, string? formateado = null, string? divisa = null)
     {
-        if (!string.IsNullOrWhiteSpace(formateado)) return formateado!;
-        if (!monto.HasValue) return "—";
+        if (!monto.HasValue) return string.IsNullOrWhiteSpace(formateado) ? "—" : formateado!;
         var texto = monto.Value.ToString("N0", Chile);
-        return string.IsNullOrWhiteSpace(divisa) ? $"$ {texto}" : $"{texto} {divisa}";
+        return string.IsNullOrWhiteSpace(divisa) || divisa.Trim().Equals("CLP", StringComparison.OrdinalIgnoreCase)
+            ? $"${texto}" : $"{texto} {divisa.Trim().ToUpperInvariant()}";
     }
 
-    public static string Pesos(decimal? monto) => monto.HasValue ? $"$ {monto.Value.ToString("N0", Chile)}" : "—";
+    public static string Pesos(decimal? monto) => monto.HasValue ? $"${monto.Value.ToString("N0", Chile)}" : "—";
 
-    /// <summary>"Marca Modelo" bajo el cliente en los listados; nada si no hay vehículo.</summary>
-    public static IHtmlContent VehiculoCorto(Services.VehiculoOperacion? v) =>
-        v?.Vehiculo is { } veh && veh.Resumen.Length > 0
-            ? new HtmlString($"<div class=\"small text-muted text-truncate\" style=\"max-width:240px\" title=\"{WebUtility.HtmlEncode($"{veh.Resumen} {veh.Version} · Cotización {veh.Cotizacion} ({veh.Empresa})")}\">"
-                             + $"<i class=\"fa-solid fa-car-side me-1\"></i>{WebUtility.HtmlEncode(veh.Resumen)}</div>")
+    /// <summary>
+    /// RUT con formato "8.690.723-2". RegCheq lo guarda sin puntos ni guion (con el DV al final); si el
+    /// dígito verificador no cuadra se muestra tal cual, para no inventar un RUT.
+    /// </summary>
+    public static string Rut(string? rut)
+    {
+        if (string.IsNullOrWhiteSpace(rut)) return "—";
+        var n = Helpers.RutHelper.Normalizar(rut);
+        if (!Helpers.RutHelper.EsValido(n)) return rut.Trim();
+        var cuerpo = long.Parse(n[..^1]).ToString("N0", Chile);
+        return $"{cuerpo}-{n[^1]}";
+    }
+
+    // Partículas que van en minúscula dentro de un nombre ("Iván de la Cruz") y siglas de sociedades.
+    private static readonly HashSet<string> Particulas = new(StringComparer.OrdinalIgnoreCase) { "de", "del", "la", "las", "los", "y", "e", "da", "do", "dos", "van", "von" };
+    private static readonly HashSet<string> Siglas = new(StringComparer.OrdinalIgnoreCase) { "SPA", "LTDA", "EIRL", "SA", "S.A.", "S.A", "SAC", "SRL", "CIA", "CÍA" };
+
+    /// <summary>
+    /// Nombre de persona o empresa en mayúsculas/minúsculas ("IVAN DE LA CRUZ" → "Ivan de la Cruz").
+    /// Las tildes no se pueden recuperar (no vienen en el dato). Las siglas de sociedad quedan en mayúscula.
+    /// </summary>
+    public static string NombrePropio(string? nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre)) return "—";
+        var palabras = nombre.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < palabras.Length; i++)
+        {
+            var p = palabras[i];
+            if (Siglas.Contains(p)) palabras[i] = p.ToUpperInvariant();
+            else if (i > 0 && Particulas.Contains(p)) palabras[i] = p.ToLower(Chile);
+            else palabras[i] = MayusculaTrasApostrofo(Chile.TextInfo.ToTitleCase(p.ToLower(Chile))); // "Pérez-Cotapos", "O'Ryan"
+        }
+        return string.Join(' ', palabras);
+
+        static string MayusculaTrasApostrofo(string s)
+        {
+            var i = s.IndexOf('\'');
+            return i < 0 || i == s.Length - 1 ? s : s[..(i + 1)] + char.ToUpper(s[i + 1], Chile) + s[(i + 2)..];
+        }
+    }
+
+    /// <summary>
+    /// Marca/modelo legible ("SONET" → "Sonet") sin romper siglas: palabras cortas (MG, BMW, CX) o con
+    /// números (CX-5, 3008) quedan como vienen.
+    /// </summary>
+    public static string Modelo(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return "";
+        return string.Join(' ', texto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(p =>
+            p.Length <= 3 || p.Any(char.IsDigit) || p.Any(char.IsLower) ? p : Chile.TextInfo.ToTitleCase(p.ToLower(Chile))));
+    }
+
+    /// <summary>
+    /// Teléfono chileno agrupado para leerlo y dictarlo ("56912345678" → "+56 9 1234 5678") y el número para
+    /// el enlace tel:. Si no se reconoce el formato, se muestra tal cual.
+    /// </summary>
+    public static (string Texto, string Enlace) Telefono(string? telefono)
+    {
+        if (string.IsNullOrWhiteSpace(telefono)) return ("", "");
+        var d = new string(telefono.Where(char.IsDigit).ToArray());
+        if (d.StartsWith("56") && d.Length == 11) d = d[2..];
+        if (d.Length != 9) return (telefono.Trim(), new string(telefono.Where(c => char.IsDigit(c) || c == '+').ToArray()));
+        var texto = d[0] switch
+        {
+            '9' => $"+56 9 {d[1..5]} {d[5..]}",   // celular
+            '2' => $"+56 2 {d[1..5]} {d[5..]}",   // fijo Santiago
+            _ => $"+56 {d[..2]} {d[2..5]} {d[5..]}" // fijo regiones (código de 2 dígitos)
+        };
+        return (texto, "+56" + d);
+    }
+
+    /// <summary>"Marca Modelo" y vendedor bajo el cliente en los listados; nada si no hay vehículo.</summary>
+    public static IHtmlContent VehiculoCorto(Services.VehiculoOperacion? v)
+    {
+        if (v?.Vehiculo is not { } veh || veh.Resumen.Length == 0) return HtmlString.Empty;
+        var resumen = Modelo(veh.Resumen);
+        var vendedor = string.IsNullOrWhiteSpace(veh.Vendedor) ? null : NombrePropio(veh.Vendedor);
+        var titulo = $"{resumen} {Modelo(veh.Version)} · Cotización {veh.Cotizacion} ({veh.Empresa})" + (vendedor is null ? "" : $" · Vendedor: {vendedor}");
+        return new HtmlString($"<div class=\"small text-muted text-truncate\" style=\"max-width:260px\" title=\"{WebUtility.HtmlEncode(titulo)}\">"
+                              + $"<i class=\"fa-solid fa-car-side me-1\"></i>{WebUtility.HtmlEncode(resumen)}"
+                              + (vendedor is null ? "" : $" <span class=\"opacity-75\">· {WebUtility.HtmlEncode(vendedor)}</span>")
+                              + "</div>");
+    }
+
+    /// <summary>Badge "Efectivo" con el monto pagado en efectivo, para destacarlo (dato relevante para la UAF).</summary>
+    public static IHtmlContent Efectivo(bool? efectivo, int? montoEfectivo, string? divisa) =>
+        efectivo == true
+            ? new HtmlString("<span class=\"badge bg-warning text-dark\" title=\"Operación con pago en efectivo\"><i class=\"fa-solid fa-money-bill-wave me-1\"></i>Efectivo"
+                             + (montoEfectivo.HasValue ? $" {WebUtility.HtmlEncode(Monto(montoEfectivo, null, divisa))}" : "") + "</span>")
             : HtmlString.Empty;
 
     public static string Fecha(DateTime? fecha, bool conHora = false) =>
