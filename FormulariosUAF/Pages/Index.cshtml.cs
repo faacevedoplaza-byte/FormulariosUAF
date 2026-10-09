@@ -15,6 +15,7 @@ public class IndexModel : PageModel
         if (User.IsInRole("Vendedor"))      return RedirectToPage("/Vendedor/Index");
         if (User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
             return RedirectToPage("/Cumplimiento/Index");
+        if (User.IsInRole("Call Center"))   return RedirectToPage("/Regcheq/Index");
 
         // SoloLectura u otros roles sin área propia.
         return RedirectToPage("/Interno/Notificaciones/Index");

@@ -13,7 +13,8 @@ public static class SeedData
         "Vendedor",
         "Cumplimiento",
         "Revisor",       // Fase 2: revisor interno sin aprobar
-        "SoloLectura"    // Fase 2: consulta sin modificar
+        "SoloLectura",   // Fase 2: consulta sin modificar
+        "Call Center"    // Solo módulo RegCheq (operaciones y gestión)
     ];
 
     public static async Task InitializeAsync(IServiceProvider services)
