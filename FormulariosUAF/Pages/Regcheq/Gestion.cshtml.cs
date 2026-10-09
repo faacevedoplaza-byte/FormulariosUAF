@@ -357,6 +357,11 @@ public class GestionModel : PageModel
         if (op is null) return Volver(id);
 
         var g = await _db.GestionesOperacion.FirstOrDefaultAsync(x => x.OperacionId == id, ct);
+        if (g?.FechaCierre is not null)
+        {
+            TempData["Error"] = $"La operación {op.Codigo} ya está cerrada: no se puede cambiar de usuario.";
+            return Volver(id);
+        }
         if (g?.UsuarioId == destino.Id) return Volver(id);
 
         Asignar(g, op, destino, yo);
@@ -409,13 +414,14 @@ public class GestionModel : PageModel
         {
             if (!pendientes.TryGetValue(id, out var op)) { omitidas++; continue; }
             var g = gestiones.GetValueOrDefault(id);
+            if (g?.FechaCierre is not null) { omitidas++; continue; } // cerrada: no se cambia de usuario
             if (g?.UsuarioId == destino.Id) continue;
             Asignar(g, op, destino, yo, " (acción masiva)");
             asignadas++;
         }
         await _db.SaveChangesAsync(ct);
         TempData["Success"] = $"{asignadas} operación(es) asignada(s) a {NombreDe(destino)}."
-                              + (omitidas > 0 ? $" {omitidas} ya no tenían firmas pendientes y se omitieron." : "");
+                              + (omitidas > 0 ? $" {omitidas} ya estaban cerradas o sin firmas pendientes y se omitieron." : "");
         return Volver(null);
     }
 
@@ -475,9 +481,10 @@ public class GestionModel : PageModel
             TempData["Error"] = "Primero tome la operación para registrar gestiones.";
             return Volver(id);
         }
-        if (g.UsuarioId != yo.Id && !User.IsInRole("Administrador"))
+        // Solo quien la tiene tomada escribe en su bitácora (tampoco el administrador: él puede reasignarla).
+        if (g.UsuarioId != yo.Id)
         {
-            TempData["Error"] = "Solo quien tomó la operación o un administrador puede registrar gestiones.";
+            TempData["Error"] = "Solo quien tomó la operación puede registrar gestiones.";
             return Volver(id);
         }
 
@@ -566,14 +573,16 @@ public class GestionModel : PageModel
         return destino;
     }
 
-    /// <summary>Asigna la operación a <paramref name="destino"/>, creando la gestión si no existía. No guarda.</summary>
+    /// <summary>
+    /// Asigna la operación a <paramref name="destino"/>, creando la gestión si no existía. No guarda.
+    /// Solo para gestiones abiertas: los llamadores descartan las cerradas (no se reabren al reasignar).
+    /// </summary>
     private void Asignar(GestionOperacion? g, RegcheqPendienteGestion op, ApplicationUser destino, ApplicationUser autor, string sufijo = "")
     {
         g ??= _db.GestionesOperacion.Add(new GestionOperacion { OperacionId = op.Id }).Entity;
         CopiarDatos(g, op);
         g.UsuarioId = destino.Id;
         g.FechaToma = DateTime.UtcNow;
-        g.FechaCierre = null;
         g.Notas.Add(NotaSistema(autor, $"Reasignó la operación a {NombreDe(destino)}{sufijo}."));
     }
 

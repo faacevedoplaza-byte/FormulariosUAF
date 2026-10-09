@@ -197,6 +197,13 @@ else
                                 <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Guardar gestión</button>
                             </form>
                         }
+                        else if (Model.TomadaPorOtro && caso is not null)
+                        {
+                            <div class="alert alert-light border small mb-4">
+                                <i class="fa-solid fa-lock me-1 text-secondary"></i>La está gestionando <strong>@nombreToma</strong>: solo esa persona puede registrar gestiones.
+                                @if (Model.EsAdmin) { <span>Para cambiarla de usuario use <a asp-page="./Gestion" asp-route-q="@op.Codigo" asp-route-abrir="@op.Id">Gestión de operaciones</a>.</span> }
+                            </div>
+                        }
                         <h6 class="fw-semibold mb-3"><i class="fa-solid fa-timeline me-2 text-primary"></i>Bitácora</h6>
                         <partial name="_Bitacora" model="Model.Notas" />
                     </div>

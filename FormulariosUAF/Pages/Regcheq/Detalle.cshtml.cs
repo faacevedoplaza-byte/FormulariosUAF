@@ -44,8 +44,11 @@ public class DetalleModel : PageModel
     /// <summary>Caso pendiente según RegCheq (null si no falta firma o la operación es anterior al seguimiento).</summary>
     public CasoGestion? CasoPendiente => Operacion?.EstadoFirmas is { } e && (int)e is >= 1 and <= 3 ? (CasoGestion)(int)e : null;
     public bool TomadaPorMi => Gestion?.UsuarioId is { } u && u == UsuarioActualId;
-    /// <summary>Puede registrar gestiones y liberar: gestión abierta y tomada por él (o es administrador).</summary>
-    public bool PuedeOperar => PuedeGestionar && Gestion is { FechaCierre: null, UsuarioId: not null } && (TomadaPorMi || EsAdmin);
+    /// <summary>Registrar gestiones y liberar: solo quien tiene tomada la operación, y solo si está abierta.
+    /// Ni el administrador escribe en la bitácora de otro; él solo puede reasignar (vista Gestión).</summary>
+    public bool PuedeOperar => PuedeGestionar && Gestion is { FechaCierre: null, UsuarioId: not null } && TomadaPorMi;
+    /// <summary>Tomada por otro usuario y abierta: se muestra quién la gestiona (bloqueada para este usuario).</summary>
+    public bool TomadaPorOtro => Gestion is { FechaCierre: null, UsuarioId: not null } && !TomadaPorMi;
     public bool MostrarGestion => EsNatural && (CasoPendiente is not null || Gestion is not null);
 
     public async Task<IActionResult> OnGetAsync(string? tipo, int id, CancellationToken ct)
