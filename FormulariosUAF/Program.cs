@@ -166,7 +166,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CumplimientoPolicy", p => p.RequireRole("Administrador", "Cumplimiento", "Revisor"));
     options.AddPolicy("InternoPolicy",      p => p.RequireRole("Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura"));
     options.AddPolicy("ExportPolicy",       p => p.RequireRole("Administrador", "Cumplimiento"));
-    options.AddPolicy("RegcheqPolicy",      p => p.RequireRole("Administrador", "Call Center"));
+    // RegCheq: Cumplimiento y Revisor siguen entrando; Call Center entra solo a este módulo.
+    options.AddPolicy("RegcheqPolicy",      p => p.RequireRole("Administrador", "Cumplimiento", "Revisor", "Call Center"));
 });
 
 var app = builder.Build();

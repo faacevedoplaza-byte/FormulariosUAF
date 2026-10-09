@@ -38,7 +38,7 @@ public class DetalleModel : PageModel
     public List<GestionOperacionNota> Notas { get; private set; } = [];
     public string? UsuarioActualId { get; private set; }
     public bool EsAdmin { get; private set; }
-    /// <summary>Administrador o Call Center.</summary>
+    /// <summary>Administrador, Cumplimiento o Call Center (Revisor solo ve).</summary>
     public bool PuedeGestionar { get; private set; }
 
     /// <summary>Caso pendiente según RegCheq (null si no falta firma o la operación es anterior al seguimiento).</summary>
@@ -72,7 +72,7 @@ public class DetalleModel : PageModel
         {
             UsuarioActualId = _userManager.GetUserId(User);
             EsAdmin = User.IsInRole("Administrador");
-            PuedeGestionar = EsAdmin || User.IsInRole("Call Center");
+            PuedeGestionar = EsAdmin || User.IsInRole("Cumplimiento") || User.IsInRole("Call Center");
 
             Gestion = await _db.GestionesOperacion.AsNoTracking()
                 .Include(g => g.Usuario)

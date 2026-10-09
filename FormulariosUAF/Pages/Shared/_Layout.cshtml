@@ -28,6 +28,8 @@
 
     // Roles de InternoPolicy (Program.cs): Call Center no tiene acceso a /Interno ni /Api.
     var esInterno = new[] { "Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura" }.Any(User.IsInRole);
+    // Roles de RegcheqPolicy (Program.cs).
+    var esRegcheq = new[] { "Administrador", "Cumplimiento", "Revisor", "Call Center" }.Any(User.IsInRole);
 }
 <body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")">
 
@@ -78,7 +80,7 @@
                     <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
                 </a>
             }
-            @if (User.IsInRole("Administrador") || User.IsInRole("Call Center"))
+            @if (esRegcheq)
             {
                 <div class="uaf-section-lbl">RegCheq</div>
                 <a href="/Regcheq" class="uaf-nav-link @(path.StartsWith("/regcheq") && !path.StartsWith("/regcheq/gestion") ? "active" : "")">
@@ -142,9 +144,9 @@ else
         document.getElementById('uafSidebar')?.classList.toggle('show'));
 </script>
 
-@if (User.Identity?.IsAuthenticated == true && esInterno)
+@if (User.Identity?.IsAuthenticated == true && (esInterno || esRegcheq))
 {
-    <!-- SignalR — Fase 2 -->
+    <!-- SignalR — Fase 2. También para Call Center: las vistas RegCheq se actualizan en vivo por este hub. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/notifications.js" asp-append-version="true"></script>
 }

@@ -17,7 +17,8 @@ public class NotificationHub : Hub
     public const string RegcheqCambiada = "RegcheqCambiada";
     public const string GrupoRegcheq = "regcheq";
 
-    private static readonly string[] RolesRegcheq = ["Administrador", "Cumplimiento", "Revisor"];
+    // Mismos roles que RegcheqPolicy (Program.cs).
+    private static readonly string[] RolesRegcheq = ["Administrador", "Cumplimiento", "Revisor", "Call Center"];
 
     // Conexiones con una vista RegCheq abierta. El vigilante solo consulta RegCheq si hay alguna.
     // (En memoria: válido mientras la app corra en un solo proceso.)
