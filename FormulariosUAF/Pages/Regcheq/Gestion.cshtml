@@ -64,7 +64,10 @@
             La gestión se cierra sola cuando RegCheq registra la firma.
         </div>
     </div>
-    <a href="/Regcheq" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list-check me-1"></i>Todas las operaciones</a>
+    <div class="d-flex align-items-center gap-3">
+        <span id="gsEstadoVivo" class="gs-vivo" title="Conectando…"><i></i><span>Conectando…</span></span>
+        <a href="/Regcheq" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list-check me-1"></i>Todas las operaciones</a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
@@ -88,6 +91,8 @@ else if (Model.Error is not null)
     <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Error</div>
 }
 
+<!-- Contenido que se recarga en vivo cuando otro usuario cambia algo (ver script al final) -->
+<div id="gsVivo">
 <!-- Indicadores (clic = filtrar) -->
 <div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
     @{
@@ -613,16 +618,18 @@ else
         }
     </div>
 }
+</div>
 
 @section Scripts {
+    <script src="~/js/vista-en-vivo.js" asp-append-version="true"></script>
     <script>
         // Tras una acción, llevar a la vista la operación cuyo panel quedó abierto.
         document.querySelector('.gs-fila.show')?.scrollIntoView({ block: 'center' });
 
         // Selección para acciones masivas (solo administrador)
-        const gsBarra = document.getElementById('gsSeleccion');
         const gsChecks = () => Array.from(document.querySelectorAll('.gs-check'));
         function gsActualizar() {
+            const gsBarra = document.getElementById('gsSeleccion');
             if (!gsBarra) return;
             const n = gsChecks().filter(c => c.checked).length;
             document.getElementById('gsCuenta').textContent = n;
@@ -642,7 +649,20 @@ else
             if (!destino.value) { alert('Seleccione a quién asignar.'); destino.focus(); return false; }
             return confirm(`¿Asignar ${n} operación(es) a ${destino.options[destino.selectedIndex].text}?`);
         }
-        document.getElementById('gsTodas')?.addEventListener('change', e => { gsChecks().forEach(c => c.checked = e.target.checked); gsActualizar(); });
-        document.addEventListener('change', e => { if (e.target.classList?.contains('gs-check')) gsActualizar(); });
+        // Delegados en document: siguen funcionando después de que la tabla se recarga en vivo.
+        document.addEventListener('change', e => {
+            if (e.target.id === 'gsTodas') { gsChecks().forEach(c => c.checked = e.target.checked); gsActualizar(); }
+            else if (e.target.classList?.contains('gs-check')) gsActualizar();
+        });
+
+        // En vivo: se recarga cuando alguien toma/libera/asigna/registra una gestión o cambia RegCheq
+        // (firmas, operaciones nuevas). Espera si hay filas marcadas para una acción masiva.
+        uafVivo({
+            contenedores: ['gsVivo'],
+            eventos: ['GestionRegcheqCambiada', 'RegcheqCambiada'],
+            estado: 'gsEstadoVivo',
+            ocupado: () => gsChecks().some(c => c.checked),
+            alActualizar: gsActualizar
+        });
     </script>
 }

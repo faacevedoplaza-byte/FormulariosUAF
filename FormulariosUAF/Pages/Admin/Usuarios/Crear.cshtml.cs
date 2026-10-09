@@ -107,7 +107,14 @@ public class CrearModel : PageModel
             return Page();
         }
 
-        await _userManager.AddToRoleAsync(user, Input.Role);
+        var asignarRol = await _userManager.AddToRoleAsync(user, Input.Role);
+        if (!asignarRol.Succeeded)
+        {
+            // Sin rol el usuario no puede entrar a ninguna sección: no dejarlo creado a medias.
+            await _userManager.DeleteAsync(user);
+            ErrorMessage = "No se pudo asignar el rol: " + string.Join("; ", asignarRol.Errors.Select(e => e.Description));
+            return Page();
+        }
 
         var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         await _audit.LogAsync("CREAR_USUARIO", "ApplicationUser", user.Id,

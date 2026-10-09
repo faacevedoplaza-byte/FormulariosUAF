@@ -1,9 +1,12 @@
 using FormulariosUAF.Data;
+using FormulariosUAF.Hubs;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Pages.Regcheq;
@@ -27,17 +30,38 @@ public class GestionModel : PageModel
     private readonly IVehiculoOperacionService _vehiculos;
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHubContext<NotificationHub> _hub;
     private readonly ILogger<GestionModel> _logger;
 
     public GestionModel(IRegcheqService regcheq, IGestionSincronizador sincronizador, IVehiculoOperacionService vehiculos,
-                        ApplicationDbContext db, UserManager<ApplicationUser> userManager, ILogger<GestionModel> logger)
+                        ApplicationDbContext db, UserManager<ApplicationUser> userManager, IHubContext<NotificationHub> hub,
+                        ILogger<GestionModel> logger)
     {
         _regcheq = regcheq;
         _sincronizador = sincronizador;
         _vehiculos = vehiculos;
         _db = db;
         _userManager = userManager;
+        _hub = hub;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Después de cualquier acción (POST) avisa a todas las vistas abiertas para que se recarguen.
+    /// Si la acción no cambió nada, el aviso solo provoca una recarga sin cambios.
+    /// </summary>
+    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        var ejecutado = await next();
+        if (!HttpMethods.IsPost(context.HttpContext.Request.Method) || ejecutado.Exception is not null) return;
+        try
+        {
+            await _hub.Clients.All.SendAsync(NotificationHub.GestionRegcheqCambiada);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo avisar por SignalR el cambio en gestiones RegCheq");
+        }
     }
 
     // Filtros (query string)
@@ -226,7 +250,7 @@ public class GestionModel : PageModel
         var op = await BuscarPendienteAsync(id, ct);
         if (op is null) return Volver(id);
 
-        var g = await _db.GestionesOperacion.Include(x => x.Usuario).FirstOrDefaultAsync(x => x.OperacionId == id, ct);
+        var g = await _db.GestionesOperacion.AsNoTracking().Include(x => x.Usuario).FirstOrDefaultAsync(x => x.OperacionId == id, ct);
         if (g?.UsuarioId is not null && g.UsuarioId != yo.Id)
         {
             TempData["Error"] = $"La operación {op.Codigo} ya fue tomada por {NombreDe(g.Usuario)}.";
@@ -234,24 +258,67 @@ public class GestionModel : PageModel
         }
         if (g?.UsuarioId == yo.Id) return Volver(id);
 
-        g ??= _db.GestionesOperacion.Add(new GestionOperacion { OperacionId = id }).Entity;
-        CopiarDatos(g, op);
-        g.UsuarioId = yo.Id;
-        g.FechaToma = DateTime.UtcNow;
-        g.FechaCierre = null;
-        g.Notas.Add(NotaSistema(yo, "Tomó la operación."));
+        if (g is null)
+        {
+            // Primera toma: el índice único por operación impide que dos usuarios la creen a la vez.
+            var nueva = _db.GestionesOperacion.Add(new GestionOperacion { OperacionId = id }).Entity;
+            CopiarDatos(nueva, op);
+            nueva.UsuarioId = yo.Id;
+            nueva.FechaToma = DateTime.UtcNow;
+            nueva.Notas.Add(NotaSistema(yo, "Tomó la operación."));
+            try
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogWarning(ex, "Conflicto al tomar la operación RegCheq {Id}", id);
+                return await ConflictoTomaAsync(id, op, ct);
+            }
+        }
+        else
+        {
+            // Ya existía (liberada o reabierta): UPDATE condicional y atómico. Si otro usuario la tomó
+            // entre la lectura y este punto, la condición UsuarioId == null no se cumple y no se pisa.
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var ahora = DateTime.UtcNow;
+            var copia = new GestionOperacion();
+            CopiarDatos(copia, op);
+            var filas = await _db.GestionesOperacion
+                .Where(x => x.Id == g.Id && x.UsuarioId == null)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.UsuarioId, yo.Id)
+                    .SetProperty(x => x.FechaToma, ahora)
+                    .SetProperty(x => x.FechaCierre, (DateTime?)null)
+                    .SetProperty(x => x.CodigoOperacion, copia.CodigoOperacion)
+                    .SetProperty(x => x.ClienteRut, copia.ClienteRut)
+                    .SetProperty(x => x.ClienteNombre, copia.ClienteNombre), ct);
+            if (filas == 0)
+            {
+                _logger.LogWarning("Conflicto al tomar la operación RegCheq {Id}: ya estaba tomada", id);
+                return await ConflictoTomaAsync(id, op, ct);
+            }
 
-        try
-        {
+            var nota = NotaSistema(yo, "Tomó la operación.");
+            nota.GestionOperacionId = g.Id;
+            _db.GestionesOperacionNotas.Add(nota);
             await _db.SaveChangesAsync(ct);
-            TempData["Success"] = $"Tomaste la operación {op.Codigo}.";
+            await tx.CommitAsync(ct);
         }
-        catch (DbUpdateException ex)
-        {
-            // Índice único por operación: otro usuario la tomó en el mismo instante.
-            _logger.LogWarning(ex, "Conflicto al tomar la operación RegCheq {Id}", id);
-            TempData["Error"] = $"Otro usuario tomó la operación {op.Codigo} al mismo tiempo. Revise quién la tiene.";
-        }
+
+        TempData["Success"] = $"Tomaste la operación {op.Codigo}.";
+        return Volver(id);
+    }
+
+    /// <summary>Otro usuario tomó la operación en el mismo instante: informa quién la tiene.</summary>
+    private async Task<IActionResult> ConflictoTomaAsync(int id, RegcheqPendienteGestion op, CancellationToken ct)
+    {
+        _db.ChangeTracker.Clear();
+        var actual = await _db.GestionesOperacion.AsNoTracking().Include(x => x.Usuario)
+            .FirstOrDefaultAsync(x => x.OperacionId == id, ct);
+        TempData["Error"] = actual?.Usuario is not null
+            ? $"La operación {op.Codigo} acaba de ser tomada por {NombreDe(actual.Usuario)}."
+            : $"Otro usuario tomó la operación {op.Codigo} al mismo tiempo. Revise quién la tiene.";
         return Volver(id);
     }
 

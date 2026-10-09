@@ -310,4 +310,10 @@ public interface IRegcheqService
 
     /// <summary>Detalle de una operación con sus asociados, fichas y listas (solo lectura).</summary>
     Task<RegcheqOperacionDetalle?> ObtenerAsync(RegcheqTipo tipo, int id, CancellationToken ct = default);
+
+    /// <summary>
+    /// "Huella" barata de las tablas RegCheq: cambia cuando se crea o modifica una operación o asociado
+    /// (o se agregan fichas/listas). Solo sirve para comparar con la anterior; null si no está configurada.
+    /// </summary>
+    Task<string?> ObtenerHuellaAsync(CancellationToken ct = default);
 }

@@ -143,11 +143,27 @@ public class EditarModel : PageModel
         user.IsActive = Input.IsActive;
         await _userManager.UpdateAsync(user);
 
-        // Rol
-        if (!oldRoles.Contains(Input.Role))
+        // Rol: primero agregar el nuevo y solo si funcionó quitar los anteriores,
+        // para que un error nunca deje al usuario sin ningún rol.
+        if (!oldRoles.Contains(Input.Role) || oldRoles.Count > 1)
         {
-            await _userManager.RemoveFromRolesAsync(user, oldRoles);
-            await _userManager.AddToRoleAsync(user, Input.Role);
+            if (!oldRoles.Contains(Input.Role))
+            {
+                var agregar = await _userManager.AddToRoleAsync(user, Input.Role);
+                if (!agregar.Succeeded)
+                {
+                    ErrorMessage = "No se pudo asignar el rol: " + string.Join("; ", agregar.Errors.Select(e => e.Description));
+                    return Page();
+                }
+            }
+            var quitar = await _userManager.RemoveFromRolesAsync(user, oldRoles.Where(r => r != Input.Role));
+            if (!quitar.Succeeded)
+            {
+                ErrorMessage = "No se pudieron quitar los roles anteriores: " + string.Join("; ", quitar.Errors.Select(e => e.Description));
+                return Page();
+            }
+            // Invalida la sesión abierta del usuario: al revalidarse la cookie debe volver a entrar y recibe el rol nuevo.
+            await _userManager.UpdateSecurityStampAsync(user);
         }
 
         // Contraseña (solo si se ingresó)

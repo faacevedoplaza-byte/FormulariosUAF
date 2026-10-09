@@ -23,6 +23,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Operaciones RegCheq</h4>
+    <span id="rqEstadoVivo" class="gs-vivo" title="Conectando…"><i></i><span>Conectando…</span></span>
 </div>
 
 <!-- Pestañas: personas naturales / empresas -->
@@ -39,6 +40,8 @@
     </li>
 </ul>
 
+<!-- Avisos y totales: se recargan en vivo (ver script al final) -->
+<div id="rqResumen">
 @if (!Model.Listado.Configurado)
 {
     <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>La conexión <code>RegCheqConnection</code> no está configurada en este ambiente.</div>
@@ -96,8 +99,9 @@ else if (Model.Listado.Error is not null)
         </div></div>
     </div>
 </div>
+</div>
 
-<!-- Filtros -->
+<!-- Filtros (fuera de la recarga en vivo: no se pierde lo que el usuario está escribiendo) -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
@@ -187,8 +191,8 @@ else if (Model.Listado.Error is not null)
     </div>
 </div>
 
-<!-- Tabla -->
-<div class="card border-0 shadow-sm">
+<!-- Tabla (se recarga en vivo) -->
+<div id="rqTabla" class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -289,3 +293,11 @@ else if (Model.Listado.Error is not null)
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="~/js/vista-en-vivo.js" asp-append-version="true"></script>
+    <script>
+        // En vivo: RegcheqVivoWorker avisa cuando cambian las operaciones en RegCheq (nuevas, firmas, estados).
+        uafVivo({ contenedores: ['rqResumen', 'rqTabla'], eventos: ['RegcheqCambiada'], estado: 'rqEstadoVivo' });
+    </script>
+}

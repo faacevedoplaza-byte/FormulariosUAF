@@ -1116,3 +1116,11 @@ body.uaf-shell { background: var(--uaf-bg); }
 .gs-orden i { font-size: .75em; opacity: .35; }
 .gs-orden:hover i, .gs-orden.activa i { opacity: 1; }
 .gs-orden.activa { color: var(--bs-primary); }
+/* Indicador "En vivo" (Regcheq/Index y Regcheq/Gestion, ver js/vista-en-vivo.js):
+   gris = sin conexión, verde = en vivo, ámbar = hay cambios esperando a que el usuario termine */
+.gs-vivo { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--bs-secondary-color); user-select: none; }
+.gs-vivo > i { width: 8px; height: 8px; border-radius: 50%; background: var(--bs-secondary-bg); border: 1px solid var(--bs-border-color); }
+.gs-vivo.on > i { background: #22c55e; border-color: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.5); animation: gs-pulso 2s infinite; }
+.gs-vivo.hay-cambios { color: #b45309; }
+.gs-vivo.hay-cambios > i { background: #f59e0b; border-color: #f59e0b; animation: none; }
+@keyframes gs-pulso { 70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }

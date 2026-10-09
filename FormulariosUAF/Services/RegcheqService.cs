@@ -616,6 +616,27 @@ OPTION (RECOMPILE);";
         }
     }
 
+    public async Task<string?> ObtenerHuellaAsync(CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(_connectionString)) return null;
+
+        // Operaciones y asociados: conteo + checksum de todas las columnas (detecta firmas, estados, etc.).
+        // Fichas y listas: solo conteo (se insertan junto con la operación). READ UNCOMMITTED para no
+        // bloquear ni esperar a la integración que escribe en estas tablas.
+        static string Completa(string tabla) => $"(SELECT CONCAT(COUNT_BIG(*), ':', CHECKSUM_AGG(BINARY_CHECKSUM(*))) FROM {tabla})";
+        static string Conteo(string tabla) => $"(SELECT COUNT_BIG(*) FROM {tabla})";
+        var partes = new[] { Natural, Empresa }.SelectMany(e => new[]
+        {
+            Completa(e.Operacion), Completa(e.Asociados), Conteo(e.Ficha), Conteo(e.Listas)
+        });
+        var sql = $"SET NOCOUNT ON; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;\nSELECT CONCAT({string.Join(", '|', ", partes)});";
+
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync(ct);
+        await using var cmd = Comando(conn, sql, []);
+        return (await cmd.ExecuteScalarAsync(ct))?.ToString();
+    }
+
     public async Task<Dictionary<int, RegcheqCotizacion>> ObtenerCotizacionesAsync(RegcheqTipo tipo, IReadOnlyCollection<int> operacionIds, CancellationToken ct = default)
     {
         var resultado = new Dictionary<int, RegcheqCotizacion>();

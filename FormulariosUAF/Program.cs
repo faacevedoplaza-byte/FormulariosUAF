@@ -100,6 +100,8 @@ builder.Services.AddScoped<IVehiculoOperacionService, VehiculoOperacionService>(
 // Cierre automático de gestiones cuando RegCheq registra las firmas (cada GestionRegcheq:IntervaloMinutos)
 builder.Services.AddScoped<IGestionSincronizador, GestionSincronizador>();
 builder.Services.AddHostedService<GestionSincronizacionWorker>();
+// Vistas /Regcheq en vivo: detecta cambios en RegCheq y avisa por SignalR (cada RegcheqVivo:IntervaloSegundos)
+builder.Services.AddHostedService<RegcheqVivoWorker>();
 
 // ── Proveedor de datos de empresa (configurable) ───────────────────────────
 var companyProvider = builder.Configuration["CompanyDataProvider:Provider"] ?? "Manual";

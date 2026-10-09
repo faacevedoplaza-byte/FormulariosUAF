@@ -18,6 +18,9 @@
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
+    // Conexión compartida: las páginas que necesitan avisos propios (ej. Regcheq/Gestion) se suscriben aquí.
+    window.uafHub = connection;
+
     connection.on('NewNotification', function (notification) {
         showToast(notification.message, 'info');
         incrementBadge();
