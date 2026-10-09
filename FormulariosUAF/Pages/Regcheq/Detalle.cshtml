@@ -28,6 +28,13 @@
     .rj-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
     .rj-chip { background: var(--bs-secondary-bg); border-radius: 999px; padding: .15rem .65rem; font-size: .78rem; }
     .rj-texto { font-size: .875rem; white-space: pre-wrap; }
+    /* Cliente destacado */
+    .rq-cliente { border-left: 5px solid var(--bs-primary) !important; }
+    .rq-cliente-icono { width: 56px; height: 56px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem;
+                        background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); flex-shrink: 0; }
+    .rq-cliente-lbl { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-secondary-color); }
+    .rq-cliente-nombre { font-size: 1.6rem; font-weight: 700; line-height: 1.2; color: var(--bs-emphasis-color); word-break: break-word; }
+    .rq-cliente-rut { font-size: .95rem; font-weight: 600; color: var(--bs-body-color); }
     .rj-pre { font-size: .75rem; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color-translucent); border-radius: .5rem; padding: .75rem; max-height: 320px; overflow: auto; }
 </style>
 
@@ -64,6 +71,35 @@ else if (op is null)
 }
 else
 {
+    var titular = op.Asociados.FirstOrDefault();
+    var nombreCliente = titular?.Ficha?.NombreCompleto is { Length: > 0 } nc ? nc : null;
+    <!-- Cliente (titular de la operación) destacado -->
+    <div class="rq-cliente card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+            <span class="rq-cliente-icono"><i class="fa-solid @(Model.EsNatural ? "fa-user" : "fa-building")"></i></span>
+            <div class="flex-grow-1 min-w-0">
+                <div class="rq-cliente-lbl">@(Model.EsNatural ? "Cliente" : "Empresa")</div>
+                <div class="rq-cliente-nombre">@(nombreCliente ?? "Sin nombre en la ficha")</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                    @if (!string.IsNullOrWhiteSpace(titular?.Rut))
+                    {
+                        <span class="rq-cliente-rut"><i class="fa-regular fa-id-card me-1"></i>@titular.Rut</span>
+                    }
+                    @if (titular?.Pep == true) { @RegcheqUi.Pep(true, titular.NivelPep) }
+                    @if (op.Asociados.Count > 1)
+                    {
+                        <a href="#asociados" class="badge bg-light text-dark border text-decoration-none">+@(op.Asociados.Count - 1) asociado@(op.Asociados.Count == 2 ? "" : "s")</a>
+                    }
+                </div>
+            </div>
+            <div class="text-end small text-muted">
+                <div>Operación <span class="font-monospace fw-semibold text-body">@(op.Codigo?.ToString() ?? "—")</span></div>
+                @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div>Ref. @op.Referencia</div> }
+                <div>@RegcheqUi.Fecha(op.FechaCreacion, true)</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Resumen de cumplimiento -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg">
@@ -301,7 +337,7 @@ else
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button @(op.Asociados.Count > 1 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#@idAcc">
-                        <span class="me-3 fw-semibold">@(f?.NombreCompleto is { Length: > 0 } n ? n : "Sin ficha")</span>
+                        <span class="me-3 fw-bold fs-6">@(f?.NombreCompleto is { Length: > 0 } n ? n : "Sin ficha")</span>
                         <span class="text-muted small me-3">@a.Rut</span>
                         @if (a.Pep == true) { <span class="me-2">@RegcheqUi.Pep(true, a.NivelPep)</span> }
                         @if (!string.IsNullOrWhiteSpace(a.Tipo)) { <span class="badge bg-light text-dark border">@a.Tipo</span> }

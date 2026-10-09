@@ -591,7 +591,10 @@ else
                                     <div><small class="text-muted">@Hora(g.FechaCierre!.Value)</small></div>
                                 </td>
                                 <td><small>@notasUsuario @(notasUsuario == 1 ? "gestión" : "gestiones")</small></td>
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
+                                    <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@g.OperacionId" class="btn btn-sm btn-outline-primary" title="Ver el desglose completo de la operación">
+                                        <i class="fa-solid fa-eye"></i><span class="d-none d-xl-inline ms-1">Detalle</span>
+                                    </a>
                                     <button type="button" class="btn btn-sm btn-outline-secondary gs-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#@idPanel">
                                         <i class="fa-solid fa-timeline me-1"></i>Bitácora <i class="fa-solid fa-chevron-down ms-1"></i>
                                     </button>
