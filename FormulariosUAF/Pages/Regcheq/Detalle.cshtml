@@ -88,7 +88,18 @@ else
             <span class="rq-cliente-icono"><i class="fa-solid @(Model.EsNatural ? "fa-user" : "fa-building")"></i></span>
             <div class="flex-grow-1 min-w-0">
                 <div class="rq-cliente-lbl">@(Model.EsNatural ? "Cliente" : "Empresa")</div>
-                <div class="rq-cliente-nombre">@(nombreCliente is null ? "Sin nombre en la ficha" : RegcheqUi.NombrePropio(nombreCliente))</div>
+                @if (nombreCliente is null)
+                {
+                    <div class="rq-cliente-nombre">Sin nombre en la ficha</div>
+                }
+                else
+                {
+                    var nombreMostrado = RegcheqUi.NombrePropio(nombreCliente);
+                    <div class="rq-cliente-nombre">
+                        @nombreMostrado
+                        <button type="button" class="rq-copiar align-middle" data-copiar="@nombreMostrado" title="Copiar nombre"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                }
                 <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
                     @if (!string.IsNullOrWhiteSpace(titular?.Rut))
                     {
@@ -594,7 +605,7 @@ else
 
 @section Scripts {
     <script>
-        // Copiar teléfono / correo del cliente. navigator.clipboard solo existe en HTTPS (o localhost):
+        // Copiar nombre / teléfono / correo del cliente. navigator.clipboard solo existe en HTTPS (o localhost):
         // si el sitio corre en HTTP se usa el método antiguo con un textarea temporal.
         document.addEventListener('click', async e => {
             const btn = e.target.closest('.rq-copiar');
