@@ -57,6 +57,24 @@ public static class RegcheqUi
         _ => new HtmlString("<span class=\"text-muted\">—</span>")
     };
 
+    /// <summary>Días a partir de los cuales una operación pendiente se marca en ámbar / rojo (igual que "Carga por usuario").</summary>
+    public const int DiasAviso = 7, DiasCritico = 30;
+
+    /// <summary>
+    /// Antigüedad de una operación pendiente: "hoy" / "hace N días", en ámbar desde <see cref="DiasAviso"/>
+    /// y en rojo desde <see cref="DiasCritico"/>. Las fechas de RegCheq vienen en hora local del servidor.
+    /// </summary>
+    public static IHtmlContent Antiguedad(DateTime? creada)
+    {
+        if (creada is null) return HtmlString.Empty;
+        var dias = (int)(DateTime.Now.Date - creada.Value.Date).TotalDays;
+        var (clase, icono) = dias >= DiasCritico ? ("gs-edad critica", "fa-fire")
+                           : dias >= DiasAviso ? ("gs-edad aviso", "fa-hourglass-half")
+                           : ("gs-edad", "fa-clock");
+        var texto = dias <= 0 ? "hoy" : dias == 1 ? "hace 1 día" : $"hace {dias.ToString("N0", Chile)} días";
+        return new HtmlString($"<span class=\"{clase}\" title=\"Días desde que RegCheq creó la operación\"><i class=\"fa-solid {icono} me-1\"></i>{texto}</span>");
+    }
+
     /// <summary>Texto tal como viene de RegCheq (estados sin catálogo conocido), o "—".</summary>
     public static IHtmlContent Texto(string? valor) =>
         string.IsNullOrWhiteSpace(valor)

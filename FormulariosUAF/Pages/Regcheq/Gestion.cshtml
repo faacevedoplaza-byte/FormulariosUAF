@@ -372,12 +372,15 @@ else if (Model.Error is not null)
                             var ultima = notasUsuario.FirstOrDefault();
                             var idPanel = $"gs{op.Id}";
                             var abierto = Model.Abrir == op.Id;
-                            <tr>
+                            <tr class="@(tomadaPorMi ? "gs-mia" : "")" title="@(tomadaPorMi ? "La tienes tomada tú" : null)">
                                 @if (Model.EsAdmin)
                                 {
                                     <td><input type="checkbox" class="form-check-input gs-check" name="ids" value="@op.Id" form="gsSeleccion" /></td>
                                 }
-                                <td class="text-nowrap"><small>@RegcheqUi.Fecha(op.FechaCreacion, conHora: true)</small></td>
+                                <td class="text-nowrap">
+                                    <small>@RegcheqUi.Fecha(op.FechaCreacion, conHora: true)</small>
+                                    <div>@RegcheqUi.Antiguedad(op.FechaCreacion)</div>
+                                </td>
                                 <td>
                                     <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="font-monospace fw-semibold text-decoration-none" title="Ver detalle de la operación">@(op.Codigo?.ToString() ?? "—")</a>
                                     @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted">Ref. @op.Referencia</div> }

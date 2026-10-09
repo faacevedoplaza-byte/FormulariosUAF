@@ -35,6 +35,15 @@
     .rq-cliente-lbl { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bs-secondary-color); }
     .rq-cliente-nombre { font-size: 1.6rem; font-weight: 700; line-height: 1.2; color: var(--bs-emphasis-color); word-break: break-word; }
     .rq-cliente-rut { font-size: .95rem; font-weight: 600; color: var(--bs-body-color); }
+    .rq-contacto { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .rq-dato { display: inline-flex; align-items: center; gap: .15rem; background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color-translucent);
+               border-radius: 999px; padding: .2rem .35rem .2rem .75rem; font-size: .9rem; }
+    .rq-dato.text-muted { padding-right: .75rem; font-size: .8rem; }
+    .rq-dato-valor { font-weight: 600; text-decoration: none; word-break: break-all; }
+    .rq-dato-valor:hover { text-decoration: underline; }
+    .rq-copiar { border: 0; background: transparent; color: var(--bs-secondary-color); border-radius: 50%; width: 28px; height: 28px; }
+    .rq-copiar:hover { background: var(--bs-secondary-bg); color: var(--bs-body-color); }
+    .rq-copiar.ok { color: var(--bs-success); }
     .rj-pre { font-size: .75rem; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color-translucent); border-radius: .5rem; padding: .75rem; max-height: 320px; overflow: auto; }
 </style>
 
@@ -89,6 +98,36 @@ else
                     @if (op.Asociados.Count > 1)
                     {
                         <a href="#asociados" class="badge bg-light text-dark border text-decoration-none">+@(op.Asociados.Count - 1) asociado@(op.Asociados.Count == 2 ? "" : "s")</a>
+                    }
+                </div>
+                @{
+                    var telefono = titular?.Ficha?.Telefono?.Trim();
+                    var correo = titular?.Ficha?.Email?.Trim();
+                    // Para el enlace tel: solo dígitos y '+' (la ficha puede traer espacios, guiones o paréntesis).
+                    var telefonoLink = telefono is null ? null : new string(telefono.Where(c => char.IsDigit(c) || c == '+').ToArray());
+                }
+                <div class="rq-contacto mt-2">
+                    @if (!string.IsNullOrEmpty(telefonoLink))
+                    {
+                        <span class="rq-dato">
+                            <a href="tel:@telefonoLink" class="rq-dato-valor" title="Llamar"><i class="fa-solid fa-phone me-1"></i>@telefono</a>
+                            <button type="button" class="rq-copiar" data-copiar="@telefono" title="Copiar teléfono"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="rq-dato text-muted"><i class="fa-solid fa-phone-slash me-1"></i>Sin teléfono en la ficha</span>
+                    }
+                    @if (!string.IsNullOrEmpty(correo))
+                    {
+                        <span class="rq-dato">
+                            <a href="mailto:@correo" class="rq-dato-valor" title="Escribir correo"><i class="fa-solid fa-envelope me-1"></i>@correo</a>
+                            <button type="button" class="rq-copiar" data-copiar="@correo" title="Copiar correo"><i class="fa-regular fa-copy"></i></button>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="rq-dato text-muted"><i class="fa-solid fa-envelope me-1"></i>Sin correo en la ficha</span>
                     }
                 </div>
             </div>
@@ -514,4 +553,27 @@ else
             </div>
         </div>
     }
+}
+
+@section Scripts {
+    <script>
+        // Copiar teléfono / correo del cliente. navigator.clipboard solo existe en HTTPS (o localhost):
+        // si el sitio corre en HTTP se usa el método antiguo con un textarea temporal.
+        document.addEventListener('click', async e => {
+            const btn = e.target.closest('.rq-copiar');
+            if (!btn) return;
+            const texto = btn.dataset.copiar;
+            try {
+                if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(texto);
+                else {
+                    const t = Object.assign(document.createElement('textarea'), { value: texto });
+                    t.style.position = 'fixed'; t.style.opacity = '0';
+                    document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+                }
+                const icono = btn.querySelector('i');
+                btn.classList.add('ok'); icono.className = 'fa-solid fa-check';
+                setTimeout(() => { btn.classList.remove('ok'); icono.className = 'fa-regular fa-copy'; }, 1500);
+            } catch { /* sin portapapeles: el dato sigue visible para copiarlo a mano */ }
+        });
+    </script>
 }

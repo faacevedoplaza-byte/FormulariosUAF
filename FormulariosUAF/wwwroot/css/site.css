@@ -1116,6 +1116,13 @@ body.uaf-shell { background: var(--uaf-bg); }
 .gs-orden i { font-size: .75em; opacity: .35; }
 .gs-orden:hover i, .gs-orden.activa i { opacity: 1; }
 .gs-orden.activa { color: var(--bs-primary); }
+/* Antigüedad de una operación pendiente (RegcheqUi.Antiguedad) */
+.gs-edad { display: inline-flex; align-items: center; font-size: .75rem; color: var(--bs-secondary-color); white-space: nowrap; }
+.gs-edad.aviso { color: #b45309; font-weight: 600; }
+.gs-edad.critica { color: var(--bs-danger); font-weight: 700; }
+/* Filas de "Gestión" tomadas por el usuario actual */
+tr.gs-mia > td { background: rgba(var(--bs-primary-rgb), .05) !important; }
+tr.gs-mia > td:first-child { box-shadow: inset 4px 0 0 var(--bs-primary); }
 /* Indicador "En vivo" (Regcheq/Index y Regcheq/Gestion, ver js/vista-en-vivo.js):
    gris = sin conexión, verde = en vivo, ámbar = hay cambios esperando a que el usuario termine */
 .gs-vivo { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--bs-secondary-color); user-select: none; }
