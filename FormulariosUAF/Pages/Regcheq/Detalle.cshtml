@@ -315,7 +315,7 @@ else
                 <span class="fw-semibold"><i class="fa-solid fa-car-side me-2 text-primary"></i>Vehículo</span>
                 @if (vo.Cotizacion is not null)
                 {
-                    <small class="text-muted">Cotización @RegcheqUi.Cotizacion(null, vo, "font-monospace")@(vo.Empresa is null ? "" : $" · Netcar {vo.Empresa}")</small>
+                    <small class="text-muted">Cotización @RegcheqUi.Cotizacion(null, vo, "font-monospace", boton: false)@(vo.Empresa is null ? "" : $" · Netcar {vo.Empresa}")</small>
                 }
             </div>
             <div class="card-body">

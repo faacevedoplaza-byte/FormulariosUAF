@@ -171,20 +171,28 @@ public static class RegcheqUi
     private const string UrlNetcarVyD = "http://netcar3.valdelarze.cl/cotizacion/cotShownegocio.aspx?k={0}&mt$opener=true";
 
     /// <summary>
-    /// N° de cotización como enlace a Netcar (Siglo 21 o VyD según la empresa de la operación).
-    /// Sin empresa o sin N° válido se muestra solo el texto.
+    /// N° de cotización seguido de un botón "Ver en Netcar" (Siglo 21 o VyD según la empresa de la operación).
+    /// Sin empresa o sin N° válido se muestra solo el número.
     /// </summary>
-    public static IHtmlContent Cotizacion(string? referencia, Services.VehiculoOperacion? v, string clase = "")
+    public static IHtmlContent Cotizacion(string? referencia, Services.VehiculoOperacion? v, string clase = "", bool boton = true)
     {
         if (string.IsNullOrWhiteSpace(referencia) && v?.Cotizacion is null) return HtmlString.Empty;
         var texto = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(referencia) ? v!.Cotizacion.ToString() : referencia.Trim());
-        if (v?.Cotizacion is not { } numero || string.IsNullOrWhiteSpace(v.Empresa))
-            return new HtmlString($"<span class=\"{clase}\">{texto}</span>");
+        return new HtmlString($"<span class=\"{clase}\">{texto}</span>" + (boton ? " " + BotonNetcarHtml(v, "rq-netcar") : ""));
+    }
+
+    /// <summary>Botón "Ver en Netcar" que abre la cotización en una pestaña nueva; nada si no se sabe la empresa.</summary>
+    public static IHtmlContent BotonNetcar(Services.VehiculoOperacion? v, string clase = "btn-sm") =>
+        new HtmlString(BotonNetcarHtml(v, clase));
+
+    private static string BotonNetcarHtml(Services.VehiculoOperacion? v, string clase)
+    {
+        if (v?.Cotizacion is not { } numero || string.IsNullOrWhiteSpace(v.Empresa)) return "";
         var esSiglo21 = string.Equals(v.Empresa, "Siglo 21", StringComparison.OrdinalIgnoreCase);
         var url = string.Format(esSiglo21 ? UrlNetcarSiglo21 : UrlNetcarVyD, numero);
-        return new HtmlString($"<a href=\"{WebUtility.HtmlEncode(url)}\" target=\"_blank\" class=\"{clase}\" "
-                              + $"title=\"Abrir la cotización en Netcar {(esSiglo21 ? "Siglo 21" : "VyD")}\">{texto}"
-                              + "<i class=\"fa-solid fa-arrow-up-right-from-square ms-1 small\"></i></a>");
+        return $"<a href=\"{WebUtility.HtmlEncode(url)}\" target=\"_blank\" class=\"btn btn-outline-primary {clase} text-nowrap\" "
+               + $"title=\"Abrir la cotización {numero} en Netcar {(esSiglo21 ? "Siglo 21" : "VyD")}\">"
+               + "<i class=\"fa-solid fa-arrow-up-right-from-square me-1\"></i>Ver en Netcar</a>";
     }
 
     /// <summary>"Marca Modelo" y vendedor bajo el cliente en los listados; nada si no hay vehículo.</summary>
