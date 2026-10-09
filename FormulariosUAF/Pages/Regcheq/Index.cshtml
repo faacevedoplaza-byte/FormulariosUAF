@@ -234,7 +234,7 @@ else if (Model.Listado.Error is not null)
                                 <span class="font-monospace small">@(op.Codigo?.ToString() ?? "—")</span>
                                 @if (!string.IsNullOrWhiteSpace(op.Referencia))
                                 {
-                                    <div class="small text-muted" title="N° de cotización Netcar (referencia en RegCheq)">Cotización @op.Referencia</div>
+                                    <div class="small text-muted">Cotización @RegcheqUi.Cotizacion(op.Referencia, Model.Vehiculos.GetValueOrDefault(op.Id), "text-decoration-none")</div>
                                 }
                             </td>
                             <td>

@@ -383,7 +383,7 @@ else if (Model.Error is not null)
                                 </td>
                                 <td>
                                     <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="font-monospace fw-semibold text-decoration-none" title="Ver detalle de la operación">@(op.Codigo?.ToString() ?? "—")</a>
-                                    @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted" title="N° de cotización Netcar (referencia en RegCheq)">Cotización @op.Referencia</div> }
+                                    @if (!string.IsNullOrWhiteSpace(op.Referencia)) { <div class="small text-muted">Cotización @RegcheqUi.Cotizacion(op.Referencia, Model.Vehiculos.GetValueOrDefault(op.Id), "text-decoration-none")</div> }
                                 </td>
                                 <td>
                                     <div class="fw-semibold">@RegcheqUi.NombrePropio(op.Nombre)</div>

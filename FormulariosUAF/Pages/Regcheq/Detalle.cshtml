@@ -146,7 +146,7 @@ else
                 <div>Operación <span class="font-monospace fw-semibold text-body">@(op.Codigo?.ToString() ?? "—")</span></div>
                 @if (!string.IsNullOrWhiteSpace(op.Referencia))
                 {
-                    <div title="N° de cotización Netcar (referencia en RegCheq)">Cotización <span class="font-monospace fw-semibold text-body">@op.Referencia</span></div>
+                    <div>Cotización @RegcheqUi.Cotizacion(op.Referencia, Model.Vehiculo, "font-monospace fw-semibold")</div>
                 }
                 <div>Monto <span class="fw-semibold text-body">@RegcheqUi.Monto(op.MontoTotal, op.MontoFormateado, op.Divisa)</span></div>
                 <div>
@@ -315,7 +315,7 @@ else
                 <span class="fw-semibold"><i class="fa-solid fa-car-side me-2 text-primary"></i>Vehículo</span>
                 @if (vo.Cotizacion is not null)
                 {
-                    <small class="text-muted">Cotización <span class="font-monospace">@vo.Cotizacion</span>@(vo.Empresa is null ? "" : $" · Netcar {vo.Empresa}")</small>
+                    <small class="text-muted">Cotización @RegcheqUi.Cotizacion(null, vo, "font-monospace")@(vo.Empresa is null ? "" : $" · Netcar {vo.Empresa}")</small>
                 }
             </div>
             <div class="card-body">
