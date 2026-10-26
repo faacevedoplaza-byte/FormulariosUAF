@@ -52,7 +52,6 @@ public static class RegcheqUi
         Services.EstadoFirmas.Pep => new HtmlString("<span class=\"badge bg-danger-subtle text-danger-emphasis\" title=\"Requiere PEP sin firmar; no requiere DOF\">Caso 1 · Falta PEP</span>"),
         Services.EstadoFirmas.Dof => new HtmlString("<span class=\"badge bg-warning-subtle text-warning-emphasis\" title=\"Requiere DOF sin firmar; no requiere PEP\">Caso 2 · Falta DOF</span>"),
         Services.EstadoFirmas.PepYDof => new HtmlString("<span class=\"badge\" style=\"background:#ede2fe;color:#5a2ca0\" title=\"Requiere PEP y DOF; falta al menos uno\">Caso 3 · PEP y DOF</span>"),
-        Services.EstadoFirmas.NoRequiere => new HtmlString("<span class=\"badge bg-light text-secondary border\">No requiere</span>"),
         Services.EstadoFirmas.SinSeguimiento => new HtmlString("<span class=\"badge bg-secondary-subtle text-secondary-emphasis\" title=\"Operación anterior al seguimiento automático de firmas: no se puede saber si se firmó\">Sin seguimiento</span>"),
         _ => new HtmlString("<span class=\"text-muted\">—</span>")
     };

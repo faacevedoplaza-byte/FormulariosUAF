@@ -38,7 +38,9 @@ public class DetalleModel : PageModel
     public List<GestionOperacionNota> Notas { get; private set; } = [];
     public string? UsuarioActualId { get; private set; }
     public bool EsAdmin { get; private set; }
-    /// <summary>Administrador, Cumplimiento o Call Center (Revisor solo ve).</summary>
+    /// <summary>Vendedor (sin otro rol RegCheq): solo entra a sus leads y no ve ROS ni los datos técnicos.</summary>
+    public bool EsVendedor { get; private set; }
+    /// <summary>Administrador, Cumplimiento, Call Center o el vendedor de la cotización (Revisor solo ve).</summary>
     public bool PuedeGestionar { get; private set; }
 
     /// <summary>Caso pendiente según RegCheq (null si no falta firma o la operación es anterior al seguimiento).</summary>
@@ -71,11 +73,28 @@ public class DetalleModel : PageModel
 
         Vehiculo = (await _vehiculos.ObtenerAsync(tipoEnum, [id], ct)).GetValueOrDefault(id);
 
+        // Vendedor: solo si la cotización Netcar de la operación es suya (misma regla que Operaciones y Gestión).
+        EsVendedor = LeadsVendedorService.EsSoloVendedor(User);
+        if (EsVendedor)
+        {
+            var yo = await _userManager.GetUserAsync(User);
+            var codigo = yo is null ? null : LeadsVendedorService.CodigoNetcar(yo);
+            if (Vehiculo is { NetcarNoDisponible: true })
+            {
+                Operacion = null;
+                Error = $"{Vehiculo.Motivo} No se pudo confirmar que la operación sea suya; intente nuevamente en unos minutos.";
+                return Page();
+            }
+            if (string.IsNullOrWhiteSpace(codigo)
+                || !string.Equals(Vehiculo?.Vehiculo?.Vendedor, codigo, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
+        }
+
         if (EsNatural)
         {
             UsuarioActualId = _userManager.GetUserId(User);
             EsAdmin = User.IsInRole("Administrador");
-            PuedeGestionar = EsAdmin || User.IsInRole("Cumplimiento") || User.IsInRole("Call Center");
+            PuedeGestionar = EsAdmin || User.IsInRole("Cumplimiento") || User.IsInRole("Call Center") || EsVendedor;
 
             Gestion = await _db.GestionesOperacion.AsNoTracking()
                 .Include(g => g.Usuario)

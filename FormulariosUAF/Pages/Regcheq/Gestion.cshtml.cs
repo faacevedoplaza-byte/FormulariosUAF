@@ -28,18 +28,20 @@ public class GestionModel : PageModel
     private readonly IRegcheqService _regcheq;
     private readonly IGestionSincronizador _sincronizador;
     private readonly IVehiculoOperacionService _vehiculos;
+    private readonly ILeadsVendedorService _leads;
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IHubContext<NotificationHub> _hub;
     private readonly ILogger<GestionModel> _logger;
 
     public GestionModel(IRegcheqService regcheq, IGestionSincronizador sincronizador, IVehiculoOperacionService vehiculos,
-                        ApplicationDbContext db, UserManager<ApplicationUser> userManager, IHubContext<NotificationHub> hub,
-                        ILogger<GestionModel> logger)
+                        ILeadsVendedorService leads, ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+                        IHubContext<NotificationHub> hub, ILogger<GestionModel> logger)
     {
         _regcheq = regcheq;
         _sincronizador = sincronizador;
         _vehiculos = vehiculos;
+        _leads = leads;
         _db = db;
         _userManager = userManager;
         _hub = hub;
@@ -105,9 +107,20 @@ public class GestionModel : PageModel
     public bool EsAdmin { get; private set; }
     /// <summary>False para Revisor: ve todo pero no toma ni registra gestiones.</summary>
     public bool PuedeGestionar { get; private set; }
+    /// <summary>
+    /// Vendedor: solo ve (y toma) las operaciones cuya cotización Netcar es suya, aunque las tenga tomadas
+    /// Call Center u otro usuario. No entra a Regcheq/Index ni Regcheq/Detalle.
+    /// </summary>
+    public bool EsVendedor { get; private set; }
+    /// <summary>Usuario Netcar (ST_ABREVIACION_USUARIO) con que se comparan los leads del vendedor.</summary>
+    public string? CodigoVendedor { get; private set; }
+    /// <summary>Aviso si Netcar no respondió: al vendedor le pueden faltar operaciones.</summary>
+    public string? AvisoNetcar { get; private set; }
 
     /// <summary>Operaciones abiertas por usuario (solo administrador).</summary>
     public List<CargaUsuario> Carga { get; private set; } = [];
+    /// <summary>Operaciones cerradas por usuario, de más a menos (solo administrador, vista Cerradas).</summary>
+    public List<CierreUsuario> RankingCierres { get; private set; } = [];
     public string? NombreUsuarioFiltro { get; private set; }
 
     public ResumenGestion Totales { get; private set; } = new();
@@ -127,6 +140,7 @@ public class GestionModel : PageModel
         UsuarioActualId = _userManager.GetUserId(User);
         EsAdmin = User.IsInRole("Administrador");
         PuedeGestionar = TieneRolGestion();
+        EsVendedor = EsSoloVendedor();
 
         List<RegcheqPendienteGestion>? pendientes = null;
         try
@@ -147,6 +161,23 @@ public class GestionModel : PageModel
         var gestiones = await _db.GestionesOperacion.AsNoTracking()
             .Include(g => g.Usuario)
             .ToListAsync(ct);
+
+        // Vendedor: el resto de la página (indicadores, abiertas y cerradas) trabaja solo con sus leads.
+        // Va después de sincronizar, que siempre debe recibir la lista completa.
+        if (EsVendedor)
+        {
+            var yo = await _userManager.GetUserAsync(User);
+            CodigoVendedor = yo is null ? null : LeadsVendedorService.CodigoNetcar(yo);
+            var ids = (pendientes ?? []).Select(p => p.Id)
+                .Concat(gestiones.Where(g => g.FechaCierre != null).Select(g => g.OperacionId))
+                .Distinct().ToList();
+            var leads = await _leads.FiltrarAsync(RegcheqTipo.Natural, ids, CodigoVendedor, ct);
+            AvisoNetcar = leads.AvisoNetcar;
+            var propias = leads.OperacionIds;
+            pendientes = pendientes?.Where(p => propias.Contains(p.Id)).ToList();
+            gestiones = gestiones.Where(g => propias.Contains(g.OperacionId)).ToList();
+        }
+
         var abiertasPorOperacion = gestiones.Where(g => g.FechaCierre == null).ToDictionary(g => g.OperacionId);
         // Cerradas: el usuario que la tenía tomada al cerrarse sigue en UsuarioId.
         bool DelAlcance(GestionOperacion g) =>
@@ -176,7 +207,10 @@ public class GestionModel : PageModel
             var cerradas = gestiones.Where(g => g.FechaCierre != null && DelAlcance(g)
                                                 && CoincideBusqueda(Q, g.CodigoOperacion, g.ClienteRut, g.ClienteNombre, null))
                 .ToList();
-            var gestionesPorCerrada = OrdenActual == "gestiones" ? await NotasPorGestionAsync(ct) : null;
+            var gestionesPorCerrada = OrdenActual == "gestiones" || EsAdmin ? await NotasPorGestionAsync(ct) : null;
+            // El ranking no depende de los filtros: siempre compara a todos los usuarios.
+            if (EsAdmin)
+                RankingCierres = CalcularRankingCierres(gestiones, gestionesPorCerrada!);
             cerradas = (OrdenActual switch
                 {
                     "codigo" => Ordenar(cerradas, g => g.CodigoOperacion),
@@ -249,6 +283,14 @@ public class GestionModel : PageModel
 
         var op = await BuscarPendienteAsync(id, ct);
         if (op is null) return Volver(id);
+
+        if (EsSoloVendedor()
+            && await _leads.FiltrarAsync(RegcheqTipo.Natural, [id], LeadsVendedorService.CodigoNetcar(yo), ct) is var leads
+            && !leads.OperacionIds.Contains(id))
+        {
+            TempData["Error"] = leads.AvisoNetcar ?? $"La operación {op.Codigo} no corresponde a una cotización suya en Netcar.";
+            return Volver(id);
+        }
 
         var g = await _db.GestionesOperacion.AsNoTracking().Include(x => x.Usuario).FirstOrDefaultAsync(x => x.OperacionId == id, ct);
         if (g?.UsuarioId is not null && g.UsuarioId != yo.Id)
@@ -559,7 +601,10 @@ public class GestionModel : PageModel
         return RedirectToPage(ruta.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => (object?)kv.Value));
     }
 
-    private bool TieneRolGestion() => RolesGestion.Any(User.IsInRole);
+    /// <summary>Tomar, liberar y registrar gestiones. Al vendedor, Tomar además le exige que el lead sea suyo.</summary>
+    private bool TieneRolGestion() => RolesGestion.Any(User.IsInRole) || EsSoloVendedor();
+
+    private bool EsSoloVendedor() => LeadsVendedorService.EsSoloVendedor(User);
 
     /// <summary>Usuario de destino válido (activo y con rol de gestión); si no, deja el error en TempData y devuelve null.</summary>
     private async Task<ApplicationUser?> ValidarDestinoAsync(string? usuarioId)
@@ -616,6 +661,8 @@ public class GestionModel : PageModel
                 .Select(n => n.GestionOperacionId).Distinct().ToListAsync(ct)).ToHashSet();
 
         var asignables = UsuariosGestion.ToDictionary(u => u.Id, u => u.Nombre);
+        // Los vendedores gestionan sus propios leads: no se les asigna desde aquí, pero siguen pudiendo gestionarlos.
+        var vendedores = (await _userManager.GetUsersInRoleAsync("Vendedor")).Where(u => u.IsActive).Select(u => u.Id).ToHashSet();
         var carga = tomadas
             .GroupBy(f => f.Gestion!.UsuarioId!)
             .Select(grp => new CargaUsuario(
@@ -627,7 +674,7 @@ public class GestionModel : PageModel
                 grp.Count(f => f.Operacion.Caso == CasoGestion.PepYDof),
                 grp.Min(f => f.Gestion!.FechaToma),
                 grp.Count(f => !conGestiones.Contains(f.Gestion!.Id)),
-                asignables.ContainsKey(grp.Key)))
+                asignables.ContainsKey(grp.Key) || vendedores.Contains(grp.Key)))
             .ToList();
 
         carga.AddRange(asignables
@@ -635,6 +682,33 @@ public class GestionModel : PageModel
             .Select(u => new CargaUsuario(u.Key, u.Value, 0, 0, 0, 0, null, 0, true)));
 
         return carga.OrderByDescending(c => c.Total).ThenBy(c => c.Nombre).ToList();
+    }
+
+    /// <summary>
+    /// Quién cierra más operaciones: la gestión se cierra sola cuando el cliente firma y queda a nombre de
+    /// quien la tenía tomada en ese momento. Las que se cerraron sin estar tomadas van en una fila aparte.
+    /// </summary>
+    private static List<CierreUsuario> CalcularRankingCierres(List<GestionOperacion> gestiones,
+                                                              Dictionary<int, (DateTime? Ultima, int Cantidad)> notas)
+    {
+        var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToUniversalTime();
+        return gestiones
+            .Where(g => g.FechaCierre != null)
+            .GroupBy(g => g.UsuarioId)
+            .Select(grp =>
+            {
+                var conToma = grp.Where(g => g.FechaToma.HasValue && g.FechaToma <= g.FechaCierre).ToList();
+                return new CierreUsuario(
+                    grp.Key,
+                    grp.Key is null ? "Sin tomar al cerrarse" : NombreDe(grp.First().Usuario),
+                    grp.Count(),
+                    grp.Count(g => g.FechaCierre >= inicioMes),
+                    grp.Count(g => notas.GetValueOrDefault(g.Id).Cantidad > 0),
+                    conToma.Count == 0 ? null : conToma.Average(g => (g.FechaCierre!.Value - g.FechaToma!.Value).TotalDays));
+            })
+            .OrderBy(c => c.UsuarioId is null) // "Sin tomar" siempre al final
+            .ThenByDescending(c => c.Total).ThenBy(c => c.Nombre)
+            .ToList();
     }
 
     private async Task CargarNotasAsync(List<GestionOperacion> gestiones, CancellationToken ct)
@@ -704,6 +778,11 @@ public record FilaGestion(RegcheqPendienteGestion Operacion, GestionOperacion? G
 /// <param name="PuedeGestionar">False si el usuario ya no está activo o no tiene rol de gestión: conviene traspasar su cartera.</param>
 public record CargaUsuario(string UsuarioId, string Nombre, int Total, int SoloPep, int SoloDof, int PepYDof,
                            DateTime? TomaMasAntigua, int SinGestiones, bool PuedeGestionar);
+
+/// <param name="UsuarioId">Null = operaciones que se cerraron sin que nadie las tuviera tomadas.</param>
+/// <param name="ConGestiones">Cerradas con al menos una gestión escrita (no solo eventos del sistema).</param>
+/// <param name="DiasPromedio">Días promedio entre que la tomó y el cierre (firma del cliente).</param>
+public record CierreUsuario(string? UsuarioId, string Nombre, int Total, int EsteMes, int ConGestiones, double? DiasPromedio);
 
 public class ResumenGestion
 {

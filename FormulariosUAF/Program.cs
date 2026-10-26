@@ -97,6 +97,10 @@ builder.Services.AddScoped<IRegcheqService, RegcheqService>();
 // Vehículo de la cotización Netcar (Siglo 21 / VyD) de cada operación RegCheq (solo lectura, con caché)
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IVehiculoOperacionService, VehiculoOperacionService>();
+// Vendedor en /Regcheq: solo las operaciones de sus leads Netcar
+builder.Services.AddScoped<ILeadsVendedorService, LeadsVendedorService>();
+// Admin/Usuarios/ImportarNetcar: crear vendedores con los datos y la contraseña de Netcar
+builder.Services.AddScoped<IVendedoresNetcarService, VendedoresNetcarService>();
 // Cierre automático de gestiones cuando RegCheq registra las firmas (cada GestionRegcheq:IntervaloMinutos)
 builder.Services.AddScoped<IGestionSincronizador, GestionSincronizador>();
 builder.Services.AddHostedService<GestionSincronizacionWorker>();
@@ -141,6 +145,12 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         opt.QueueLimit = 5;
     });
+    // Enlace público de asistencia (Pages/Asistencia): toda una sala puede escanear el QR a la vez y, en la
+    // oficina, salir por la misma IP. Límite por IP, holgado: solo frena scripts que lo bombardeen.
+    options.AddPolicy("AsistenciaPublica", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
@@ -155,6 +165,8 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Regcheq",      "RegcheqPolicy");
     options.Conventions.AllowAnonymousToFolder("/Cliente");
     options.Conventions.AllowAnonymousToFolder("/Account");
+    // Enlace público de registro de asistencia a capacitaciones (Admin/Capacitaciones)
+    options.Conventions.AllowAnonymousToFolder("/Asistencia");
     options.Conventions.AllowAnonymousToPage("/Index");
     options.Conventions.AuthorizeFolder("/Api", "InternoPolicy");
 });
@@ -167,7 +179,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("InternoPolicy",      p => p.RequireRole("Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura"));
     options.AddPolicy("ExportPolicy",       p => p.RequireRole("Administrador", "Cumplimiento"));
     // RegCheq: Cumplimiento y Revisor siguen entrando; Call Center entra solo a este módulo.
-    options.AddPolicy("RegcheqPolicy",      p => p.RequireRole("Administrador", "Cumplimiento", "Revisor", "Call Center"));
+    // Vendedor: solo sus leads Netcar en Operaciones, Gestión y Detalle (lo filtra cada página).
+    options.AddPolicy("RegcheqPolicy",      p => p.RequireRole("Administrador", "Cumplimiento", "Revisor", "Call Center", "Vendedor"));
 });
 
 var app = builder.Build();

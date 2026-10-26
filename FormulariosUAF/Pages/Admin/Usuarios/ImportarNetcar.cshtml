@@ -1,0 +1,236 @@
+@page
+@model FormulariosUAF.Pages.Admin.Usuarios.ImportarNetcarModel
+@{
+    ViewData["Title"] = "Importar vendedores de Netcar";
+    var importables = Model.Filas.Count(f => f.Importable);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-file-import me-2 text-primary"></i>Importar vendedores de Netcar</h4>
+    <a href="/Admin/Usuarios" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Volver</a>
+</div>
+
+<p class="text-muted small mb-3">
+    Se crean con rol <strong>Vendedor</strong>, usuario = abreviación de Netcar (pueden entrar con ella o con su RUT),
+    con el mismo RUT, nombre, apellidos, correo y <strong>la misma contraseña</strong> que tienen en Netcar.
+    La contraseña se copia al momento de crear; si después la cambian en Netcar, aquí no se actualiza.
+</p>
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var e in Model.Empresas)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(e == Model.Empresa ? "active" : "")" href="?Empresa=@Uri.EscapeDataString(e)">Netcar @e</a>
+        </li>
+    }
+</ul>
+
+@if (Model.ErrorNetcar is not null)
+{
+    <div class="alert alert-danger">@Model.ErrorNetcar</div>
+}
+else
+{
+    <form method="post" id="formImportar">
+        <input type="hidden" asp-for="Empresa" />
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                <span class="small text-muted">
+                    @Model.Filas.Count vendedores vigentes · <strong>@importables</strong> se pueden importar
+                </span>
+                <button type="button" class="btn btn-primary btn-sm" id="btnCrearSeleccionados" disabled>
+                    <i class="fa-solid fa-user-plus me-1"></i>Crear seleccionados
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:2rem">
+                                    <input type="checkbox" class="form-check-input" id="marcarTodos" title="Marcar todos" @(importables == 0 ? "disabled" : "") />
+                                </th>
+                                <th>Nombre</th>
+                                <th>Usuario (abreviación Netcar)</th>
+                                <th>RUT (login Netcar)</th>
+                                <th>Correo</th>
+                                <th>Estado</th>
+                                <th class="text-center">Vista previa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model.Filas)
+                            {
+                                var v = f.Vendedor;
+                                <tr class="@(f.Importable ? "" : "table-light text-muted")">
+                                    <td>
+                                        @if (f.Importable)
+                                        {
+                                            <input type="checkbox" class="form-check-input fila-check" name="Seleccionados" value="@v.IdUsuario" />
+                                        }
+                                    </td>
+                                    <td><strong>@v.NombreCompleto</strong></td>
+                                    <td>@v.Abreviacion</td>
+                                    <td>@v.Rut</td>
+                                    <td><small>@v.Email</small></td>
+                                    <td>
+                                        @if (f.Existente is not null)
+                                        {
+                                            <span class="badge bg-success">Ya existe (@f.Existente)</span>
+                                        }
+                                        else if (f.Problema is not null)
+                                        {
+                                            <span class="badge bg-warning text-dark">@f.Problema</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-primary">Nuevo</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (f.Importable)
+                                        {
+                                            <button type="button" class="btn btn-outline-primary btn-sm btn-vista" data-id="@v.IdUsuario" title="Ver los datos con que se creará">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @* Vista previa por vendedor: exactamente los valores que se guardarán (ImportarNetcarModel.UsuarioACrear). *@
+    @foreach (var f in Model.Filas.Where(f => f.Importable))
+    {
+        var u = f.Vista;
+        <template id="vista-@f.Vendedor.IdUsuario">
+            <div class="border rounded mb-3">
+                <div class="bg-light px-3 py-2 fw-bold border-bottom">
+                    <i class="fa-solid fa-user me-1 text-primary"></i>@u.FullName
+                </div>
+                <table class="table table-sm mb-0 small">
+                    <tbody>
+                        <tr><th class="ps-3 w-50">Usuario (login)</th><td><code>@u.UserName</code></td></tr>
+                        <tr><th class="ps-3">RUT (también sirve para entrar)</th><td>@u.Rut</td></tr>
+                        <tr><th class="ps-3">Nombre</th><td>@u.Nombre</td></tr>
+                        <tr><th class="ps-3">Apellido paterno</th><td>@u.ApellidoPaterno</td></tr>
+                        <tr><th class="ps-3">Apellido materno</th><td>@(u.ApellidoMaterno ?? "—")</td></tr>
+                        <tr><th class="ps-3">Nombre completo</th><td>@u.FullName</td></tr>
+                        <tr><th class="ps-3">Correo</th><td>@u.Email</td></tr>
+                        <tr><th class="ps-3">Rol</th><td><span class="badge bg-secondary">@ImportarNetcarModel.UsuarioACrear.Rol</span></td></tr>
+                        <tr><th class="ps-3">Estado</th><td><span class="badge bg-success">Activo</span></td></tr>
+                        <tr><th class="ps-3">Contraseña</th><td><i class="fa-solid fa-lock me-1 text-muted"></i>La misma de Netcar @Model.Empresa <span class="text-muted">(no se muestra)</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+    }
+
+    <div class="modal fade" id="modalVistaPrevia" tabindex="-1" aria-labelledby="modalVistaPreviaTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalVistaPreviaTitulo"><i class="fa-solid fa-eye me-2 text-primary"></i>Vista previa del usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="vistaPreviaCuerpo"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmarImportar" tabindex="-1" aria-labelledby="modalConfirmarImportarTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalConfirmarImportarTitulo"><i class="fa-solid fa-user-plus me-2 text-primary"></i>Crear vendedores</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Se crearán <strong id="importarCantidad">0</strong> usuario(s) con estos datos y su contraseña de Netcar @Model.Empresa:</p>
+                    <div id="importarLista"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" form="formImportar" class="btn btn-primary" id="btnConfirmarImportar">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Crear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Resultados.Count > 0)
+{
+    <div class="modal fade" id="modalResultadoImportar" tabindex="-1" aria-labelledby="modalResultadoImportarTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalResultadoImportarTitulo"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Resultado de la importación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-bold">@Model.Resultados[0]</p>
+                    <ul class="small mb-0">
+                        @foreach (var r in Model.Resultados.Skip(1))
+                        {
+                            <li class="@(r.StartsWith("✖") ? "text-danger" : "")">@r</li>
+                        }
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const checks = () => [...document.querySelectorAll('.fila-check')];
+            const btnCrear = document.getElementById('btnCrearSeleccionados');
+            const actualizar = () => { if (btnCrear) btnCrear.disabled = !checks().some(c => c.checked); };
+
+            document.getElementById('marcarTodos')?.addEventListener('change', e => {
+                checks().forEach(c => c.checked = e.target.checked);
+                actualizar();
+            });
+            checks().forEach(c => c.addEventListener('change', actualizar));
+
+            const vista = id => document.getElementById('vista-' + id).content.cloneNode(true);
+
+            document.querySelectorAll('.btn-vista').forEach(b => b.addEventListener('click', () => {
+                document.getElementById('vistaPreviaCuerpo').replaceChildren(vista(b.dataset.id));
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVistaPrevia')).show();
+            }));
+
+            btnCrear?.addEventListener('click', () => {
+                const marcados = checks().filter(c => c.checked);
+                if (marcados.length === 0) return;
+                document.getElementById('importarCantidad').textContent = marcados.length;
+                document.getElementById('importarLista').replaceChildren(...marcados.map(c => vista(c.value)));
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmarImportar')).show();
+            });
+
+            // Evita doble envío mientras se crean los usuarios.
+            document.getElementById('formImportar')?.addEventListener('submit', () => {
+                const b = document.getElementById('btnConfirmarImportar');
+                b.disabled = true;
+                b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creando...';
+            });
+
+            const resultado = document.getElementById('modalResultadoImportar');
+            if (resultado) bootstrap.Modal.getOrCreateInstance(resultado).show();
+        })();
+    </script>
+}

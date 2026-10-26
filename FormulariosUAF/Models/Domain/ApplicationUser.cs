@@ -5,7 +5,10 @@ namespace FormulariosUAF.Models.Domain;
 
 public class ApplicationUser : IdentityUser
 {
-    /// <summary>RUT normalizado (sin puntos ni guión). Coincide con el UserName y es el identificador de login.</summary>
+    /// <summary>
+    /// RUT normalizado (sin puntos ni guión), único entre usuarios. Sirve para iniciar sesión, igual que
+    /// el UserName (login libre, p. ej. la abreviatura Netcar del vendedor).
+    /// </summary>
     [MaxLength(20)]
     public string? Rut { get; set; }
 

@@ -27,7 +27,8 @@ public class VehiculoCotizacion
 }
 
 /// <summary>Resultado por operación: el vehículo, o por qué no se pudo obtener.</summary>
-public record VehiculoOperacion(int? Cotizacion, string? Empresa, VehiculoCotizacion? Vehiculo, string? Motivo);
+/// <param name="NetcarNoDisponible">True si no se obtuvo porque la consulta a Netcar falló (no porque la cotización no exista).</param>
+public record VehiculoOperacion(int? Cotizacion, string? Empresa, VehiculoCotizacion? Vehiculo, string? Motivo, bool NetcarNoDisponible = false);
 
 public interface IVehiculoOperacionService
 {
@@ -36,6 +37,9 @@ public interface IVehiculoOperacionService
     /// fallan, la operación queda con <see cref="VehiculoOperacion.Motivo"/>.
     /// </summary>
     Task<Dictionary<int, VehiculoOperacion>> ObtenerAsync(RegcheqTipo tipo, IReadOnlyCollection<int> operacionIds, CancellationToken ct = default);
+
+    /// <summary>Igual, a partir de las cotizaciones ya obtenidas de RegCheq (p. ej. con ListarCotizacionesAsync).</summary>
+    Task<Dictionary<int, VehiculoOperacion>> ObtenerAsync(IReadOnlyDictionary<int, RegcheqCotizacion> cotizaciones, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -48,6 +52,8 @@ public interface IVehiculoOperacionService
 public class VehiculoOperacionService : IVehiculoOperacionService
 {
     private const int TimeoutSegundos = 10;
+    /// <summary>TOP (200) de dbo.sp_UAF_VehiculoCotizacion.</summary>
+    private const int MaximoPorLlamada = 200;
     private static readonly TimeSpan DuracionCache = TimeSpan.FromMinutes(10);
     /// <summary>Tras un fallo, no se reintenta esa base durante este tiempo (evita esperar el timeout en cada página).</summary>
     private static readonly TimeSpan PausaTrasFallo = TimeSpan.FromMinutes(2);
@@ -74,10 +80,19 @@ public class VehiculoOperacionService : IVehiculoOperacionService
 
     public async Task<Dictionary<int, VehiculoOperacion>> ObtenerAsync(RegcheqTipo tipo, IReadOnlyCollection<int> operacionIds, CancellationToken ct = default)
     {
+        if (operacionIds.Count == 0) return [];
+        var cotizaciones = await _regcheq.ObtenerCotizacionesAsync(tipo, operacionIds, ct);
+        return await ResolverAsync(operacionIds, cotizaciones, ct);
+    }
+
+    public Task<Dictionary<int, VehiculoOperacion>> ObtenerAsync(IReadOnlyDictionary<int, RegcheqCotizacion> cotizaciones, CancellationToken ct = default) =>
+        ResolverAsync(cotizaciones.Keys.ToList(), cotizaciones, ct);
+
+    private async Task<Dictionary<int, VehiculoOperacion>> ResolverAsync(IReadOnlyCollection<int> operacionIds,
+        IReadOnlyDictionary<int, RegcheqCotizacion> cotizaciones, CancellationToken ct)
+    {
         var resultado = new Dictionary<int, VehiculoOperacion>();
         if (operacionIds.Count == 0) return resultado;
-
-        var cotizaciones = await _regcheq.ObtenerCotizacionesAsync(tipo, operacionIds, ct);
 
         // Agrupar por base Netcar; las que no tienen cotización o empresa se resuelven sin consultar.
         var porBase = new Dictionary<string, List<RegcheqCotizacion>>();
@@ -104,7 +119,7 @@ public class VehiculoOperacionService : IVehiculoOperacionService
             foreach (var c in lista)
             {
                 if (vehiculos is null)
-                    resultado[c.OperacionId] = new(c.Cotizacion, baseNetcar, null, $"No se pudo consultar Netcar {baseNetcar}.");
+                    resultado[c.OperacionId] = new(c.Cotizacion, baseNetcar, null, $"No se pudo consultar Netcar {baseNetcar}.", NetcarNoDisponible: true);
                 else if (vehiculos.TryGetValue(c.Cotizacion!.Value, out var v))
                     resultado[c.OperacionId] = new(c.Cotizacion, baseNetcar, v, null);
                 else
@@ -146,34 +161,9 @@ public class VehiculoOperacionService : IVehiculoOperacionService
             // uaf_lectura solo tiene EXECUTE sobre este SP (no SELECT sobre las tablas). Ver SQL/Netcar_01_*.sql.
             await using var conn = new SqlConnection(conexion);
             await conn.OpenAsync(ct);
-            await using var cmd = new SqlCommand("dbo.sp_UAF_VehiculoCotizacion", conn)
-            {
-                CommandType = System.Data.CommandType.StoredProcedure,
-                CommandTimeout = TimeoutSegundos
-            };
-            cmd.Parameters.Add(new SqlParameter("@Cotizaciones", System.Data.SqlDbType.VarChar, 4000) { Value = string.Join(",", faltantes) });
-            await using var r = await cmd.ExecuteReaderAsync(ct);
-            while (await r.ReadAsync(ct))
-            {
-                var v = new VehiculoCotizacion
-                {
-                    Cotizacion = Convert.ToInt32(r["Cotizacion"]),
-                    Empresa = baseNetcar,
-                    Marca = Texto(r["Marca"]),
-                    Modelo = Texto(r["Modelo"]),
-                    Version = Texto(r["Version"]),
-                    Anio = Positivo(r["Anio"]) is { } anio ? (int)anio : null,
-                    Color = Texto(r["Color"]),
-                    Patente = Texto(r["Patente"]),
-                    Chasis = Texto(r["Chasis"]),
-                    EsNuevo = r["EsNuevo"] is DBNull ? null : Convert.ToInt32(r["EsNuevo"]) == 1,
-                    Precio = Positivo(r["Precio"]),
-                    EstadoCotizacion = Texto(r["Estado"]),
-                    Vendedor = Texto(r["Vendedor"]),
-                    FechaCotizacion = r["Fecha"] as DateTime?
-                };
-                encontrados[v.Cotizacion] = v;
-            }
+            // El SP acepta hasta MaximoPorLlamada cotizaciones: se consulta por lotes (p. ej. Gestión del vendedor revisa todas).
+            foreach (var lote in faltantes.Chunk(MaximoPorLlamada))
+                await LeerLoteAsync(conn, baseNetcar, lote, encontrados, ct);
 
             // También se guardan en caché las que no existen, para no reconsultarlas en cada página.
             foreach (var cot in faltantes)
@@ -185,6 +175,38 @@ public class VehiculoOperacionService : IVehiculoOperacionService
             _logger.LogError(ex, "Error consultando vehículos en Netcar {Base}; no se reintenta por {Minutos} min", baseNetcar, PausaTrasFallo.TotalMinutes);
             _cache.Set(ClaveCaida(baseNetcar), true, PausaTrasFallo);
             return null;
+        }
+    }
+
+    private static async Task LeerLoteAsync(SqlConnection conn, string baseNetcar, int[] lote, Dictionary<int, VehiculoCotizacion> encontrados, CancellationToken ct)
+    {
+        await using var cmd = new SqlCommand("dbo.sp_UAF_VehiculoCotizacion", conn)
+        {
+            CommandType = System.Data.CommandType.StoredProcedure,
+            CommandTimeout = TimeoutSegundos
+        };
+        cmd.Parameters.Add(new SqlParameter("@Cotizaciones", System.Data.SqlDbType.VarChar, 4000) { Value = string.Join(",", lote) });
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+        {
+            var v = new VehiculoCotizacion
+            {
+                Cotizacion = Convert.ToInt32(r["Cotizacion"]),
+                Empresa = baseNetcar,
+                Marca = Texto(r["Marca"]),
+                Modelo = Texto(r["Modelo"]),
+                Version = Texto(r["Version"]),
+                Anio = Positivo(r["Anio"]) is { } anio ? (int)anio : null,
+                Color = Texto(r["Color"]),
+                Patente = Texto(r["Patente"]),
+                Chasis = Texto(r["Chasis"]),
+                EsNuevo = r["EsNuevo"] is DBNull ? null : Convert.ToInt32(r["EsNuevo"]) == 1,
+                Precio = Positivo(r["Precio"]),
+                EstadoCotizacion = Texto(r["Estado"]),
+                Vendedor = Texto(r["Vendedor"]),
+                FechaCotizacion = r["Fecha"] as DateTime?
+            };
+            encontrados[v.Cotizacion] = v;
         }
     }
 

@@ -11,7 +11,9 @@
        eventos: ['RegcheqCambiada'],         // avisos del hub que provocan la recarga
        estado: 'idIndicador',                // opcional: indicador "En vivo"
        ocupado: () => false,                 // opcional: condición extra para esperar
-       alActualizar: () => {}                // opcional: después de reemplazar
+       alActualizar: () => {},               // opcional: después de reemplazar
+       seguir: hub => hub.invoke('...'),     // opcional: método del hub que suscribe la vista (por omisión SeguirRegcheq)
+       filtro: (...datos) => true            // opcional: decide con los datos del aviso si recargar
    });
 */
 window.uafVivo = function (o) {
@@ -23,6 +25,7 @@ window.uafVivo = function (o) {
     const contenedores = () => o.contenedores.map(id => document.getElementById(id)).filter(Boolean);
 
     function ocupado() {
+        if (window.uafTourActivo) return true; // recorrido guiado abierto (tour.js)
         const a = document.activeElement;
         for (const c of contenedores()) {
             if (a && c.contains(a) && a.matches('input, textarea, select')) return true;
@@ -90,12 +93,12 @@ window.uafVivo = function (o) {
         }
     }
 
-    // Registrarse en el grupo RegCheq del hub (al conectar y en cada reconexión: el grupo se pierde).
-    function seguir() { hub.invoke('SeguirRegcheq').catch(() => { }); }
+    // Registrarse en el grupo del hub (al conectar y en cada reconexión: el grupo se pierde).
+    function seguir() { (o.seguir ? o.seguir(hub) : hub.invoke('SeguirRegcheq')).catch(() => { }); }
 
     if (hub) {
         // Agrupa varios avisos seguidos (ej. acción masiva) en una sola recarga.
-        o.eventos.forEach(ev => hub.on(ev, () => programar(700)));
+        o.eventos.forEach(ev => hub.on(ev, (...datos) => { if (!o.filtro || o.filtro(...datos)) programar(700); }));
         hub.onreconnecting(() => pintarEstado(false));
         hub.onreconnected(() => { seguir(); pintarEstado(true); programar(0); }); // pudo perderse algún aviso
         hub.onclose(() => pintarEstado(false));

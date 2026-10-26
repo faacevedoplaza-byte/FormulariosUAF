@@ -80,10 +80,10 @@
 
             <form method="post">
                 <div class="mb-3">
-                    <label asp-for="Input.Login" class="login-label">Login</label>
+                    <label asp-for="Input.Login" class="login-label">Usuario o RUT</label>
                     <div class="login-field">
                         <span class="ic"><i class="fa-solid fa-id-card"></i></span>
-                        <input asp-for="Input.Login" class="form-control" autofocus />
+                        <input asp-for="Input.Login" class="form-control" placeholder="Ej.: SLARA o 12.345.678-9" autocomplete="username" autofocus />
                     </div>
                     <span asp-validation-for="Input.Login" class="text-danger small"></span>
                 </div>

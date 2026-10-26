@@ -63,10 +63,24 @@
             Operaciones de persona natural desde @GestionModel.InicioSeguimiento.ToString("dd/MM/yyyy") con formulario PEP o DOF requerido y sin firmar.
             La gestión se cierra sola cuando RegCheq registra la firma.
         </div>
+        @if (Model.EsVendedor)
+        {
+            <div class="small mt-1">
+                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                    <i class="fa-solid fa-user-tag me-1"></i>Solo sus leads: cotizaciones Netcar (Siglo 21 y VyD) del vendedor <strong>@(Model.CodigoVendedor ?? "—")</strong>
+                </span>
+            </div>
+        }
     </div>
     <div class="d-flex align-items-center gap-3">
         <span id="gsEstadoVivo" class="gs-vivo" title="Conectando…"><i></i><span>Conectando…</span></span>
-        <a href="/Regcheq" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list-check me-1"></i>Todas las operaciones</a>
+        <a href="/Regcheq/Introduccion" id="gsVideo" class="btn btn-outline-primary btn-sm" title="Video: qué son las declaraciones PEP y DOF">
+            <i class="fa-solid fa-circle-play me-1"></i>PEP y DOF
+        </a>
+        <button type="button" id="gsTour" class="btn btn-outline-secondary btn-sm" data-tour-iniciar title="Ver el recorrido guiado de esta vista">
+            <i class="fa-regular fa-circle-question me-1"></i>Tour
+        </button>
+        <a href="/Regcheq" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-list-check me-1"></i>@(Model.EsVendedor ? "Mis operaciones" : "Todas las operaciones")</a>
     </div>
 </div>
 
@@ -82,6 +96,7 @@
         <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
+<partial name="_AvisoVideoPepDof" />
 @if (!Model.Configurado && Model.Error is null)
 {
     <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>La conexión <code>RegCheqConnection</code> no está configurada en este ambiente.</div>
@@ -90,11 +105,15 @@ else if (Model.Error is not null)
 {
     <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Error</div>
 }
+@if (Model.AvisoNetcar is not null)
+{
+    <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>@Model.AvisoNetcar</div>
+}
 
 <!-- Contenido que se recarga en vivo cuando otro usuario cambia algo (ver script al final) -->
 <div id="gsVivo">
 <!-- Indicadores (clic = filtrar) -->
-<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
+<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6" id="gsKpis">
     @{
         var kpis = new[]
         {
@@ -127,7 +146,7 @@ else if (Model.Error is not null)
     var abiertasCount = Model.SoloMias ? t.Mias : t.Pendientes;
 }
 <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3 border-bottom">
-    <ul class="nav nav-tabs border-0">
+    <ul class="nav nav-tabs border-0" id="gsPestanas">
         <li class="nav-item">
             <a class="nav-link @(!Model.EsCerradas ? "active" : "")" asp-page="./Gestion" asp-route-asignacion="@asigTab" asp-route-usuario="@Model.Usuario">
                 <i class="fa-solid fa-folder-open me-1"></i>Abiertas <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis ms-1">@abiertasCount.ToString("N0")</span>
@@ -155,7 +174,7 @@ else if (Model.Error is not null)
     var maxCarga = Math.Max(1, Model.Carga.Max(c => c.Total));
     var ocultarCarga = !string.IsNullOrEmpty(Model.Usuario);
     <!-- Carga por usuario (administrador) -->
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card border-0 shadow-sm mb-4" id="gsCargaUsuarios">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><i class="fa-solid fa-people-group me-2 text-primary"></i>Carga por usuario</span>
             <button type="button" class="btn btn-sm btn-link text-decoration-none gs-toggle @(ocultarCarga ? "collapsed" : "")" data-bs-toggle="collapse" data-bs-target="#gsCarga">
@@ -197,7 +216,7 @@ else if (Model.Error is not null)
                                                 }
                                                 @if (!c.PuedeGestionar)
                                                 {
-                                                    <div><span class="badge bg-warning-subtle text-warning-emphasis" title="Usuario inactivo o sin rol Cumplimiento/Call Center/Administrador: no puede gestionar estas operaciones">
+                                                    <div><span class="badge bg-warning-subtle text-warning-emphasis" title="Usuario inactivo o sin rol Cumplimiento/Call Center/Vendedor/Administrador: no puede gestionar estas operaciones">
                                                         <i class="fa-solid fa-triangle-exclamation me-1"></i>No puede gestionar</span></div>
                                                 }
                                             </div>
@@ -253,8 +272,86 @@ else if (Model.Error is not null)
     </div>
 }
 
+@if (Model.EsAdmin && Model.EsCerradas && Model.RankingCierres.Any())
+{
+    var maxCierres = Math.Max(1, Model.RankingCierres.Max(c => c.Total));
+    var puesto = 0;
+    <!-- Quién cierra más operaciones (administrador). No depende de los filtros. -->
+    <div class="card border-0 shadow-sm mb-4" id="gsRankingCierres">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="fa-solid fa-trophy me-2 text-warning"></i>Operaciones cerradas por usuario</span>
+            <button type="button" class="btn btn-sm btn-link text-decoration-none gs-toggle" data-bs-toggle="collapse" data-bs-target="#gsRanking">
+                <span class="small">Mostrar / ocultar</span> <i class="fa-solid fa-chevron-down ms-1"></i>
+            </button>
+        </div>
+        <div id="gsRanking" class="collapse show">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:48px" class="text-center">#</th>
+                                <th>Usuario</th>
+                                <th style="min-width:180px">Cerradas</th>
+                                <th class="text-center">Este mes</th>
+                                <th class="text-center" title="Cerradas en las que escribió al menos una gestión en la bitácora">Con gestiones</th>
+                                <th class="text-center" title="Días promedio desde que la tomó hasta que el cliente firmó">Tiempo promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.RankingCierres)
+                            {
+                                var conUsuario = c.UsuarioId is not null;
+                                if (conUsuario) puesto++;
+                                var medalla = !conUsuario ? null : puesto switch { 1 => "#d4a017", 2 => "#9ca3af", 3 => "#b87333", _ => null };
+                                <tr class="@(Model.Usuario is not null && Model.Usuario == c.UsuarioId ? "table-primary" : "") @(conUsuario ? "" : "text-muted")">
+                                    <td class="text-center fw-semibold">
+                                        @if (medalla is not null) { <i class="fa-solid fa-medal" style="color:@medalla" title="Puesto @puesto"></i> }
+                                        else if (conUsuario) { @puesto }
+                                        else { <span>—</span> }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="gs-avatar">@(conUsuario ? GestionModel.Iniciales(c.Nombre) : "?")</span>
+                                            @if (conUsuario)
+                                            {
+                                                <a asp-page="./Gestion" asp-route-vista="cerradas" asp-route-usuario="@c.UsuarioId" class="fw-semibold text-decoration-none" title="Ver sus operaciones cerradas">@c.Nombre</a>
+                                            }
+                                            else
+                                            {
+                                                <span title="El cliente firmó antes de que alguien tomara la operación">@c.Nombre</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height:8px">
+                                                <div class="progress-bar @(conUsuario ? "bg-success" : "bg-secondary")" style="width:@((c.Total * 100 / maxCierres))%"></div>
+                                            </div>
+                                            <span class="fw-semibold" style="min-width:2.5rem">@c.Total.ToString("N0")</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">@(c.EsteMes > 0 ? c.EsteMes.ToString("N0") : "—")</td>
+                                    <td class="text-center">@(conUsuario ? c.ConGestiones.ToString("N0") : "—")</td>
+                                    <td class="text-center text-nowrap">
+                                        @if (c.DiasPromedio is { } d)
+                                        {
+                                            <span>@(d < 1 ? "menos de 1 día" : $"{d:N1} días")</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Filtros -->
-<div class="card border-0 shadow-sm mb-4">
+<div class="card border-0 shadow-sm mb-4" id="gsFiltros">
     <div class="card-body">
         @if (!string.IsNullOrEmpty(Model.Usuario))
         {
@@ -357,6 +454,11 @@ else if (Model.Error is not null)
                         {
                             <tr><td colspan="@columnas" class="text-center text-muted py-5">
                                 <i class="fa-regular fa-face-smile fs-3 d-block mb-2"></i>No hay operaciones pendientes con estos filtros
+                                @if (Model.EsVendedor)
+                                {
+                                    <div class="small mt-2">Se muestran las cotizaciones cuyo vendedor en Netcar es <strong>@(Model.CodigoVendedor ?? "—")</strong>.
+                                        Si su usuario Netcar es otro, pida a un administrador que lo registre.</div>
+                                }
                             </td></tr>
                         }
                         @foreach (var f in Model.Filas)
@@ -430,13 +532,13 @@ else if (Model.Error is not null)
                                     {
                                         <form method="post" asp-page-handler="Tomar" asp-all-route-data="Model.Ruta(Model.Pagina)" class="d-inline">
                                             <input type="hidden" name="id" value="@op.Id" />
-                                            <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-hand me-1"></i>Tomar</button>
+                                            <button type="submit" class="btn btn-sm btn-primary gs-tomar"><i class="fa-solid fa-hand me-1"></i>Tomar</button>
                                         </form>
                                     }
                                     <a asp-page="./Detalle" asp-route-tipo="natural" asp-route-id="@op.Id" class="btn btn-sm btn-outline-primary" title="Ver el desglose completo y la bitácora">
                                         <i class="fa-solid fa-eye"></i><span class="d-none d-xl-inline ms-1">Detalle</span>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary gs-toggle @(abierto ? "" : "collapsed")" data-bs-toggle="collapse" data-bs-target="#@idPanel" aria-expanded="@(abierto ? "true" : "false")">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary gs-toggle gs-abrir @(abierto ? "" : "collapsed")" data-bs-toggle="collapse" data-bs-target="#@idPanel" aria-expanded="@(abierto ? "true" : "false")">
                                         <i class="fa-solid fa-comments me-1"></i>Gestión <i class="fa-solid fa-chevron-down ms-1"></i>
                                     </button>
                                 </td>
@@ -679,6 +781,38 @@ else
             estado: 'gsEstadoVivo',
             ocupado: () => gsChecks().some(c => c.checked),
             alActualizar: gsActualizar
+        });
+    </script>
+    <partial name="_TourScripts" />
+    <script>
+        uafTour({
+            clave: 'regcheq-gestion',
+            pasos: [
+                { titulo: '@(Model.EsVendedor ? "Gestión de sus leads" : "Gestión de operaciones")',
+                  texto: 'Aquí están las operaciones de persona natural con formulario PEP o DOF pendiente de firma. Se toman, se contacta al cliente y se deja registro. Cuando RegCheq registra la firma, la gestión se cierra sola.' },
+                { elemento: '#gsKpis', lado: 'bottom', titulo: 'Indicadores',
+                  texto: 'Cada tarjeta es un filtro: haga clic para ver solo ese grupo. <b>Caso 1</b> falta PEP, <b>Caso 2</b> falta DOF, <b>Caso 3</b> requiere ambos. <b>Sin tomar</b> son las que nadie está gestionando.' },
+                { elemento: '#gsPestanas', lado: 'bottom', titulo: 'Abiertas y cerradas',
+                  texto: '<b>Abiertas</b>: aún falta alguna firma. <b>Cerradas</b>: el cliente ya firmó; ahí se puede revisar la bitácora de cómo se gestionó.' },
+                { elemento: '.gs-switch', lado: 'left', titulo: 'Solo mis operaciones',
+                  texto: 'Active este interruptor para ver únicamente las operaciones que usted tiene o tuvo tomadas.' },
+                { elemento: '#gsCargaUsuarios', lado: 'bottom', titulo: 'Carga por usuario',
+                  texto: 'Como administrador ve cuántas operaciones tiene cada persona, cuáles llevan más tiempo y cuáles no tienen gestiones. Puede traspasar todas las de un usuario a otro.' },
+                { elemento: '#gsRankingCierres', lado: 'bottom', titulo: 'Quién cierra más',
+                  texto: 'Ranking de operaciones cerradas por usuario: total, este mes, cuántas tuvieron gestiones escritas y el tiempo promedio desde que la tomó hasta la firma. Haga clic en un nombre para ver sus cerradas.' },
+                { elemento: '#gsFiltros', lado: 'bottom', titulo: 'Buscar y filtrar',
+                  texto: 'Busque por N° de operación, cotización, RUT o nombre, y filtre por caso o asignación.' },
+                { elemento: '#gsTodas', lado: 'right', titulo: 'Acciones masivas',
+                  texto: 'Marque varias filas para asignarlas a una persona o liberarlas de una sola vez. La barra de acciones aparece abajo al marcar.' },
+                { elemento: '.gs-tomar', lado: 'left', titulo: 'Tomar una operación',
+                  texto: 'Al tomarla queda a su nombre y nadie más puede registrar gestiones en ella. Si no puede seguir con ella, use <b>Liberar</b> para dejarla disponible.' },
+                { elemento: '.gs-abrir', lado: 'left', titulo: 'Bitácora y gestiones',
+                  texto: 'Despliega la bitácora de la operación. Si la tiene tomada, aquí escribe lo que hizo (ej. llamó al cliente, reenvió el formulario).' },
+                { elemento: '#gsVideo', lado: 'bottom', alinear: 'end', titulo: '¿Qué es PEP y DOF?',
+                  texto: 'Si necesita explicarle al cliente por qué debe firmar, este video de 2 minutos le da el contexto y frases sugeridas.' },
+                { elemento: '#gsTour', lado: 'bottom', alinear: 'end', titulo: '¿Necesita repasar?',
+                  texto: 'Puede volver a ver este recorrido cuando quiera con el botón <b>Tour</b>.' }
+            ]
         });
     </script>
 }

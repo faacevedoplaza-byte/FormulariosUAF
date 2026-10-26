@@ -376,7 +376,14 @@ public static class DatabaseNaming
             ["Orden"] = "IN_ORDEN_NACIONALIDAD",
             ["Activo"] = "BO_ACTIVO_NACIONALIDAD",
         }),
-        ["GestionesOperacion"] = ("T_GESTIONOPERACION", new()
+        ["Empresas"] = ("T_EMPRESA", new()
+        {
+            ["Id"] = "IN_COD_EMPRESA",
+            ["Nombre"] = "ST_NOMBRE_EMPRESA",
+            ["Orden"] = "IN_ORDEN_EMPRESA",
+            ["Activo"] = "BO_ACTIVO_EMPRESA",
+        }),
+        ["GestionesOperacion"] =("T_GESTIONOPERACION", new()
         {
             ["Id"] = "IN_COD_GESTIONOPERACION",
             ["OperacionId"] = "IN_CODOPERACIONREGCHEQ_GESTIONOPERACION",
@@ -397,6 +404,55 @@ public static class DatabaseNaming
             ["Texto"] = "ST_TEXTO_GESTIONOPERACIONNOTA",
             ["EsSistema"] = "BO_SISTEMA_GESTIONOPERACIONNOTA",
             ["CreatedAt"] = "DT_FECHACREACION_GESTIONOPERACIONNOTA",
+        }),
+        ["VideosVisualizacion"] = ("T_VIDEOVISUALIZACION", new()
+        {
+            ["Id"] = "IN_COD_VIDEOVISUALIZACION",
+            ["Sesion"] = "IN_CODSESION_VIDEOVISUALIZACION",
+            ["Video"] = "ST_VIDEO_VIDEOVISUALIZACION",
+            ["UsuarioId"] = "IN_COD_USUARIO",
+            ["FechaInicio"] = "DT_FECHAINICIO_VIDEOVISUALIZACION",
+            ["FechaUltimaActividad"] = "DT_FECHAULTIMAACTIVIDAD_VIDEOVISUALIZACION",
+            ["Reproducido"] = "BO_REPRODUCIDO_VIDEOVISUALIZACION",
+            ["TotalEscenas"] = "IN_TOTALESCENAS_VIDEOVISUALIZACION",
+            ["EscenaMaxima"] = "IN_ESCENAMAXIMA_VIDEOVISUALIZACION",
+            ["EscenasVistas"] = "ST_ESCENASVISTAS_VIDEOVISUALIZACION",
+            ["Pausas"] = "IN_PAUSAS_VIDEOVISUALIZACION",
+            ["Adelantos"] = "IN_ADELANTOS_VIDEOVISUALIZACION",
+            ["Retrocesos"] = "IN_RETROCESOS_VIDEOVISUALIZACION",
+            ["SegundosReproducidos"] = "IN_SEGUNDOS_VIDEOVISUALIZACION",
+            ["Completo"] = "BO_COMPLETO_VIDEOVISUALIZACION",
+            ["ConVoz"] = "BO_CONVOZ_VIDEOVISUALIZACION",
+            ["UsoPantallaCompleta"] = "BO_PANTALLACOMPLETA_VIDEOVISUALIZACION",
+        }),
+        ["Capacitaciones"] = ("T_CAPACITACION", new()
+        {
+            ["Id"] = "IN_COD_CAPACITACION",
+            ["Titulo"] = "ST_TITULO_CAPACITACION",
+            ["Descripcion"] = "ST_DESCRIPCION_CAPACITACION",
+            ["Fecha"] = "DT_FECHA_CAPACITACION",
+            ["Lugar"] = "ST_LUGAR_CAPACITACION",
+            ["Relator"] = "ST_RELATOR_CAPACITACION",
+            ["Token"] = "ST_TOKEN_CAPACITACION",
+            ["RegistroAbierto"] = "BO_REGISTROABIERTO_CAPACITACION",
+            ["CreadoPor"] = "ST_CREADOPOR_CAPACITACION",
+            ["CreatedAt"] = "DT_FECHACREACION_CAPACITACION",
+        }),
+        ["CapacitacionesAsistencia"] = ("T_CAPACITACIONASISTENCIA", new()
+        {
+            ["Id"] = "IN_COD_CAPACITACIONASISTENCIA",
+            ["CapacitacionId"] = "IN_COD_CAPACITACION",
+            ["NombreCompleto"] = "ST_NOMBRECOMPLETO_CAPACITACIONASISTENCIA",
+            ["Rut"] = "ST_RUT_CAPACITACIONASISTENCIA",
+            ["Email"] = "ST_EMAIL_CAPACITACIONASISTENCIA",
+            ["Telefono"] = "ST_TELEFONO_CAPACITACIONASISTENCIA",
+            ["Cargo"] = "ST_CARGO_CAPACITACIONASISTENCIA",
+            ["Sucursal"] = "ST_SUCURSAL_CAPACITACIONASISTENCIA",
+            ["EmpresaId"] = "IN_COD_EMPRESA",
+            ["AceptaAsistencia"] = "BO_ACEPTAASISTENCIA_CAPACITACIONASISTENCIA",
+            ["FechaRegistro"] = "DT_FECHAREGISTRO_CAPACITACIONASISTENCIA",
+            ["IpAddress"] = "ST_DIRECCIONIP_CAPACITACIONASISTENCIA",
+            ["UserAgent"] = "ST_USERAGENT_CAPACITACIONASISTENCIA",
         }),
     };
 

@@ -22,12 +22,32 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Operaciones RegCheq</h4>
-    <span id="rqEstadoVivo" class="gs-vivo" title="Conectando…"><i></i><span>Conectando…</span></span>
+    <div>
+        <h4 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>@(Model.EsVendedor ? "Mis operaciones RegCheq" : "Operaciones RegCheq")</h4>
+        @if (Model.EsVendedor)
+        {
+            <div class="small mt-1">
+                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                    <i class="fa-solid fa-user-tag me-1"></i>Solo sus leads: cotizaciones Netcar (Siglo 21 y VyD) del vendedor <strong>@(Model.CodigoVendedor ?? "—")</strong>
+                </span>
+            </div>
+        }
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span id="rqEstadoVivo" class="gs-vivo" title="Conectando…"><i></i><span>Conectando…</span></span>
+        <a href="/Regcheq/Introduccion" id="rqVideo" class="btn btn-outline-primary btn-sm" title="Video: qué son las declaraciones PEP y DOF">
+            <i class="fa-solid fa-circle-play me-1"></i>PEP y DOF
+        </a>
+        <button type="button" id="rqTour" class="btn btn-outline-secondary btn-sm" data-tour-iniciar title="Ver el recorrido guiado de esta vista">
+            <i class="fa-regular fa-circle-question me-1"></i>Tour
+        </button>
+    </div>
 </div>
 
+<partial name="_AvisoVideoPepDof" />
+
 <!-- Pestañas: personas naturales / empresas -->
-<ul class="nav nav-tabs mb-3">
+<ul class="nav nav-tabs mb-3" id="rqPestanas">
     <li class="nav-item">
         <a class="nav-link @(Model.EsNatural ? "active" : "")" asp-page="./Index" asp-all-route-data='Model.Ruta(tipo: "natural")'>
             <i class="fa-solid fa-user me-1"></i>Personas naturales
@@ -50,9 +70,13 @@ else if (Model.Listado.Error is not null)
 {
     <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>@Model.Listado.Error</div>
 }
+@if (Model.AvisoVendedor is not null)
+{
+    <div class="alert alert-warning"><i class="fa-solid fa-plug-circle-xmark me-2"></i>@Model.AvisoVendedor</div>
+}
 
 <!-- Totales (según filtros) -->
-<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-6">
+<div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-5">
     <div class="col">
         <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
             <div class="fs-3 fw-bold text-primary">@t.Total.ToString("N0")</div><small class="text-muted">Operaciones</small>
@@ -90,7 +114,7 @@ else if (Model.Listado.Error is not null)
         <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
             @if (Model.EsNatural)
             {
-                <div class="fs-3 fw-bold text-success">@t.FirmasCompletas.ToString("N0")</div><small class="text-muted" title="Todos los formularios requeridos (PEP/DOF) firmados">Firmas completas</small>
+                <div class="fs-3 fw-bold text-success">@t.FirmasCompletas.ToString("N0")</div><small class="text-muted" title="Todos los formularios requeridos (PEP/DOF) firmados, o no requiere ninguno">Firmas completas</small>
             }
             else
             {
@@ -98,11 +122,29 @@ else if (Model.Listado.Error is not null)
             }
         </div></div>
     </div>
+    @if (Model.EsNatural)
+    {
+        // Pendientes por caso (misma regla que la columna Firmas y la vista Gestión).
+        var casos = new[]
+        {
+            (Cantidad: t.Caso1, Titulo: "Caso 1 · Falta PEP", Ayuda: "Requiere PEP sin firmar; no requiere DOF", Color: "var(--bs-danger)"),
+            (Cantidad: t.Caso2, Titulo: "Caso 2 · Falta DOF", Ayuda: "Requiere DOF sin firmar; no requiere PEP", Color: "var(--bs-warning)"),
+            (Cantidad: t.Caso3, Titulo: "Caso 3 · PEP y DOF", Ayuda: "Requiere PEP y DOF; falta al menos uno",   Color: "#6f42c1")
+        };
+        foreach (var c in casos)
+        {
+            <div class="col">
+                <div class="card border-0 shadow-sm text-center"><div class="card-body py-3">
+                    <div class="fs-3 fw-bold" style="color:@c.Color">@c.Cantidad.ToString("N0")</div><small class="text-muted" title="@c.Ayuda">@c.Titulo</small>
+                </div></div>
+            </div>
+        }
+    }
 </div>
 </div>
 
 <!-- Filtros (fuera de la recarga en vivo: no se pierde lo que el usuario está escribiendo) -->
-<div class="card border-0 shadow-sm mb-4">
+<div class="card border-0 shadow-sm mb-4" id="rqFiltros">
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
             <input type="hidden" name="tipo" value="@Model.Tipo" />
@@ -165,7 +207,6 @@ else if (Model.Listado.Error is not null)
                         <option value="pep" selected="@Sel(Model.Firmas, "pep")">Caso 1 · Falta PEP</option>
                         <option value="dof" selected="@Sel(Model.Firmas, "dof")">Caso 2 · Falta DOF</option>
                         <option value="ambos" selected="@Sel(Model.Firmas, "ambos")">Caso 3 · PEP y DOF</option>
-                        <option value="norequiere" selected="@Sel(Model.Firmas, "norequiere")">No requiere</option>
                         <option value="sinseguimiento" selected="@Sel(Model.Firmas, "sinseguimiento")">Sin seguimiento (antes de 2026)</option>
                     </select>
                 </div>
@@ -268,7 +309,7 @@ else if (Model.Listado.Error is not null)
                                 <td class="text-center">@RegcheqUi.SiNo(op.Finalizada)</td>
                             }
                             <td>
-                                <a asp-page="./Detalle" asp-route-tipo="@Model.Tipo" asp-route-id="@op.Id" class="btn btn-sm btn-primary">
+                                <a asp-page="./Detalle" asp-route-tipo="@Model.Tipo" asp-route-id="@op.Id" class="btn btn-sm btn-primary rq-ver">
                                     <i class="fa-solid fa-eye me-1"></i>Ver
                                 </a>
                             </td>
@@ -301,5 +342,33 @@ else if (Model.Listado.Error is not null)
     <script>
         // En vivo: RegcheqVivoWorker avisa cuando cambian las operaciones en RegCheq (nuevas, firmas, estados).
         uafVivo({ contenedores: ['rqResumen', 'rqTabla'], eventos: ['RegcheqCambiada'], estado: 'rqEstadoVivo' });
+    </script>
+    <partial name="_TourScripts" />
+    <script>
+        uafTour({
+            clave: 'regcheq-index',
+            pasos: [
+                { titulo: '@(Model.EsVendedor ? "Bienvenido a sus operaciones RegCheq" : "Bienvenido a Operaciones RegCheq")',
+                  texto: 'Aquí se revisan las operaciones que RegCheq evalúa para la UAF: si el cliente es PEP, si aparece en listas y si firmó los formularios PEP y DOF. Le mostramos lo principal en unos pasos.' },
+                { elemento: '[data-tour="menu-regcheq"]', lado: 'right', titulo: 'Menú RegCheq',
+                  texto: '<b>Operaciones</b> es este listado completo. <b>Gestión</b> reúne solo las operaciones con firmas pendientes, para tomarlas y registrar el seguimiento al cliente.' },
+                { elemento: '#rqEstadoVivo', lado: 'bottom', alinear: 'end', titulo: 'Actualización en vivo',
+                  texto: 'En verde, la vista se actualiza sola cuando llegan operaciones nuevas o firmas. En ámbar, hay cambios que se mostrarán cuando termine de escribir.' },
+                { elemento: '#rqPestanas', lado: 'bottom', titulo: 'Personas naturales y empresas',
+                  texto: 'Cambie entre operaciones de personas naturales y de empresas. Los filtros se ajustan a cada tipo.' },
+                { elemento: '#rqResumen', lado: 'bottom', titulo: 'Totales',
+                  texto: 'Resumen según los filtros aplicados. Los casos indican qué firma falta: <b>Caso 1</b> falta PEP, <b>Caso 2</b> falta DOF y <b>Caso 3</b> requiere ambos y falta al menos uno.' },
+                { elemento: '#rqFiltros', lado: 'bottom', titulo: 'Filtros',
+                  texto: 'Busque por RUT, nombre, N° de cotización o código, y filtre por fechas, PEP, lista PEP o estado de firmas. <b>Limpiar</b> quita todos los filtros.' },
+                { elemento: '#rqTabla thead', lado: 'bottom', titulo: 'Ordenar columnas',
+                  texto: 'Haga clic en el título de una columna para ordenar; otro clic invierte el orden. Se ordenan todas las operaciones filtradas, no solo esta página.' },
+                { elemento: '#rqTabla tbody .rq-ver', lado: 'left', titulo: 'Ver el detalle',
+                  texto: 'Abre la ficha completa de la operación: datos de contacto del cliente, formularios, vehículo cotizado, asociados y revisión en listas.' },
+                { elemento: '#rqVideo', lado: 'bottom', alinear: 'end', titulo: '¿Qué es PEP y DOF?',
+                  texto: 'Un video de 2 minutos que explica qué declara el cliente en cada formulario, por qué la normativa exige su firma y cómo explicárselo.' },
+                { elemento: '#rqTour', lado: 'bottom', alinear: 'end', titulo: '¿Necesita repasar?',
+                  texto: 'Puede volver a ver este recorrido cuando quiera con el botón <b>Tour</b>.' }
+            ]
+        });
     </script>
 }

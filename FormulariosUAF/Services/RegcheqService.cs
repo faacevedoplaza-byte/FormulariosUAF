@@ -75,10 +75,16 @@ public class RegcheqService : IRegcheqService
             return resultado;
         }
 
+        // Filtro por operaciones (vendedor) sin ninguna: no hay nada que consultar.
+        if (filtro.SoloIds is { Count: 0 }) return resultado;
+
         var e = Para(filtro.Tipo);
         var esNatural = filtro.Tipo == RegcheqTipo.Natural;
         var where = new List<string>();
         var parametros = new List<SqlParameter>();
+        var declararIds = DeclararIds(filtro.SoloIds);
+        if (filtro.SoloIds is not null)
+            where.Add($"o.{e.OperacionId} IN (SELECT Id FROM @ids)");
 
         if (!string.IsNullOrWhiteSpace(filtro.Texto))
         {
@@ -166,10 +172,10 @@ public class RegcheqService : IRegcheqService
             "formularios" => "ISNULL(CAST(o.BT_FORMSIGNED AS int), 0)",
             "estado" => "o.ST_STATUS",
             "finalizada" => "ISNULL(CAST(o.BT_FINISHED AS int), 0)",
-            // Pendientes primero (caso 1, 2, 3), luego sin seguimiento, no requiere y completas.
+            // Pendientes primero (caso 1, 2, 3), luego sin seguimiento y completas.
             "firmas" when esNatural => $@"CASE WHEN {CondicionFirmas(EstadoFirmas.Pep)} THEN 1 WHEN {CondicionFirmas(EstadoFirmas.Dof)} THEN 2
                 WHEN {CondicionFirmas(EstadoFirmas.PepYDof)} THEN 3 WHEN {CondicionFirmas(EstadoFirmas.SinSeguimiento)} THEN 4
-                WHEN {CondicionFirmas(EstadoFirmas.NoRequiere)} THEN 5 WHEN {CondicionFirmas(EstadoFirmas.Completa)} THEN 6 ELSE 7 END",
+                WHEN {CondicionFirmas(EstadoFirmas.Completa)} THEN 5 ELSE 6 END",
             _ => "o.DT_CREATED_AT"
         };
         // Desempate estable: más nuevas primero. (SQL Server no admite repetir una columna en el ORDER BY.)
@@ -197,7 +203,7 @@ DECLARE @cp TABLE (Id int PRIMARY KEY);
 INSERT @cp (Id) SELECT DISTINCT x.Id FROM ({OperacionesConCoincidenciaPep(e)}) x (Id);
 ";
 
-        var sqlTotales = prefijoCp + $@"
+        var sqlTotales = prefijoCp + declararIds + $@"
 SELECT COUNT(*) AS Total,
        SUM(CASE WHEN o.BT_HASPEP = 1 THEN 1 ELSE 0 END) AS ConPep,
        {(esNatural ? "SUM(CASE WHEN o.BT_FIRMADOPEP = 1 THEN 1 ELSE 0 END)" : "0")} AS FirmoPep,
@@ -205,6 +211,9 @@ SELECT COUNT(*) AS Total,
        SUM(CASE WHEN o.BT_FORMSIGNED = 1 THEN 1 ELSE 0 END) AS FormulariosFirmados,
        SUM(CASE WHEN o.BT_FINISHED = 1 THEN 1 ELSE 0 END) AS Finalizadas,
        {(esNatural ? $"SUM(CASE WHEN {CondicionFirmas(EstadoFirmas.Completa)} THEN 1 ELSE 0 END)" : "0")} AS FirmasCompletas,
+       {(esNatural ? $"SUM(CASE WHEN {CondicionFirmas(EstadoFirmas.Pep)} THEN 1 ELSE 0 END)" : "0")} AS Caso1,
+       {(esNatural ? $"SUM(CASE WHEN {CondicionFirmas(EstadoFirmas.Dof)} THEN 1 ELSE 0 END)" : "0")} AS Caso2,
+       {(esNatural ? $"SUM(CASE WHEN {CondicionFirmas(EstadoFirmas.PepYDof)} THEN 1 ELSE 0 END)" : "0")} AS Caso3,
        SUM(CASE WHEN cp.Id IS NOT NULL THEN 1 ELSE 0 END) AS CoincidenciaListaPep
 FROM {e.Operacion} o
 LEFT JOIN @cp cp ON cp.Id = o.{e.OperacionId}
@@ -221,7 +230,7 @@ OPTION (RECOMPILE);";
         // elige bucles anidados que recorren la tabla de operaciones miles de veces.
         // OPTION (RECOMPILE) le permite ver que @pagina tiene ~25 filas y elegir un plan acorde.
         // Pos guarda el orden elegido para devolver la página en ese mismo orden.
-        var sqlPagina = (necesitaCp ? prefijoCp : "SET NOCOUNT ON;") + $@"
+        var sqlPagina = (necesitaCp ? prefijoCp : "SET NOCOUNT ON;\n") + declararIds + $@"
 DECLARE @pagina TABLE (Id int PRIMARY KEY, Pos int NOT NULL);
 
 INSERT @pagina (Id, Pos)
@@ -290,6 +299,9 @@ OPTION (RECOMPILE);";
                         FormulariosFirmados = f.Int("FormulariosFirmados") ?? 0,
                         Finalizadas = f.Int("Finalizadas") ?? 0,
                         FirmasCompletas = f.Int("FirmasCompletas") ?? 0,
+                        Caso1 = f.Int("Caso1") ?? 0,
+                        Caso2 = f.Int("Caso2") ?? 0,
+                        Caso3 = f.Int("Caso3") ?? 0,
                         CoincidenciaListaPep = f.Int("CoincidenciaListaPep") ?? 0
                     };
                 }
@@ -678,6 +690,78 @@ WHERE o.{e.OperacionId} IN ({ids});";
         return resultado;
     }
 
+    public async Task<Dictionary<int, RegcheqCotizacion>?> ListarCotizacionesAsync(RegcheqTipo tipo, DateTime? desde, DateTime? hasta, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(_connectionString)) return null;
+
+        var e = Para(tipo);
+        var clientes = tipo == RegcheqTipo.Empresa ? "DB_REGCHEQ.T_OUT_CLIENTES_EMPRESAS" : "DB_REGCHEQ.T_OUT_CLIENTES_NATURALES";
+        // Mismo cruce que ObtenerCotizacionesAsync, pero por conjuntos (hash joins) en vez de un APPLY por
+        // operación: con miles de operaciones, un APPLY recorrería T_OUT_CLIENTES_* por cada una.
+        var sql = $@"
+SET NOCOUNT ON;
+DECLARE @ops TABLE (Id int PRIMARY KEY, Cotizacion int NULL);
+INSERT @ops (Id, Cotizacion)
+SELECT o.{e.OperacionId}, TRY_CONVERT(int, o.ST_REFERENCENUMBER)
+FROM {e.Operacion} o
+WHERE (@desde IS NULL OR o.DT_CREATED_AT >= @desde) AND (@hasta IS NULL OR o.DT_CREATED_AT < @hasta)
+OPTION (RECOMPILE);
+
+WITH asociados AS (
+    SELECT a.{e.OperacionId} AS OperacionId, a.ST_DNI,
+           ROW_NUMBER() OVER (PARTITION BY a.{e.OperacionId} ORDER BY a.{e.AsociadoId}) AS Orden
+    FROM {e.Asociados} a
+    WHERE a.{e.OperacionId} IN (SELECT Id FROM @ops)
+),
+clientes AS (
+    SELECT c.NEGOCIO, c.RUT, MIN(c.EMPRESA) AS EMPRESA
+    FROM {clientes} c
+    WHERE c.NEGOCIO IN (SELECT Cotizacion FROM @ops)
+    GROUP BY c.NEGOCIO, c.RUT
+)
+SELECT x.Id, x.Cotizacion, c.EMPRESA
+FROM @ops x
+LEFT JOIN asociados a ON a.OperacionId = x.Id AND a.Orden = 1
+LEFT JOIN clientes c ON c.NEGOCIO = x.Cotizacion AND c.RUT = a.ST_DNI
+OPTION (RECOMPILE);";
+
+        try
+        {
+            var resultado = new Dictionary<int, RegcheqCotizacion>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = Comando(conn, sql,
+            [
+                new SqlParameter("@desde", (object?)desde?.Date ?? DBNull.Value),
+                new SqlParameter("@hasta", (object?)hasta?.Date.AddDays(1) ?? DBNull.Value)
+            ]);
+            await using var r = await cmd.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+            {
+                var f = new Fila(r);
+                var id = f.Int("Id") ?? 0;
+                resultado[id] = new RegcheqCotizacion(id, f.Int("Cotizacion"), f.Str("EMPRESA"));
+            }
+            return resultado;
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "Error listando cotizaciones RegCheq ({Tipo}, {Desde} - {Hasta})", tipo, desde, hasta);
+            return null;
+        }
+    }
+
+    /// <summary>Tabla @ids con las operaciones del filtro. Son enteros propios (no texto del usuario): van escritos en el SQL.</summary>
+    private static string DeclararIds(IReadOnlyCollection<int>? ids)
+    {
+        if (ids is null) return "";
+        var sql = new System.Text.StringBuilder("DECLARE @ids TABLE (Id int PRIMARY KEY);\n");
+        // INSERT ... VALUES admite hasta 1000 filas por sentencia.
+        foreach (var lote in ids.Distinct().Chunk(1000))
+            sql.Append("INSERT @ids (Id) VALUES ").AppendJoin(',', lote.Select(i => $"({i})")).Append(";\n");
+        return sql.ToString();
+    }
+
     private static void LlenarResumen(RegcheqOperacionResumen op, Fila f)
     {
         op.Id = f.Int("Id") ?? 0;
@@ -769,11 +853,11 @@ LEFT JOIN (
         const string seg = "o.DT_CREATED_AT >= @inicioSeguimiento";
         return estado switch
         {
-            EstadoFirmas.Completa => $"(fa.OpId IS NOT NULL AND ({rp} OR {rd}) AND ({nrp} OR {fp}) AND ({nrd} OR {fd}))",
+            // Incluye las que no requieren PEP ni DOF: no les falta ninguna firma.
+            EstadoFirmas.Completa => $"(fa.OpId IS NOT NULL AND ({nrp} OR {fp}) AND ({nrd} OR {fd}))",
             EstadoFirmas.Pep => $"({rp} AND {nrd} AND {nfp} AND {seg})",
             EstadoFirmas.Dof => $"({rd} AND {nrp} AND {nfd} AND {seg})",
             EstadoFirmas.PepYDof => $"({rp} AND {rd} AND ({nfp} OR {nfd}) AND {seg})",
-            EstadoFirmas.NoRequiere => $"(fa.OpId IS NOT NULL AND {nrp} AND {nrd})",
             EstadoFirmas.SinSeguimiento => $"(NOT ({seg}) AND (({rp} AND {nfp}) OR ({rd} AND {nfd})))",
             _ => "1 = 1"
         };

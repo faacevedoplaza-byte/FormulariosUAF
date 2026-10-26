@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using FormulariosUAF.Helpers;
 using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Pages.Account;
 
@@ -28,7 +30,7 @@ public class LoginModel : PageModel
 
     public class InputModel
     {
-        [Required(ErrorMessage = "El login es obligatorio")]
+        [Required(ErrorMessage = "Ingrese su usuario o RUT")]
         [Display(Name = "Login")]
         public string Login { get; set; } = string.Empty;
 
@@ -45,10 +47,11 @@ public class LoginModel : PageModel
     {
         if (!ModelState.IsValid) return Page();
 
-        // Login por el identificador que se definió al crear el usuario (UserName).
+        // Se puede entrar con el login (nickname, UserName) o con el RUT, con o sin puntos y guion.
         // Fallback a email para los usuarios de prueba antiguos (UserName = correo).
         var id = Input.Login.Trim();
         var user = await _userManager.FindByNameAsync(id)
+                   ?? await BuscarPorRutAsync(id)
                    ?? await _userManager.FindByEmailAsync(id);
 
         if (user is null || !user.IsActive)
@@ -79,6 +82,18 @@ public class LoginModel : PageModel
             ErrorMessage = "Credenciales incorrectas.";
 
         return Page();
+    }
+
+    /// <summary>
+    /// Usuario cuyo RUT (guardado normalizado) es el ingresado. Si hay más de un usuario con ese RUT
+    /// no se elige ninguno: tendrá que entrar con su login.
+    /// </summary>
+    private async Task<ApplicationUser?> BuscarPorRutAsync(string valor)
+    {
+        if (!RutHelper.EsValido(valor)) return null;
+        var rut = RutHelper.Normalizar(valor);
+        var usuarios = await _userManager.Users.Where(u => u.Rut == rut).Take(2).ToListAsync();
+        return usuarios.Count == 1 ? usuarios[0] : null;
     }
 
     // Área de inicio según el rol (evita mandar a todos a /Vendedor,

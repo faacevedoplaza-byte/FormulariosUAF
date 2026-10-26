@@ -52,9 +52,14 @@
         <i class="fa-solid fa-file-shield me-2 text-primary"></i>Operación @(op?.Codigo?.ToString() ?? "")
         <small class="text-muted fs-6 ms-2">@(Model.EsNatural ? "Persona natural" : "Empresa")</small>
     </h4>
-    <a asp-page="./Index" asp-route-tipo="@Model.Tipo" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-arrow-left me-1"></i>Volver
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" id="rqTour" class="btn btn-outline-secondary btn-sm" data-tour-iniciar title="Ver el recorrido guiado de esta vista">
+            <i class="fa-regular fa-circle-question me-1"></i>Tour
+        </button>
+        <a asp-page="./Index" asp-route-tipo="@Model.Tipo" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
@@ -83,7 +88,7 @@ else
     var titular = op.Asociados.FirstOrDefault();
     var nombreCliente = titular?.Ficha?.NombreCompleto is { Length: > 0 } nc ? nc : null;
     <!-- Cliente (titular de la operación) destacado -->
-    <div class="rq-cliente card border-0 shadow-sm mb-4">
+    <div class="rq-cliente card border-0 shadow-sm mb-4" id="rqCliente">
         <div class="card-body d-flex align-items-center gap-3 flex-wrap">
             <span class="rq-cliente-icono"><i class="fa-solid @(Model.EsNatural ? "fa-user" : "fa-building")"></i></span>
             <div class="flex-grow-1 min-w-0">
@@ -159,7 +164,7 @@ else
     </div>
 
     <!-- Resumen de cumplimiento -->
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4" id="rqCumplimiento">
         <div class="col-6 col-lg">
             <div class="card border-0 shadow-sm h-100"><div class="card-body">
                 <div class="small text-muted mb-1">PEP según RegCheq</div>@RegcheqUi.Pep(op.TienePep)
@@ -310,7 +315,7 @@ else
     {
         var v = vo.Vehiculo;
         <!-- Vehículo de la cotización Netcar (ST_REFERENCENUMBER = N° de cotización) -->
-        <div class="card border-0 shadow-sm mb-4">
+        <div class="card border-0 shadow-sm mb-4" id="rqVehiculo">
             <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span class="fw-semibold"><i class="fa-solid fa-car-side me-2 text-primary"></i>Vehículo</span>
                 @if (vo.Cotizacion is not null)
@@ -377,7 +382,8 @@ else
                 {
                     <dt class="col-sm-3">Fecha transacción</dt><dd class="col-sm-3">@op.FechaTransaccion</dd>
                 }
-                @if (!string.IsNullOrWhiteSpace(op.Ros))
+                @* ROS: no se muestra al vendedor (la ley prohíbe dar a conocer al cliente un reporte de operación sospechosa). *@
+                @if (!string.IsNullOrWhiteSpace(op.Ros) && !Model.EsVendedor)
                 {
                     <dt class="col-sm-3">ROS</dt><dd class="col-sm-3">@op.Ros</dd>
                 }
@@ -399,7 +405,7 @@ else
     </div>
 
     <!-- Asociados -->
-    <h5 class="fw-bold mb-3"><i class="fa-solid fa-users me-2"></i>Asociados (@op.Asociados.Count)</h5>
+    <h5 class="fw-bold mb-3" id="rqAsociados"><i class="fa-solid fa-users me-2"></i>Asociados (@op.Asociados.Count)</h5>
     @if (!op.Asociados.Any())
     {
         <div class="alert alert-light border">La operación no tiene asociados registrados.</div>
@@ -566,7 +572,9 @@ else
         }
     </div>
 
-    <!-- Datos técnicos (colapsados: rara vez los necesita quien gestiona) -->
+    <!-- Datos técnicos (colapsados: rara vez los necesita quien gestiona). El vendedor no los ve: el JSON completo incluye el ROS. -->
+    @if (!Model.EsVendedor)
+    {
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><i class="fa-solid fa-code me-2"></i>Datos técnicos de RegCheq</span>
@@ -601,6 +609,7 @@ else
             </div>
         </div>
     </div>
+    }
 }
 
 @section Scripts {
@@ -624,4 +633,29 @@ else
             } catch { /* sin portapapeles: el dato sigue visible para copiarlo a mano */ }
         });
     </script>
+    @if (op is not null)
+    {
+        <partial name="_TourScripts" />
+        <script>
+            uafTour({
+                clave: 'regcheq-detalle',
+                pasos: [
+                    { titulo: 'Detalle de la operación',
+                      texto: 'Esta ficha reúne todo lo que RegCheq sabe de la operación. Le mostramos dónde está cada cosa.' },
+                    { elemento: '#rqCliente', lado: 'bottom', titulo: 'Cliente',
+                      texto: 'Nombre, RUT y datos de contacto del titular. Haga clic en el teléfono para llamar o en el correo para escribir; el ícono <i class="fa-regular fa-copy"></i> copia el dato.' },
+                    { elemento: '#rqCumplimiento', lado: 'bottom', titulo: 'Resumen de cumplimiento',
+                      texto: 'Si RegCheq lo considera PEP, si coincide en la lista PEP y el estado de firma de los formularios PEP y DOF, con enlace para verlos.' },
+                    { elemento: '#gestion', lado: 'top', titulo: 'Gestión',
+                      texto: 'Quién tiene tomada la operación, qué formularios faltan y la bitácora de gestiones. Si la tiene tomada, puede registrar aquí lo que hizo.' },
+                    { elemento: '#rqVehiculo', lado: 'top', titulo: 'Vehículo',
+                      texto: 'El vehículo de la cotización en Netcar asociada a la operación, con su vendedor.' },
+                    { elemento: '#rqAsociados', lado: 'top', titulo: 'Asociados y listas',
+                      texto: 'Cada persona de la operación con su ficha y la revisión en listas. Las filas en rojo son coincidencias; <b>Ver detalle</b> muestra la información de la lista PEP.' },
+                    { elemento: '#rqTour', lado: 'bottom', alinear: 'end', titulo: '¿Necesita repasar?',
+                      texto: 'Puede volver a ver este recorrido cuando quiera con el botón <b>Tour</b>.' }
+                ]
+            });
+        </script>
+    }
 }

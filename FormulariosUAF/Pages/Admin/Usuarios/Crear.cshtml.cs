@@ -5,6 +5,7 @@ using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Pages.Admin.Usuarios;
 
@@ -80,6 +81,13 @@ public class CrearModel : PageModel
         if (await _userManager.FindByNameAsync(login) is not null)
         {
             ModelState.AddModelError("Input.Login", "Ya existe un usuario con ese login.");
+            return Page();
+        }
+
+        // El RUT también sirve para iniciar sesión: no puede repetirse.
+        if (await _userManager.Users.AnyAsync(u => u.Rut == rut))
+        {
+            ModelState.AddModelError("Input.Rut", "Ya existe un usuario con ese RUT.");
             return Page();
         }
 

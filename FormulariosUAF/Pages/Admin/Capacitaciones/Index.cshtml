@@ -1,0 +1,112 @@
+@page
+@model FormulariosUAF.Pages.Admin.Capacitaciones.IndexModel
+@{
+    ViewData["Title"] = "Capacitaciones";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="mb-3">
+    <h4 class="fw-bold mb-1">
+        <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>Capacitaciones
+        <span id="capEstadoVivo" class="gs-vivo align-middle ms-2" title="Conectando…"><i></i><span>Conectando…</span></span>
+    </h4>
+    <div class="text-muted small">Cada capacitación tiene un enlace público donde los asistentes registran sus datos y confirman su asistencia. Después se cruzan con los usuarios del sistema por RUT y correo.</div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white fw-bold">
+                <i class="fa-solid fa-plus me-2"></i>Nueva capacitación
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label asp-for="Input.Titulo" class="form-label">Título <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Titulo" class="form-control" placeholder="Ej: Capacitación PEP y DOF" />
+                        <span asp-validation-for="Input.Titulo" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Fecha" class="form-label">Fecha y hora <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Fecha" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="Input.Fecha" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Lugar" class="form-label">Lugar</label>
+                        <input asp-for="Input.Lugar" class="form-control" placeholder="Ej: Sala de reuniones / Teams" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Relator" class="form-label">Relator</label>
+                        <input asp-for="Input.Relator" class="form-control" placeholder="Quién dicta la capacitación" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Descripcion" class="form-label">Descripción</label>
+                        <textarea asp-for="Input.Descripcion" class="form-control" rows="3" placeholder="Se muestra en el formulario de registro"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-link me-1"></i>Crear y generar enlace</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" id="capLista">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr><th>Fecha</th><th>Capacitación</th><th>Relator</th><th class="text-center">Asistentes</th><th>Registro</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Capacitaciones)
+                        {
+                            <tr>
+                                <td class="text-nowrap">@c.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <div class="fw-semibold">@c.Titulo</div>
+                                    @if (!string.IsNullOrWhiteSpace(c.Lugar)) { <div class="text-muted">@c.Lugar</div> }
+                                </td>
+                                <td class="text-muted">@(c.Relator ?? "—")</td>
+                                <td class="text-center fw-bold">@c.Asistentes</td>
+                                <td>
+                                    @if (c.RegistroAbierto)
+                                    {
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Abierto</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Cerrado</span>
+                                    }
+                                </td>
+                                <td class="text-end"><a asp-page="Detalle" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary py-0">Ver</a></td>
+                            </tr>
+                        }
+                        @if (!Model.Capacitaciones.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-4">Todavía no hay capacitaciones. Crea la primera a la izquierda.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/vista-en-vivo.js" asp-append-version="true"></script>
+    <script>
+        // En vivo: asistentes y estado de cada capacitación (y las que creen otros administradores).
+        uafVivo({
+            contenedores: ['capLista'],
+            eventos: ['CapacitacionCambiada'],
+            estado: 'capEstadoVivo',
+            seguir: hub => hub.invoke('SeguirCapacitaciones')
+        });
+    </script>
+}

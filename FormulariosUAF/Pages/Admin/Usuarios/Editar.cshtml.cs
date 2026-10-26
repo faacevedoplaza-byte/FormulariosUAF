@@ -5,6 +5,7 @@ using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Pages.Admin.Usuarios;
 
@@ -98,6 +99,13 @@ public class EditarModel : PageModel
         if (!RutHelper.EsValido(rut))
         {
             ModelState.AddModelError("Input.Rut", "El RUT no es válido.");
+            return Page();
+        }
+
+        // El RUT también sirve para iniciar sesión: no puede repetirse.
+        if (await _userManager.Users.AnyAsync(u => u.Rut == rut && u.Id != user.Id))
+        {
+            ModelState.AddModelError("Input.Rut", "Ya existe otro usuario con ese RUT.");
             return Page();
         }
 
