@@ -24,6 +24,8 @@ public class RegcheqFiltro
     public bool? Finalizada { get; set; }
     /// <summary>Estado de firmas PEP/DOF (solo personas naturales).</summary>
     public EstadoFirmas? Firmas { get; set; }
+    /// <summary>Si no es null, solo estas operaciones (p. ej. las de los leads de un vendedor). Vacía = ninguna.</summary>
+    public IReadOnlyCollection<int>? SoloIds { get; set; }
     /// <summary>
     /// Columna de orden: fecha | codigo | cliente | monto | efectivo | pep | listapep | firmapep | firmadof |
     /// formularios | estado | firmas | finalizada. Desconocida o vacía = fecha.
@@ -86,6 +88,10 @@ public class RegcheqTotales
     public int Finalizadas { get; set; }
     /// <summary>Operaciones con todos los formularios requeridos firmados (solo naturales).</summary>
     public int FirmasCompletas { get; set; }
+    /// <summary>Pendientes por caso (solo naturales; misma regla que la columna Firmas y la vista Gestión).</summary>
+    public int Caso1 { get; set; }
+    public int Caso2 { get; set; }
+    public int Caso3 { get; set; }
     public int CoincidenciaListaPep { get; set; }
 }
 
@@ -229,10 +235,8 @@ public enum EstadoFirmas
     Pep = 1,
     Dof = 2,
     PepYDof = 3,
-    /// <summary>Todos los formularios requeridos están firmados.</summary>
+    /// <summary>Todos los formularios requeridos están firmados, o no requiere PEP ni DOF.</summary>
     Completa = 10,
-    /// <summary>No requiere PEP ni DOF.</summary>
-    NoRequiere = 11,
     /// <summary>Falta una firma, pero la operación es anterior al seguimiento de firmas: no se puede saber.</summary>
     SinSeguimiento = 12
 }
@@ -258,7 +262,6 @@ public static class RegcheqFirmas
 
     public static EstadoFirmas Estado(bool requierePep, bool requiereDof, bool firmoPep, bool firmoDof, DateTime? creada)
     {
-        if (!requierePep && !requiereDof) return EstadoFirmas.NoRequiere;
         if (Caso(requierePep, requiereDof, firmoPep, firmoDof) is not { } caso) return EstadoFirmas.Completa;
         return creada < InicioSeguimiento ? EstadoFirmas.SinSeguimiento : (EstadoFirmas)(int)caso;
     }
@@ -299,6 +302,12 @@ public interface IRegcheqService
     Task<Dictionary<int, RegcheqCotizacion>> ObtenerCotizacionesAsync(RegcheqTipo tipo, IReadOnlyCollection<int> operacionIds, CancellationToken ct = default);
 
     /// <summary>
+    /// Igual que <see cref="ObtenerCotizacionesAsync"/>, pero para todas las operaciones creadas en el rango
+    /// (en una sola consulta por conjuntos, para muchos miles de operaciones). Null si falla o no está configurada.
+    /// </summary>
+    Task<Dictionary<int, RegcheqCotizacion>?> ListarCotizacionesAsync(RegcheqTipo tipo, DateTime? desde, DateTime? hasta, CancellationToken ct = default);
+
+    /// <summary>
     /// Operaciones de persona natural creadas desde <paramref name="desde"/> que requieren PEP y/o DOF
     /// y todavía no lo firman (vista Gestión). Null si RegCheqConnection no está configurada.
     /// Lanza excepción si la consulta falla (el llamador no debe cerrar gestiones en ese caso).
@@ -310,4 +319,10 @@ public interface IRegcheqService
 
     /// <summary>Detalle de una operación con sus asociados, fichas y listas (solo lectura).</summary>
     Task<RegcheqOperacionDetalle?> ObtenerAsync(RegcheqTipo tipo, int id, CancellationToken ct = default);
+
+    /// <summary>
+    /// "Huella" barata de las tablas RegCheq: cambia cuando se crea o modifica una operación o asociado
+    /// (o se agregan fichas/listas). Solo sirve para comparar con la anterior; null si no está configurada.
+    /// </summary>
+    Task<string?> ObtenerHuellaAsync(CancellationToken ct = default);
 }

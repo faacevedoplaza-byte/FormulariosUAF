@@ -52,10 +52,27 @@ public static class RegcheqUi
         Services.EstadoFirmas.Pep => new HtmlString("<span class=\"badge bg-danger-subtle text-danger-emphasis\" title=\"Requiere PEP sin firmar; no requiere DOF\">Caso 1 · Falta PEP</span>"),
         Services.EstadoFirmas.Dof => new HtmlString("<span class=\"badge bg-warning-subtle text-warning-emphasis\" title=\"Requiere DOF sin firmar; no requiere PEP\">Caso 2 · Falta DOF</span>"),
         Services.EstadoFirmas.PepYDof => new HtmlString("<span class=\"badge\" style=\"background:#ede2fe;color:#5a2ca0\" title=\"Requiere PEP y DOF; falta al menos uno\">Caso 3 · PEP y DOF</span>"),
-        Services.EstadoFirmas.NoRequiere => new HtmlString("<span class=\"badge bg-light text-secondary border\">No requiere</span>"),
         Services.EstadoFirmas.SinSeguimiento => new HtmlString("<span class=\"badge bg-secondary-subtle text-secondary-emphasis\" title=\"Operación anterior al seguimiento automático de firmas: no se puede saber si se firmó\">Sin seguimiento</span>"),
         _ => new HtmlString("<span class=\"text-muted\">—</span>")
     };
+
+    /// <summary>Días a partir de los cuales una operación pendiente se marca en ámbar / rojo (igual que "Carga por usuario").</summary>
+    public const int DiasAviso = 7, DiasCritico = 30;
+
+    /// <summary>
+    /// Antigüedad de una operación pendiente: "hoy" / "hace N días", en ámbar desde <see cref="DiasAviso"/>
+    /// y en rojo desde <see cref="DiasCritico"/>. Las fechas de RegCheq vienen en hora local del servidor.
+    /// </summary>
+    public static IHtmlContent Antiguedad(DateTime? creada)
+    {
+        if (creada is null) return HtmlString.Empty;
+        var dias = (int)(DateTime.Now.Date - creada.Value.Date).TotalDays;
+        var (clase, icono) = dias >= DiasCritico ? ("gs-edad critica", "fa-fire")
+                           : dias >= DiasAviso ? ("gs-edad aviso", "fa-hourglass-half")
+                           : ("gs-edad", "fa-clock");
+        var texto = dias <= 0 ? "hoy" : dias == 1 ? "hace 1 día" : $"hace {dias.ToString("N0", Chile)} días";
+        return new HtmlString($"<span class=\"{clase}\" title=\"Días desde que RegCheq creó la operación\"><i class=\"fa-solid {icono} me-1\"></i>{texto}</span>");
+    }
 
     /// <summary>Texto tal como viene de RegCheq (estados sin catálogo conocido), o "—".</summary>
     public static IHtmlContent Texto(string? valor) =>
@@ -63,21 +80,138 @@ public static class RegcheqUi
             ? new HtmlString("<span class=\"text-muted\">—</span>")
             : new HtmlString(WebUtility.HtmlEncode(valor));
 
+    /// <summary>
+    /// Monto con el mismo formato en todas las vistas: "$12.490.000" en pesos, "12.490 USD" en otra divisa.
+    /// Se prefiere el número; el texto formateado de RegCheq solo si no viene el número.
+    /// </summary>
     public static string Monto(int? monto, string? formateado = null, string? divisa = null)
     {
-        if (!string.IsNullOrWhiteSpace(formateado)) return formateado!;
-        if (!monto.HasValue) return "—";
+        if (!monto.HasValue) return string.IsNullOrWhiteSpace(formateado) ? "—" : formateado!;
         var texto = monto.Value.ToString("N0", Chile);
-        return string.IsNullOrWhiteSpace(divisa) ? $"$ {texto}" : $"{texto} {divisa}";
+        return string.IsNullOrWhiteSpace(divisa) || divisa.Trim().Equals("CLP", StringComparison.OrdinalIgnoreCase)
+            ? $"${texto}" : $"{texto} {divisa.Trim().ToUpperInvariant()}";
     }
 
-    public static string Pesos(decimal? monto) => monto.HasValue ? $"$ {monto.Value.ToString("N0", Chile)}" : "—";
+    public static string Pesos(decimal? monto) => monto.HasValue ? $"${monto.Value.ToString("N0", Chile)}" : "—";
 
-    /// <summary>"Marca Modelo" bajo el cliente en los listados; nada si no hay vehículo.</summary>
-    public static IHtmlContent VehiculoCorto(Services.VehiculoOperacion? v) =>
-        v?.Vehiculo is { } veh && veh.Resumen.Length > 0
-            ? new HtmlString($"<div class=\"small text-muted text-truncate\" style=\"max-width:240px\" title=\"{WebUtility.HtmlEncode($"{veh.Resumen} {veh.Version} · Cotización {veh.Cotizacion} ({veh.Empresa})")}\">"
-                             + $"<i class=\"fa-solid fa-car-side me-1\"></i>{WebUtility.HtmlEncode(veh.Resumen)}</div>")
+    /// <summary>
+    /// RUT con formato "8.690.723-2". RegCheq lo guarda sin puntos ni guion (con el DV al final); si el
+    /// dígito verificador no cuadra se muestra tal cual, para no inventar un RUT.
+    /// </summary>
+    public static string Rut(string? rut)
+    {
+        if (string.IsNullOrWhiteSpace(rut)) return "—";
+        var n = Helpers.RutHelper.Normalizar(rut);
+        if (!Helpers.RutHelper.EsValido(n)) return rut.Trim();
+        var cuerpo = long.Parse(n[..^1]).ToString("N0", Chile);
+        return $"{cuerpo}-{n[^1]}";
+    }
+
+    // Partículas que van en minúscula dentro de un nombre ("Iván de la Cruz") y siglas de sociedades.
+    private static readonly HashSet<string> Particulas = new(StringComparer.OrdinalIgnoreCase) { "de", "del", "la", "las", "los", "y", "e", "da", "do", "dos", "van", "von" };
+    private static readonly HashSet<string> Siglas = new(StringComparer.OrdinalIgnoreCase) { "SPA", "LTDA", "EIRL", "SA", "S.A.", "S.A", "SAC", "SRL", "CIA", "CÍA" };
+
+    /// <summary>
+    /// Nombre de persona o empresa en mayúsculas/minúsculas ("IVAN DE LA CRUZ" → "Ivan de la Cruz").
+    /// Las tildes no se pueden recuperar (no vienen en el dato). Las siglas de sociedad quedan en mayúscula.
+    /// </summary>
+    public static string NombrePropio(string? nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre)) return "—";
+        var palabras = nombre.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < palabras.Length; i++)
+        {
+            var p = palabras[i];
+            if (Siglas.Contains(p)) palabras[i] = p.ToUpperInvariant();
+            else if (i > 0 && Particulas.Contains(p)) palabras[i] = p.ToLower(Chile);
+            else palabras[i] = MayusculaTrasApostrofo(Chile.TextInfo.ToTitleCase(p.ToLower(Chile))); // "Pérez-Cotapos", "O'Ryan"
+        }
+        return string.Join(' ', palabras);
+
+        static string MayusculaTrasApostrofo(string s)
+        {
+            var i = s.IndexOf('\'');
+            return i < 0 || i == s.Length - 1 ? s : s[..(i + 1)] + char.ToUpper(s[i + 1], Chile) + s[(i + 2)..];
+        }
+    }
+
+    /// <summary>
+    /// Marca/modelo legible ("SONET" → "Sonet") sin romper siglas: palabras cortas (MG, BMW, CX) o con
+    /// números (CX-5, 3008) quedan como vienen.
+    /// </summary>
+    public static string Modelo(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return "";
+        return string.Join(' ', texto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(p =>
+            p.Length <= 3 || p.Any(char.IsDigit) || p.Any(char.IsLower) ? p : Chile.TextInfo.ToTitleCase(p.ToLower(Chile))));
+    }
+
+    /// <summary>
+    /// Teléfono chileno agrupado para leerlo y dictarlo ("56912345678" → "+56 9 1234 5678") y el número para
+    /// el enlace tel:. Si no se reconoce el formato, se muestra tal cual.
+    /// </summary>
+    public static (string Texto, string Enlace) Telefono(string? telefono)
+    {
+        if (string.IsNullOrWhiteSpace(telefono)) return ("", "");
+        var d = new string(telefono.Where(char.IsDigit).ToArray());
+        if (d.StartsWith("56") && d.Length == 11) d = d[2..];
+        if (d.Length != 9) return (telefono.Trim(), new string(telefono.Where(c => char.IsDigit(c) || c == '+').ToArray()));
+        var texto = d[0] switch
+        {
+            '9' => $"+56 9 {d[1..5]} {d[5..]}",   // celular
+            '2' => $"+56 2 {d[1..5]} {d[5..]}",   // fijo Santiago
+            _ => $"+56 {d[..2]} {d[2..5]} {d[5..]}" // fijo regiones (código de 2 dígitos)
+        };
+        return (texto, "+56" + d);
+    }
+
+    // Ficha de la cotización en Netcar; {0} = N° de cotización (ST_REFERENCENUMBER).
+    private const string UrlNetcarSiglo21 = "https://netcar3.xxi.cl/cotizacion/cotShownegocio.aspx?k={0}&mt$opener=true";
+    private const string UrlNetcarVyD = "http://netcar3.valdelarze.cl/cotizacion/cotShownegocio.aspx?k={0}&mt$opener=true";
+
+    /// <summary>
+    /// N° de cotización seguido de un botón "Ver en Netcar" (Siglo 21 o VyD según la empresa de la operación).
+    /// Sin empresa o sin N° válido se muestra solo el número.
+    /// </summary>
+    public static IHtmlContent Cotizacion(string? referencia, Services.VehiculoOperacion? v, string clase = "", bool boton = true)
+    {
+        if (string.IsNullOrWhiteSpace(referencia) && v?.Cotizacion is null) return HtmlString.Empty;
+        var texto = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(referencia) ? v!.Cotizacion.ToString() : referencia.Trim());
+        return new HtmlString($"<span class=\"{clase}\">{texto}</span>" + (boton ? " " + BotonNetcarHtml(v, "rq-netcar") : ""));
+    }
+
+    /// <summary>Botón "Ver en Netcar" que abre la cotización en una pestaña nueva; nada si no se sabe la empresa.</summary>
+    public static IHtmlContent BotonNetcar(Services.VehiculoOperacion? v, string clase = "btn-sm") =>
+        new HtmlString(BotonNetcarHtml(v, clase));
+
+    private static string BotonNetcarHtml(Services.VehiculoOperacion? v, string clase)
+    {
+        if (v?.Cotizacion is not { } numero || string.IsNullOrWhiteSpace(v.Empresa)) return "";
+        var esSiglo21 = string.Equals(v.Empresa, "Siglo 21", StringComparison.OrdinalIgnoreCase);
+        var url = string.Format(esSiglo21 ? UrlNetcarSiglo21 : UrlNetcarVyD, numero);
+        return $"<a href=\"{WebUtility.HtmlEncode(url)}\" target=\"_blank\" class=\"btn btn-outline-primary {clase} text-nowrap\" "
+               + $"title=\"Abrir la cotización {numero} en Netcar {(esSiglo21 ? "Siglo 21" : "VyD")}\">"
+               + "<i class=\"fa-solid fa-arrow-up-right-from-square me-1\"></i>Ver en Netcar</a>";
+    }
+
+    /// <summary>"Marca Modelo" y vendedor bajo el cliente en los listados; nada si no hay vehículo.</summary>
+    public static IHtmlContent VehiculoCorto(Services.VehiculoOperacion? v)
+    {
+        if (v?.Vehiculo is not { } veh || veh.Resumen.Length == 0) return HtmlString.Empty;
+        var resumen = Modelo(veh.Resumen);
+        var vendedor = string.IsNullOrWhiteSpace(veh.Vendedor) ? null : NombrePropio(veh.Vendedor);
+        var titulo = $"{resumen} {Modelo(veh.Version)} · Cotización {veh.Cotizacion} ({veh.Empresa})" + (vendedor is null ? "" : $" · Vendedor: {vendedor}");
+        return new HtmlString($"<div class=\"small text-muted text-truncate\" style=\"max-width:260px\" title=\"{WebUtility.HtmlEncode(titulo)}\">"
+                              + $"<i class=\"fa-solid fa-car-side me-1\"></i>{WebUtility.HtmlEncode(resumen)}"
+                              + (vendedor is null ? "" : $" <span class=\"opacity-75\">· {WebUtility.HtmlEncode(vendedor)}</span>")
+                              + "</div>");
+    }
+
+    /// <summary>Badge "Efectivo" con el monto pagado en efectivo, para destacarlo (dato relevante para la UAF).</summary>
+    public static IHtmlContent Efectivo(bool? efectivo, int? montoEfectivo, string? divisa) =>
+        efectivo == true
+            ? new HtmlString("<span class=\"badge bg-warning text-dark\" title=\"Operación con pago en efectivo\"><i class=\"fa-solid fa-money-bill-wave me-1\"></i>Efectivo"
+                             + (montoEfectivo.HasValue ? $" {WebUtility.HtmlEncode(Monto(montoEfectivo, null, divisa))}" : "") + "</span>")
             : HtmlString.Empty;
 
     public static string Fecha(DateTime? fecha, bool conHora = false) =>

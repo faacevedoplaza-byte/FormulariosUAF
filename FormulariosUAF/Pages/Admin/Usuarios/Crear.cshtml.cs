@@ -5,6 +5,7 @@ using FormulariosUAF.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Pages.Admin.Usuarios;
 
@@ -83,6 +84,13 @@ public class CrearModel : PageModel
             return Page();
         }
 
+        // El RUT también sirve para iniciar sesión: no puede repetirse.
+        if (await _userManager.Users.AnyAsync(u => u.Rut == rut))
+        {
+            ModelState.AddModelError("Input.Rut", "Ya existe un usuario con ese RUT.");
+            return Page();
+        }
+
         var fullName = string.Join(" ",
             new[] { Input.Nombre, Input.ApellidoPaterno, Input.ApellidoMaterno }
                 .Where(s => !string.IsNullOrWhiteSpace(s)));
@@ -107,7 +115,14 @@ public class CrearModel : PageModel
             return Page();
         }
 
-        await _userManager.AddToRoleAsync(user, Input.Role);
+        var asignarRol = await _userManager.AddToRoleAsync(user, Input.Role);
+        if (!asignarRol.Succeeded)
+        {
+            // Sin rol el usuario no puede entrar a ninguna sección: no dejarlo creado a medias.
+            await _userManager.DeleteAsync(user);
+            ErrorMessage = "No se pudo asignar el rol: " + string.Join("; ", asignarRol.Errors.Select(e => e.Description));
+            return Page();
+        }
 
         var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         await _audit.LogAsync("CREAR_USUARIO", "ApplicationUser", user.Id,

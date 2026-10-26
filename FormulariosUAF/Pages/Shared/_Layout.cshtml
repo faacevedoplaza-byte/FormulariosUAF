@@ -28,8 +28,13 @@
 
     // Roles de InternoPolicy (Program.cs): Call Center no tiene acceso a /Interno ni /Api.
     var esInterno = new[] { "Administrador", "Vendedor", "Cumplimiento", "Revisor", "SoloLectura" }.Any(User.IsInRole);
+    // Roles de RegcheqPolicy (Program.cs).
+    var esRegcheq = new[] { "Administrador", "Cumplimiento", "Revisor", "Call Center" }.Any(User.IsInRole);
+    // "Operaciones" queda activo en /Regcheq y en Detalle, no en Gestión ni en el video.
+    var enOperaciones = path.StartsWith("/regcheq") && !path.StartsWith("/regcheq/gestion") && !path.StartsWith("/regcheq/introduccion");
 }
-<body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")">
+@* data-uaf-usuario: tour.js recuerda por usuario qué recorridos guiados ya vio. *@
+<body class="@(User.Identity?.IsAuthenticated == true ? "uaf-shell" : "")" data-uaf-usuario="@User.Identity?.Name">
 
 @if (User.Identity?.IsAuthenticated == true)
 {
@@ -52,6 +57,9 @@
                 <a href="/Vendedor/Crear" class="uaf-nav-link @ActiveIf("/vendedor/crear")">
                     <i class="fa-solid fa-plus-circle"></i> Nueva Solicitud
                 </a>
+                <a href="/Vendedor/Introduccion" class="uaf-nav-link @ActiveIf("/vendedor/introduccion")">
+                    <i class="fa-solid fa-circle-play"></i> ¿Cómo funcionan?
+                </a>
             }
             @if (User.IsInRole("Administrador") || User.IsInRole("Cumplimiento") || User.IsInRole("Revisor"))
             {
@@ -69,6 +77,12 @@
                 <a href="/Admin" class="uaf-nav-link @(path == "/admin" ? "active" : "")">
                     <i class="fa-solid fa-gears"></i> Administración
                 </a>
+                <a href="/Admin/Videos" class="uaf-nav-link @ActiveIf("/admin/videos")">
+                    <i class="fa-solid fa-chart-column"></i> Videos
+                </a>
+                <a href="/Admin/Capacitaciones" class="uaf-nav-link @ActiveIf("/admin/capacitaciones")">
+                    <i class="fa-solid fa-chalkboard-user"></i> Capacitaciones
+                </a>
             }
             @if (esInterno)
             {
@@ -78,15 +92,35 @@
                     <span id="notif-badge" class="position-absolute badge rounded-pill bg-danger d-none" style="top:6px;right:10px">0</span>
                 </a>
             }
-            @if (User.IsInRole("Administrador") || User.IsInRole("Call Center"))
+            @if (esRegcheq)
             {
+                <div data-tour="menu-regcheq">
                 <div class="uaf-section-lbl">RegCheq</div>
-                <a href="/Regcheq" class="uaf-nav-link @(path.StartsWith("/regcheq") && !path.StartsWith("/regcheq/gestion") ? "active" : "")">
+                <a href="/Regcheq" class="uaf-nav-link @(enOperaciones ? "active" : "")">
                     <i class="fa-solid fa-list-check"></i> Operaciones
                 </a>
                 <a href="/Regcheq/Gestion" class="uaf-nav-link @ActiveIf("/regcheq/gestion")">
                     <i class="fa-solid fa-clipboard-check"></i> Gestión
                 </a>
+                <a href="/Regcheq/Introduccion" class="uaf-nav-link @ActiveIf("/regcheq/introduccion")">
+                    <i class="fa-solid fa-circle-play"></i> ¿Qué es PEP y DOF?
+                </a>
+                </div>
+            }
+            else if (User.IsInRole("Vendedor"))
+            {
+                <div data-tour="menu-regcheq">
+                <div class="uaf-section-lbl">RegCheq</div>
+                <a href="/Regcheq" class="uaf-nav-link @(enOperaciones ? "active" : "")">
+                    <i class="fa-solid fa-list-check"></i> Mis operaciones
+                </a>
+                <a href="/Regcheq/Gestion" class="uaf-nav-link @ActiveIf("/regcheq/gestion")">
+                    <i class="fa-solid fa-clipboard-check"></i> Gestión de mis leads
+                </a>
+                <a href="/Regcheq/Introduccion" class="uaf-nav-link @ActiveIf("/regcheq/introduccion")">
+                    <i class="fa-solid fa-circle-play"></i> ¿Qué es PEP y DOF?
+                </a>
+                </div>
             }
         </nav>
 
@@ -142,9 +176,9 @@ else
         document.getElementById('uafSidebar')?.classList.toggle('show'));
 </script>
 
-@if (User.Identity?.IsAuthenticated == true && esInterno)
+@if (User.Identity?.IsAuthenticated == true && (esInterno || esRegcheq))
 {
-    <!-- SignalR — Fase 2 -->
+    <!-- SignalR — Fase 2. También para Call Center: las vistas RegCheq se actualizan en vivo por este hub. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/notifications.js" asp-append-version="true"></script>
 }

@@ -30,10 +30,19 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="uaf-page-title"><i class="fa-solid fa-briefcase"></i>Solicitudes</h1>
-    <a href="/Vendedor/Crear" class="btn-uaf-primary">
-        <i class="fa-solid fa-plus"></i> Nueva Solicitud
-    </a>
+    <div class="d-flex gap-2">
+        <a href="/Vendedor/Introduccion" class="btn-uaf-ghost" title="Video: cómo funcionan las solicitudes">
+            <i class="fa-solid fa-circle-play"></i> ¿Cómo funcionan?
+        </a>
+        <a href="/Vendedor/Crear" class="btn-uaf-primary">
+            <i class="fa-solid fa-plus"></i> Nueva Solicitud
+        </a>
+    </div>
 </div>
+
+<partial name="_AvisoVideo" model='("uaf-video-solicitudes:v1", "/Vendedor/Introduccion",
+    "¿Primera vez creando solicitudes?",
+    "Vea el video de 3 minutos: para qué sirven, cómo crear una, qué hace el cliente y cómo hacerle seguimiento.")' />
 
 <!-- Stat chips -->
 <div class="row g-3 mb-4">

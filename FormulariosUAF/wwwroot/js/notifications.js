@@ -5,11 +5,13 @@
 (function () {
     const badge = document.getElementById('notif-badge');
 
-    // Cargar conteo inicial al entrar
-    fetch('/api/notificaciones/count')
-        .then(r => r.ok ? r.json() : null)
-        .then(data => { if (data?.count > 0) updateBadge(data.count); })
-        .catch(() => { /* silent — SignalR no disponible */ });
+    // Cargar conteo inicial al entrar (solo si el menú muestra Notificaciones: Call Center no tiene acceso a /api)
+    if (badge) {
+        fetch('/api/notificaciones/count')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data?.count > 0) updateBadge(data.count); })
+            .catch(() => { /* silent — SignalR no disponible */ });
+    }
 
     // Conectar al hub SignalR
     const connection = new signalR.HubConnectionBuilder()
@@ -17,6 +19,9 @@
         .withAutomaticReconnect([0, 2000, 5000, 10000])
         .configureLogging(signalR.LogLevel.Warning)
         .build();
+
+    // Conexión compartida: las páginas que necesitan avisos propios (ej. Regcheq/Gestion) se suscriben aquí.
+    window.uafHub = connection;
 
     connection.on('NewNotification', function (notification) {
         showToast(notification.message, 'info');

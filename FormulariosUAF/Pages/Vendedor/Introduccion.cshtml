@@ -1,0 +1,166 @@
+@page
+@model FormulariosUAF.Pages.Vendedor.IntroduccionModel
+@{
+    ViewData["Title"] = "¿Cómo funcionan las solicitudes?";
+}
+
+@*
+    "Video" animado (reproductor: wwwroot/js/video-intro.js y css/video-intro.css). Cada <section class="vx-escena"> es una
+    escena; data-narracion es lo que se lee en voz alta (voz en español del navegador) y se muestra como subtítulo.
+    Para cambiar el contenido basta editar estas secciones. Las animaciones de entrada usan la clase vx-a y el retardo --d.
+*@
+
+<link rel="stylesheet" href="~/css/video-intro.css" asp-append-version="true" />
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-circle-play me-2 text-primary"></i>¿Cómo funcionan las solicitudes?</h4>
+        <div class="text-muted small">Video de introducción (unos 3 minutos): qué es la declaración de Beneficiario Final y PEP, cómo crear una solicitud y cómo hacerle seguimiento.</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Administrador"))
+        {
+            <a href="/Admin/Videos?video=solicitudes" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-chart-column me-1"></i>Estadísticas</a>
+        }
+        <a href="/Vendedor"class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-briefcase me-1"></i>Mis Solicitudes</a>
+        <a href="/Vendedor/Crear" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Nueva Solicitud</a>
+    </div>
+</div>
+
+<div class="vx-reproductor" data-clave-visto="uaf-video-solicitudes:v1" data-video="@FormulariosUAF.Models.Domain.VideosIntroduccion.Solicitudes.Clave">
+    <div class="vx-pantalla">
+
+        <section class="vx-escena" data-narracion="Bienvenido. En unos tres minutos le explicamos para qué sirven las solicitudes, cómo crear una, qué debe hacer el cliente y cómo seguirla hasta que quede aprobada.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-briefcase"></i></div>
+            <div class="vx-etiqueta vx-a" style="--d:.25s">Introducción para el equipo</div>
+            <h2 class="vx-titulo vx-a" style="--d:.4s">Solicitudes</h2>
+            <p class="vx-sub vx-a" style="--d:.6s">La declaración de Beneficiario Final y PEP de las empresas</p>
+        </section>
+
+        <section class="vx-escena" data-narracion="Cuando una empresa nos compra, la normativa de la UAF nos exige conocer a las personas naturales que están detrás de ella. Quiénes son sus dueños con un diez por ciento o más, quiénes la controlan aunque tengan menos, y si alguna de ellas es una Persona Expuesta Políticamente. Esa información la entrega la empresa en una declaración, y la solicitud es la forma de pedírsela.">
+            <div class="vx-etiqueta vx-a">¿Para qué sirve?</div>
+            <h2 class="vx-titulo vx-a" style="--d:.15s;font-size:clamp(1rem,3vw,2rem)">Conocer a quién está detrás de la empresa</h2>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:.7s"><i class="fa-solid fa-chart-pie"></i><b>Beneficiarios finales</b>Personas con un 10% o más de la empresa, directa o indirectamente</div>
+                <div class="vx-tarjeta vx-a" style="--d:.95s"><i class="fa-solid fa-user-tie"></i><b>Control efectivo</b>Quienes deciden o influyen, aunque tengan menos del 10%</div>
+                <div class="vx-tarjeta vx-a" style="--d:1.2s"><i class="fa-solid fa-landmark"></i><b>Condición PEP</b>Si alguna es Persona Expuesta Políticamente</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="El proceso tiene cuatro pasos. Usted crea la solicitud. El cliente recibe un enlace, completa la declaración y la envía. Cumplimiento la revisa. Y cuando queda aprobada, usted puede descargar el PDF.">
+            <div class="vx-etiqueta vx-a">El proceso completo</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.2s"><i class="fa-solid fa-plus-circle"></i><b>1. Usted</b>crea la solicitud</div>
+                <div class="vx-flecha vx-a" style="--d:.4s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.6s"><i class="fa-solid fa-envelope-open-text"></i><b>2. El cliente</b>completa y envía la declaración</div>
+                <div class="vx-flecha vx-a" style="--d:.8s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1s"><i class="fa-solid fa-magnifying-glass"></i><b>3. Cumplimiento</b>la revisa</div>
+                <div class="vx-flecha vx-a" style="--d:1.2s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1.4s"><i class="fa-solid fa-file-pdf" style="color:#4ade80"></i><b>4. Aprobada</b>descargue el PDF</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Para crearla, vaya a Nueva Solicitud e ingrese el RUT de la empresa. Si ya la conocemos, sus datos se completan solos y verá sus solicitudes anteriores. Revise la razón social, el domicilio y el representante legal. Lo más importante es el correo del cliente: ahí le llegará el enlace. El número de negocio en Netcar es opcional.">
+            <div class="vx-etiqueta vx-a">Paso 1 · Nueva Solicitud</div>
+            <h2 class="vx-titulo vx-a" style="--d:.15s;font-size:clamp(1rem,3vw,2rem)">Empiece por el RUT de la empresa</h2>
+            <div class="vx-chips">
+                <span class="vx-chip vx-a" style="--d:.6s"><i class="fa-solid fa-id-card"></i>RUT</span>
+                <span class="vx-chip vx-a" style="--d:.75s"><i class="fa-solid fa-building"></i>Razón social</span>
+                <span class="vx-chip vx-a" style="--d:.9s"><i class="fa-solid fa-location-dot"></i>Domicilio y ciudad</span>
+                <span class="vx-chip vx-a" style="--d:1.05s"><i class="fa-solid fa-user-tie"></i>Representante legal</span>
+                <span class="vx-chip vx-a" style="--d:1.2s"><i class="fa-solid fa-hashtag"></i>N° negocio Netcar (opcional)</span>
+            </div>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1.6s;max-width:420px;border-color:#60a5fa"><i class="fa-solid fa-at"></i><b>Correo del cliente</b>Obligatorio: ahí llega el enlace para completar la declaración</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Luego elija el tipo de solicitud. Cliente nuevo, para una empresa que empieza a comprarnos. Transacción única, para una compra puntual. Actualización de datos, si el cliente ya declaró pero cambiaron sus socios o su representante. Y actualización sin cambios, si vuelve a comprar con los mismos dueños. Si la empresa ya tiene una solicitud, solo podrá elegir una actualización.">
+            <div class="vx-etiqueta vx-a">Paso 1 · Tipo de solicitud</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.2s"><i class="fa-solid fa-user-plus"></i><b>Cliente nuevo</b>Empieza a comprarnos</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.4s"><i class="fa-solid fa-receipt"></i><b>Transacción única</b>Compra un solo vehículo</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.6s"><i class="fa-solid fa-pen-to-square"></i><b>Actualización de datos</b>Cambiaron socios o representante</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.8s"><i class="fa-solid fa-rotate"></i><b>Actualización sin cambios</b>Mismos dueños, vuelve a comprar</div>
+            </div>
+            <div class="vx-alerta vx-a" style="--d:1.4s;background:rgba(96,165,250,.14);border-color:rgba(96,165,250,.5);color:#dbeafe"><i class="fa-solid fa-circle-info" style="color:#60a5fa"></i>Si la empresa ya tiene una solicitud, solo se permite una actualización.</div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Indique cuántos días tendrá el cliente para responder: entre uno y noventa, treinta por defecto. Al crear la solicitud, el enlace se envía automáticamente al correo del cliente. Si el correo no sale, la solicitud queda en borrador: desde el detalle puede enviarla de nuevo o copiar el enlace y mandarlo usted.">
+            <div class="vx-etiqueta vx-a">Paso 1 · Vigencia y envío</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.2s"><i class="fa-solid fa-calendar-days"></i><b>Vigencia</b>De 1 a 90 días (30 por defecto)</div>
+                <div class="vx-flecha vx-a" style="--d:.45s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.7s"><i class="fa-solid fa-paper-plane"></i><b>Envío automático</b>El enlace llega al correo del cliente</div>
+            </div>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:1.3s;max-width:420px"><i class="fa-solid fa-link"></i><b>¿No llegó el correo?</b>Reenvíelo desde el detalle o copie el enlace</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="El cliente abre el enlace, sin necesidad de usuario ni contraseña. Revisa los datos de la empresa, declara a sus beneficiarios finales, a quienes tienen control efectivo y si alguno es PEP, e indica quién completa la declaración. Después adjunta la carpeta tributaria, que es obligatoria, y si los tiene, la cédula del representante y la escritura o poderes. Al final revisa todo y lo envía.">
+            <div class="vx-etiqueta vx-a">Paso 2 · Lo que hace el cliente</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a" style="--d:.2s"><i class="fa-solid fa-building"></i><b>Empresa</b>Revisa sus datos</div>
+                <div class="vx-flecha vx-a" style="--d:.35s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a" style="--d:.5s"><i class="fa-solid fa-users"></i><b>Personas</b>Beneficiarios, control y PEP</div>
+                <div class="vx-flecha vx-a" style="--d:.65s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a" style="--d:.8s"><i class="fa-solid fa-user-pen"></i><b>Declarante</b>Quién la completa</div>
+                <div class="vx-flecha vx-a" style="--d:.95s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.1s"><i class="fa-solid fa-paperclip"></i><b>Adjuntos</b>Carpeta tributaria (obligatoria)</div>
+                <div class="vx-flecha vx-a" style="--d:1.25s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1.4s"><i class="fa-solid fa-paper-plane" style="color:#4ade80"></i><b>Envía</b>para revisión</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="En todo momento puede ver en qué estado está. Enviada, cuando el enlace salió. Abierta, cuando el cliente entró. Completada y en revisión, cuando Cumplimiento la está viendo. Y al final, aprobada. Cumplimiento también puede observarla, pedir una corrección o rechazarla. Si el plazo pasa sin respuesta, queda vencida.">
+            <div class="vx-etiqueta vx-a">Paso 3 · Los estados</div>
+            <div class="vx-fila" style="margin-top:.2em;align-items:center">
+                <span class="vx-estado vx-a bg-info text-dark" style="--d:.2s">Enviada al Cliente</span>
+                <span class="vx-flecha vx-a" style="--d:.3s"><i class="fa-solid fa-arrow-right"></i></span>
+                <span class="vx-estado vx-a bg-primary" style="--d:.45s">Abierta por Cliente</span>
+                <span class="vx-flecha vx-a" style="--d:.55s"><i class="fa-solid fa-arrow-right"></i></span>
+                <span class="vx-estado vx-a bg-warning text-dark" style="--d:.7s">Completada · En Revisión</span>
+                <span class="vx-flecha vx-a" style="--d:.8s"><i class="fa-solid fa-arrow-right"></i></span>
+                <span class="vx-estado vx-a vx-pop bg-success" style="--d:.95s">Aprobada</span>
+            </div>
+            <div class="vx-fila" style="align-items:center">
+                <span class="vx-estado vx-a bg-danger" style="--d:1.5s">Observada</span>
+                <span class="vx-estado vx-a bg-warning text-dark" style="--d:1.65s">Corrección Solicitada</span>
+                <span class="vx-estado vx-a bg-danger" style="--d:1.8s">Rechazada</span>
+                <span class="vx-estado vx-a bg-dark" style="--d:1.95s">Vencida</span>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="En Mis Solicitudes ve todas las suyas, con contadores y filtros por RUT, razón social o estado. Desde cada fila puede abrir el detalle, copiar el enlace del cliente o, si está aprobada, descargar el PDF. Y cuando Cumplimiento aprueba, observa o rechaza una solicitud, le llega una notificación.">
+            <div class="vx-etiqueta vx-a">Seguimiento · Mis Solicitudes</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a" style="--d:.2s"><i class="fa-solid fa-filter"></i><b>Filtros</b>Por RUT, razón social o estado</div>
+                <div class="vx-tarjeta vx-a" style="--d:.45s"><i class="fa-solid fa-eye"></i><b>Detalle</b>Datos, adjuntos e historial</div>
+                <div class="vx-tarjeta vx-a" style="--d:.7s"><i class="fa-solid fa-link"></i><b>Copiar enlace</b>Para reenviárselo al cliente</div>
+                <div class="vx-tarjeta vx-a" style="--d:.95s"><i class="fa-solid fa-file-pdf"></i><b>PDF</b>Cuando está aprobada</div>
+            </div>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1.5s;max-width:420px"><i class="fa-solid fa-bell" style="color:#fbbf24"></i><b>Notificaciones</b>Le avisamos cuando Cumplimiento aprueba, observa o rechaza</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Algunos consejos. Revise bien el correo del cliente antes de crear la solicitud. Avísele que le llegará un enlace y que tenga a mano su carpeta tributaria. Esté atento a la fecha de vencimiento. Y recuerde: nunca comente al cliente que su operación está siendo revisada o reportada.">
+            <div class="vx-etiqueta vx-a">Consejos</div>
+            <div class="vx-burbuja vx-a" style="--d:.3s"><i class="fa-solid fa-at"></i>Revise bien el correo del cliente antes de crear la solicitud.</div>
+            <div class="vx-burbuja vx-a" style="--d:.7s"><i class="fa-solid fa-comment"></i>Avísele que le llegará un enlace y que tenga a mano su carpeta tributaria.</div>
+            <div class="vx-burbuja vx-a" style="--d:1.1s"><i class="fa-solid fa-calendar-days"></i>Esté atento a la fecha de vencimiento.</div>
+            <div class="vx-alerta vx-a vx-pop" style="--d:1.7s"><i class="fa-solid fa-triangle-exclamation"></i>Nunca comente que una operación está siendo revisada o reportada: la ley lo prohíbe.</div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Gracias. Con cada solicitud bien hecha cumplimos la normativa y protegemos a la empresa y a nuestros clientes.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-handshake"></i></div>
+            <h2 class="vx-titulo vx-a" style="--d:.3s">¡Gracias!</h2>
+            <p class="vx-sub vx-a" style="--d:.5s">Con cada solicitud bien hecha cumplimos la normativa y protegemos a la empresa y a nuestros clientes</p>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/video-intro.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,142 @@
+﻿@page
+@model FormulariosUAF.Pages.Regcheq.IntroduccionModel
+@{
+    ViewData["Title"] = "¿Qué es PEP y DOF?";
+}
+
+@*
+    "Video" animado (reproductor: wwwroot/js/video-intro.js y css/video-intro.css). Cada <section class="vx-escena"> es una
+    escena; data-narracion es lo que se lee en voz alta (voz en español del navegador) y se muestra como subtítulo.
+    Para cambiar el contenido basta editar estas secciones. Las animaciones de entrada usan la clase vx-a y el retardo --d.
+*@
+
+<link rel="stylesheet" href="~/css/video-intro.css" asp-append-version="true" />
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-circle-play me-2 text-primary"></i>¿Qué es PEP y DOF?</h4>
+        <div class="text-muted small">Video de introducción (unos 2 minutos): qué declaran los clientes, por qué la normativa exige su firma y cómo gestionarlo.</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Administrador"))
+        {
+            <a href="/Admin/Videos?video=pepdof" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-chart-column me-1"></i>Estadísticas</a>
+        }
+        <a href="/Regcheq/Gestion" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-clipboard-check me-1"></i>Ir a Gestión</a>
+    </div>
+</div>
+
+<div class="vx-reproductor" data-clave-visto="uaf-video-pepdof:v1" data-video="@FormulariosUAF.Models.Domain.VideosIntroduccion.PepDof.Clave">
+    <div class="vx-pantalla">
+
+        <section class="vx-escena" data-narracion="Bienvenido. En unos dos minutos le explicamos qué son las declaraciones PEP y DOF, por qué la normativa nos pide tenerlas firmadas por el cliente, y cómo puede ayudar a conseguirlo.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="vx-etiqueta vx-a" style="--d:.25s">Introducción para el equipo</div>
+            <h2 class="vx-titulo vx-a" style="--d:.4s">PEP y DOF</h2>
+            <p class="vx-sub vx-a" style="--d:.6s">Por qué le pedimos al cliente que los firme</p>
+        </section>
+
+        <section class="vx-escena" data-narracion="En Chile, la Ley diecinueve mil novecientos trece creó la Unidad de Análisis Financiero, la UAF. Su objetivo es prevenir el lavado de activos y el financiamiento del terrorismo. La empresa debe cumplir sus instrucciones, y una de las principales es conocer a sus clientes.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div class="vx-etiqueta vx-a" style="--d:.2s">La normativa</div>
+            <h2 class="vx-titulo vx-a" style="--d:.35s">Ley N° 19.913 · UAF</h2>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:.7s"><i class="fa-solid fa-money-bill-transfer"></i><b>Lavado de activos</b>Evitar que dinero de origen ilícito entre al sistema</div>
+                <div class="vx-tarjeta vx-a" style="--d:.9s"><i class="fa-solid fa-ban"></i><b>Financiamiento del terrorismo</b>Impedir que se financien actividades terroristas</div>
+                <div class="vx-tarjeta vx-a" style="--d:1.1s"><i class="fa-solid fa-user-check"></i><b>Conocer al cliente</b>Saber quién compra y con qué dinero</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="La compra de un vehículo involucra montos altos y, a veces, pagos en efectivo. Por eso cada operación se revisa en RegCheq, que consulta las listas y determina qué declaraciones debe firmar el cliente.">
+            <div class="vx-etiqueta vx-a">¿Y en una venta de auto?</div>
+            <div class="vx-fila" style="margin-top:.3em">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.2s"><i class="fa-solid fa-car-side"></i><b>Montos altos</b>Cada venta es una operación relevante</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.45s"><i class="fa-solid fa-money-bill-wave"></i><b>Pagos en efectivo</b>Requieren especial atención</div>
+                <div class="vx-flecha vx-a" style="--d:.7s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.9s"><i class="fa-solid fa-list-check"></i><b>RegCheq</b>Revisa listas y define qué debe firmar el cliente</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="PEP significa Persona Expuesta Políticamente. Es quien desempeña, o desempeñó en el último año, una función pública destacada, en Chile o en el extranjero. Por ejemplo: ministros, parlamentarios, alcaldes, jueces de tribunales superiores, embajadores o altos mandos de las Fuerzas Armadas. También se consideran su cónyuge y sus familiares cercanos.">
+            <div class="vx-sigla vx-a vx-pop">PEP</div>
+            <h2 class="vx-titulo vx-a" style="--d:.3s;font-size:clamp(1rem,3vw,2rem)">Persona Expuesta Políticamente</h2>
+            <p class="vx-sub vx-a" style="--d:.5s">Función pública destacada, en Chile o el extranjero, hoy o en el último año</p>
+            <div class="vx-chips">
+                <span class="vx-chip vx-a" style="--d:.9s"><i class="fa-solid fa-landmark"></i>Ministros y subsecretarios</span>
+                <span class="vx-chip vx-a" style="--d:1.05s"><i class="fa-solid fa-users-rectangle"></i>Parlamentarios</span>
+                <span class="vx-chip vx-a" style="--d:1.2s"><i class="fa-solid fa-city"></i>Alcaldes y gobernadores</span>
+                <span class="vx-chip vx-a" style="--d:1.35s"><i class="fa-solid fa-gavel"></i>Jueces de tribunales superiores</span>
+                <span class="vx-chip vx-a" style="--d:1.5s"><i class="fa-solid fa-flag"></i>Embajadores</span>
+                <span class="vx-chip vx-a" style="--d:1.65s"><i class="fa-solid fa-star"></i>Altos mandos FF.AA. y de Orden</span>
+                <span class="vx-chip vx-a" style="--d:1.8s"><i class="fa-solid fa-people-roof"></i>Cónyuge y familiares cercanos</span>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Ser PEP no es algo malo, ni una acusación. Pero por su cargo, estas personas tienen mayor exposición, y la normativa exige revisar sus operaciones con más cuidado. En la declaración PEP, el cliente informa si es o no una persona expuesta políticamente, y la firma.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-user-shield"></i></div>
+            <h2 class="vx-titulo vx-a" style="--d:.3s">No es una acusación</h2>
+            <p class="vx-sub vx-a" style="--d:.5s">Es una revisión más cuidadosa que exige la normativa por la exposición del cargo</p>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:1s"><i class="fa-solid fa-file-signature"></i><b>Declaración PEP</b>El cliente informa si es o no PEP, y la firma</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="DOF significa Declaración de Origen de Fondos. En ella, el cliente indica de dónde proviene el dinero con que paga: su sueldo, sus ahorros, la venta de otro bien, un crédito u otra fuente. Así dejamos constancia de que conocemos el origen del dinero de la compra.">
+            <div class="vx-sigla vx-a vx-pop">DOF</div>
+            <h2 class="vx-titulo vx-a" style="--d:.3s;font-size:clamp(1rem,3vw,2rem)">Declaración de Origen de Fondos</h2>
+            <p class="vx-sub vx-a" style="--d:.5s">¿De dónde viene el dinero con que paga el cliente?</p>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:.9s;max-width:150px"><i class="fa-solid fa-briefcase"></i><b>Sueldo</b></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.05s;max-width:150px"><i class="fa-solid fa-piggy-bank"></i><b>Ahorros</b></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.2s;max-width:150px"><i class="fa-solid fa-house"></i><b>Venta de un bien</b></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.35s;max-width:150px"><i class="fa-solid fa-building-columns"></i><b>Crédito</b></div>
+                <div class="vx-flecha vx-a" style="--d:1.6s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:1.8s;max-width:150px"><i class="fa-solid fa-car"></i><b>Compra</b></div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="¿Y por qué la firma? Porque la declaración firmada es el respaldo de la empresa: deja constancia de que el cliente entregó esa información. Es lo que debemos poder mostrar si la UAF nos fiscaliza. Mientras el cliente no firme, la operación queda pendiente.">
+            <div class="vx-etiqueta vx-a">¿Por qué tiene que firmar?</div>
+            <div class="vx-firma vx-a vx-pop" style="--d:.25s">Firma del cliente</div>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:.8s"><i class="fa-solid fa-file-circle-check"></i><b>Es el respaldo</b>Deja constancia de lo que el cliente declaró</div>
+                <div class="vx-tarjeta vx-a" style="--d:1s"><i class="fa-solid fa-magnifying-glass"></i><b>Ante una fiscalización</b>Es lo que la empresa debe poder mostrar</div>
+                <div class="vx-tarjeta vx-a" style="--d:1.2s"><i class="fa-solid fa-clock"></i><b>Sin firma</b>La operación queda pendiente</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="En FormulariosUAF, la vista Gestión muestra las operaciones con firmas pendientes. Caso uno: falta el PEP. Caso dos: falta el DOF. Caso tres: requiere ambos. Tome la operación, contacte al cliente y registre lo que hizo. Cuando el cliente firma, la gestión se cierra sola.">
+            <div class="vx-etiqueta vx-a">En la aplicación</div>
+            <div class="vx-fila" style="margin-top:.2em">
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.2s;border-color:#ef4444"><i class="fa-solid fa-1" style="color:#f87171"></i><b>Caso 1</b>Falta PEP</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.4s;border-color:#f59e0b"><i class="fa-solid fa-2" style="color:#fbbf24"></i><b>Caso 2</b>Falta DOF</div>
+                <div class="vx-tarjeta vx-a vx-pop" style="--d:.6s;border-color:#8b5cf6"><i class="fa-solid fa-3" style="color:#a78bfa"></i><b>Caso 3</b>Requiere ambos</div>
+            </div>
+            <div class="vx-fila">
+                <div class="vx-tarjeta vx-a" style="--d:1.2s"><i class="fa-solid fa-hand"></i><b>Tome</b>la operación</div>
+                <div class="vx-flecha vx-a" style="--d:1.35s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.5s"><i class="fa-solid fa-phone"></i><b>Contacte</b>al cliente y registre la gestión</div>
+                <div class="vx-flecha vx-a" style="--d:1.65s"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="vx-tarjeta vx-a" style="--d:1.8s"><i class="fa-solid fa-signature" style="color:#4ade80"></i><b>Firma</b>y se cierra sola</div>
+            </div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Al hablar con el cliente, explíquele que es un trámite obligatorio por normativa, que se pide a todos los clientes, y que toma solo unos minutos. Y algo muy importante: nunca le comente que su operación está siendo revisada o reportada. La ley lo prohíbe.">
+            <div class="vx-etiqueta vx-a">Cómo explicárselo al cliente</div>
+            <div class="vx-burbuja vx-a" style="--d:.3s"><i class="fa-solid fa-comment"></i>«Es un trámite obligatorio por normativa de la UAF.»</div>
+            <div class="vx-burbuja vx-a" style="--d:.7s"><i class="fa-solid fa-comment"></i>«Se lo pedimos a todos nuestros clientes.»</div>
+            <div class="vx-burbuja vx-a" style="--d:1.1s"><i class="fa-solid fa-comment"></i>«Toma solo unos minutos.»</div>
+            <div class="vx-alerta vx-a vx-pop" style="--d:1.7s"><i class="fa-solid fa-triangle-exclamation"></i>Nunca comente que una operación está siendo revisada o reportada: la ley lo prohíbe.</div>
+        </section>
+
+        <section class="vx-escena" data-narracion="Gracias. Con su ayuda cumplimos la normativa y protegemos a la empresa y a nuestros clientes.">
+            <div class="vx-icono vx-a vx-pop"><i class="fa-solid fa-handshake"></i></div>
+            <h2 class="vx-titulo vx-a" style="--d:.3s">¡Gracias!</h2>
+            <p class="vx-sub vx-a" style="--d:.5s">Con su ayuda cumplimos la normativa y protegemos a la empresa y a nuestros clientes</p>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/video-intro.js" asp-append-version="true"></script>
+}

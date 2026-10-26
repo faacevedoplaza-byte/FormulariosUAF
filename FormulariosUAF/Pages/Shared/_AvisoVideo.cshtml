@@ -1,0 +1,28 @@
+@model (string Clave, string Url, string Titulo, string Texto)
+@* Aviso que invita a ver un video de introducción. Se muestra hasta que el usuario llega al final del video o lo cierra;
+   se recuerda en este navegador, por usuario. Clave = data-clave-visto del reproductor (js/video-intro.js). *@
+@{
+    var id = "aviso-" + Model.Clave.Replace(':', '-');
+}
+<div class="alert alert-primary border-0 shadow-sm d-flex align-items-center gap-3 flex-wrap" id="@id" data-clave="@Model.Clave" hidden>
+    <i class="fa-solid fa-circle-play fs-3"></i>
+    <div class="flex-grow-1">
+        <div class="fw-semibold">@Model.Titulo</div>
+        <div class="small">@Model.Texto</div>
+    </div>
+    <a href="@Model.Url" class="btn btn-primary btn-sm"><i class="fa-solid fa-play me-1"></i>Ver video</a>
+    <button type="button" class="btn-close" title="No volver a mostrar"></button>
+</div>
+<script>
+    (function () {
+        const aviso = document.getElementById('@id');
+        const clave = aviso.dataset.clave + ':' + (document.body.dataset.uafUsuario || 'anonimo');
+        let visto = true;
+        try { visto = localStorage.getItem(clave) === '1'; } catch { }
+        if (!visto) aviso.hidden = false;
+        aviso.querySelector('.btn-close').addEventListener('click', () => {
+            aviso.hidden = true;
+            try { localStorage.setItem(clave, '1'); } catch { }
+        });
+    })();
+</script>

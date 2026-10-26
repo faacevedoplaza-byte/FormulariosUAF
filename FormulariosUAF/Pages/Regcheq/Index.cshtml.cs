@@ -1,4 +1,6 @@
+using FormulariosUAF.Models.Domain;
 using FormulariosUAF.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -10,15 +12,27 @@ public class IndexModel : PageModel
 
     private readonly IRegcheqService _regcheq;
     private readonly IVehiculoOperacionService _vehiculos;
+    private readonly ILeadsVendedorService _leads;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public IndexModel(IRegcheqService regcheq, IVehiculoOperacionService vehiculos)
+    public IndexModel(IRegcheqService regcheq, IVehiculoOperacionService vehiculos, ILeadsVendedorService leads,
+                      UserManager<ApplicationUser> userManager)
     {
         _regcheq = regcheq;
         _vehiculos = vehiculos;
+        _leads = leads;
+        _userManager = userManager;
     }
 
     /// <summary>Vehículo de la cotización Netcar por Id de operación (solo las de la página).</summary>
     public Dictionary<int, VehiculoOperacion> Vehiculos { get; private set; } = [];
+
+    /// <summary>Vendedor: solo ve las operaciones de sus leads Netcar y no entra al detalle.</summary>
+    public bool EsVendedor { get; private set; }
+    /// <summary>Usuario Netcar (ST_ABREVIACION_USUARIO) con que se comparan los leads del vendedor.</summary>
+    public string? CodigoVendedor { get; private set; }
+    /// <summary>Aviso si RegCheq o Netcar no respondieron al buscar las operaciones del vendedor.</summary>
+    public string? AvisoVendedor { get; private set; }
 
     // Filtros (query string). Banderas: "si" / "no" / vacío = todos.
     [BindProperty(SupportsGet = true)] public string Tipo { get; set; } = "natural";
@@ -30,7 +44,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)] public string? FirmoPep { get; set; }
     [BindProperty(SupportsGet = true)] public string? FirmoDof { get; set; }
     [BindProperty(SupportsGet = true)] public string? Fin { get; set; }
-    /// <summary>Estado de firmas (solo naturales): completa | pep | dof | ambos | norequiere | sinseguimiento.</summary>
+    /// <summary>Estado de firmas (solo naturales): completa (incluye las que no requieren firma) | pep | dof | ambos | sinseguimiento.</summary>
     [BindProperty(SupportsGet = true)] public string? Firmas { get; set; }
     [BindProperty(SupportsGet = true)] public int Pagina { get; set; } = 1;
     /// <summary>Columna de orden (ver <see cref="RegcheqFiltro.Orden"/>). Vacío = fecha, más nuevas primero.</summary>
@@ -67,8 +81,21 @@ public class IndexModel : PageModel
         Desde ??= new DateTime(anio, 1, 1);
         Hasta ??= new DateTime(anio, 12, 31);
 
+        // Vendedor: el listado y los totales se limitan a sus operaciones (mismo rango de fechas).
+        HashSet<int>? soloIds = null;
+        EsVendedor = LeadsVendedorService.EsSoloVendedor(User);
+        if (EsVendedor)
+        {
+            var yo = await _userManager.GetUserAsync(User);
+            CodigoVendedor = yo is null ? null : LeadsVendedorService.CodigoNetcar(yo);
+            var leads = await _leads.OperacionesAsync(TipoEnum, CodigoVendedor, Desde, Hasta, ct);
+            soloIds = leads.OperacionIds;
+            AvisoVendedor = leads.AvisoNetcar;
+        }
+
         Listado = await _regcheq.ListarAsync(new RegcheqFiltro
         {
+            SoloIds = soloIds,
             Tipo = TipoEnum,
             Texto = Q,
             Desde = Desde,
@@ -127,7 +154,6 @@ public class IndexModel : PageModel
         "pep" => EstadoFirmas.Pep,
         "dof" => EstadoFirmas.Dof,
         "ambos" => EstadoFirmas.PepYDof,
-        "norequiere" => EstadoFirmas.NoRequiere,
         "sinseguimiento" => EstadoFirmas.SinSeguimiento,
         _ => null
     };

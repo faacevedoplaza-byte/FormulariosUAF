@@ -284,6 +284,149 @@ namespace FormulariosUAF.Data.Migrations
                     b.ToTable("T_BENEFICIARIOFINAL");
                 });
 
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.Capacitacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_CAPACITACION");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("ST_CREADOPOR_CAPACITACION");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DT_FECHACREACION_CAPACITACION");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("ST_DESCRIPCION_CAPACITACION");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DT_FECHA_CAPACITACION");
+
+                    b.Property<string>("Lugar")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_LUGAR_CAPACITACION");
+
+                    b.Property<bool>("RegistroAbierto")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_REGISTROABIERTO_CAPACITACION");
+
+                    b.Property<string>("Relator")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_RELATOR_CAPACITACION");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_TITULO_CAPACITACION");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ST_TOKEN_CAPACITACION");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fecha");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("T_CAPACITACION");
+                });
+
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.CapacitacionAsistencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_CAPACITACIONASISTENCIA");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AceptaAsistencia")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_ACEPTAASISTENCIA_CAPACITACIONASISTENCIA");
+
+                    b.Property<int>("CapacitacionId")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_CAPACITACION");
+
+                    b.Property<string>("Cargo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("ST_CARGO_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("ST_EMAIL_CAPACITACIONASISTENCIA");
+
+                    b.Property<int?>("EmpresaId")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_EMPRESA");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DT_FECHAREGISTRO_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ST_DIRECCIONIP_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_NOMBRECOMPLETO_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("Rut")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("ST_RUT_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("Sucursal")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("ST_SUCURSAL_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("ST_TELEFONO_CAPACITACIONASISTENCIA");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("ST_USERAGENT_CAPACITACIONASISTENCIA");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId");
+
+                    b.HasIndex("Rut");
+
+                    b.HasIndex("CapacitacionId", "Rut")
+                        .IsUnique();
+
+                    b.ToTable("T_CAPACITACIONASISTENCIA");
+                });
+
             modelBuilder.Entity("FormulariosUAF.Models.Domain.Client", b =>
                 {
                     b.Property<int>("Id")
@@ -711,6 +854,50 @@ namespace FormulariosUAF.Data.Migrations
                     b.HasIndex("RequestId");
 
                     b.ToTable("T_CONTROLADOREFECTIVO");
+                });
+
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.Empresa", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_EMPRESA");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_ACTIVO_EMPRESA");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_NOMBRE_EMPRESA");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_ORDEN_EMPRESA");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("T_EMPRESA");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activo = true,
+                            Nombre = "Comercial Automotriz Siglo 21",
+                            Orden = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activo = true,
+                            Nombre = "Jorge Valenzuela Delarze",
+                            Orden = 2
+                        });
                 });
 
             modelBuilder.Entity("FormulariosUAF.Models.Domain.FileStorageRecord", b =>
@@ -4274,6 +4461,98 @@ namespace FormulariosUAF.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.VideoVisualizacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("IN_COD_VIDEOVISUALIZACION");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Adelantos")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_ADELANTOS_VIDEOVISUALIZACION");
+
+                    b.Property<bool>("Completo")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_COMPLETO_VIDEOVISUALIZACION");
+
+                    b.Property<bool>("ConVoz")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_CONVOZ_VIDEOVISUALIZACION");
+
+                    b.Property<int>("EscenaMaxima")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_ESCENAMAXIMA_VIDEOVISUALIZACION");
+
+                    b.Property<string>("EscenasVistas")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ST_ESCENASVISTAS_VIDEOVISUALIZACION");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DT_FECHAINICIO_VIDEOVISUALIZACION");
+
+                    b.Property<DateTime>("FechaUltimaActividad")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DT_FECHAULTIMAACTIVIDAD_VIDEOVISUALIZACION");
+
+                    b.Property<int>("Pausas")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_PAUSAS_VIDEOVISUALIZACION");
+
+                    b.Property<bool>("Reproducido")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_REPRODUCIDO_VIDEOVISUALIZACION");
+
+                    b.Property<int>("Retrocesos")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_RETROCESOS_VIDEOVISUALIZACION");
+
+                    b.Property<int>("SegundosReproducidos")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_SEGUNDOS_VIDEOVISUALIZACION");
+
+                    b.Property<Guid>("Sesion")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("IN_CODSESION_VIDEOVISUALIZACION");
+
+                    b.Property<int>("TotalEscenas")
+                        .HasColumnType("int")
+                        .HasColumnName("IN_TOTALESCENAS_VIDEOVISUALIZACION");
+
+                    b.Property<bool>("UsoPantallaCompleta")
+                        .HasColumnType("bit")
+                        .HasColumnName("BO_PANTALLACOMPLETA_VIDEOVISUALIZACION");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("IN_COD_USUARIO");
+
+                    b.Property<string>("Video")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ST_VIDEO_VIDEOVISUALIZACION");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FechaInicio");
+
+                    b.HasIndex("Sesion")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("Video", "UsuarioId");
+
+                    b.ToTable("T_VIDEOVISUALIZACION");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -4448,6 +4727,24 @@ namespace FormulariosUAF.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.CapacitacionAsistencia", b =>
+                {
+                    b.HasOne("FormulariosUAF.Models.Domain.Capacitacion", "Capacitacion")
+                        .WithMany("Asistencias")
+                        .HasForeignKey("CapacitacionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FormulariosUAF.Models.Domain.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Capacitacion");
+
+                    b.Navigation("Empresa");
                 });
 
             modelBuilder.Entity("FormulariosUAF.Models.Domain.Declarant", b =>
@@ -4633,6 +4930,17 @@ namespace FormulariosUAF.Data.Migrations
                     b.Navigation("Request");
                 });
 
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.VideoVisualizacion", b =>
+                {
+                    b.HasOne("FormulariosUAF.Models.Domain.ApplicationUser", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -4687,6 +4995,11 @@ namespace FormulariosUAF.Data.Migrations
             modelBuilder.Entity("FormulariosUAF.Models.Domain.ApplicationUser", b =>
                 {
                     b.Navigation("Requests");
+                });
+
+            modelBuilder.Entity("FormulariosUAF.Models.Domain.Capacitacion", b =>
+                {
+                    b.Navigation("Asistencias");
                 });
 
             modelBuilder.Entity("FormulariosUAF.Models.Domain.Client", b =>

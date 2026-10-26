@@ -1,0 +1,151 @@
+@page
+@model FormulariosUAF.Pages.Asistencia.IndexModel
+@{
+    Layout = "_ClientLayout";
+    ViewData["Title"] = "Registro de asistencia";
+    var cap = Model.Capacitacion;
+}
+
+<style>
+    .asis-card { max-width: 42rem; }
+    .asis-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem 1rem; }
+    .asis-meta span { white-space: nowrap; }
+    .asis-acepta { padding: .9rem 1rem .9rem 2.6rem; }
+    .asis-acepta .form-check-input { width: 1.25rem; height: 1.25rem; margin-left: -1.75rem; margin-top: .1rem; }
+
+    @@media (max-width: 575.98px) {
+        .decl-welcome { padding: .5rem 0 1rem; }
+        .decl-welcome-card.asis-card { padding: 1.5rem 1rem; border-radius: 12px; }
+        .asis-card .decl-welcome-logo { width: 3rem; height: 3rem; font-size: 1.35rem; }
+        .asis-card .decl-welcome-title { font-size: 1.3rem; margin-top: .9rem; }
+        .asis-card .decl-welcome-company { margin: 1rem 0; padding: .75rem; }
+        .asis-meta span { white-space: normal; }
+        /* 16px evita que iOS haga zoom al tocar un campo */
+        .asis-card .form-control, .asis-card .form-select { font-size: 16px; }
+        .asis-card .decl-welcome-btn { width: 100%; padding: .8rem 1rem; }
+    }
+</style>
+
+<div class="decl-welcome">
+    <div class="decl-welcome-card asis-card">
+        @if (cap is null || Model.ErrorMessage is not null)
+        {
+            <div class="decl-welcome-logo is-error"><i class="fa-solid fa-circle-xmark"></i></div>
+            <h3 class="decl-welcome-title">No es posible registrarse</h3>
+            <p class="decl-welcome-sub">@Model.ErrorMessage</p>
+        }
+        else if (Model.Registrado is not null)
+        {
+            <div class="decl-welcome-logo"><i class="fa-solid fa-circle-check"></i></div>
+            <h3 class="decl-welcome-title">@(Model.YaEstabaRegistrado ? "Ya estabas registrado" : "¡Asistencia registrada!")</h3>
+            <p class="decl-welcome-sub">
+                @(Model.YaEstabaRegistrado
+                    ? "Este RUT ya había registrado su asistencia a esta capacitación. No es necesario volver a hacerlo."
+                    : "Gracias. Tu asistencia quedó registrada.")
+            </p>
+            <div class="decl-welcome-company">
+                <div class="name">@cap.Titulo</div>
+                @* Si el RUT ya estaba registrado no se muestra el nombre: quien escribe un RUT ajeno no debe ver datos de otra persona. *@
+                <div class="rut">
+                    @(Model.YaEstabaRegistrado ? "" : Model.Registrado.NombreCompleto + " · ")registrado el @Model.Registrado.FechaRegistro.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </div>
+            </div>
+            <p class="small text-muted mb-0">Ya puedes cerrar esta página.</p>
+        }
+        else
+        {
+            <div class="decl-welcome-logo"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <h3 class="decl-welcome-title">Registro de asistencia</h3>
+            <div class="decl-welcome-company">
+                <div class="name">@cap.Titulo</div>
+                <div class="rut asis-meta mt-1">
+                    <span><i class="fa-regular fa-calendar me-1"></i>@cap.Fecha.ToString("dd/MM/yyyy HH:mm")</span>
+                    @if (!string.IsNullOrWhiteSpace(cap.Lugar)) { <span><i class="fa-solid fa-location-dot me-1"></i>@cap.Lugar</span> }
+                    @if (!string.IsNullOrWhiteSpace(cap.Relator)) { <span><i class="fa-solid fa-user-tie me-1"></i>@cap.Relator</span> }
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(cap.Descripcion))
+            {
+                <p class="small text-muted" style="white-space:pre-line">@cap.Descripcion</p>
+            }
+
+            <form method="post" class="text-start mt-3" asp-route-t="@Model.Token">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Input.NombreCompleto" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                        <input asp-for="Input.NombreCompleto" class="form-control name-input" placeholder="Nombre y apellidos" autocomplete="name" />
+                        <span asp-validation-for="Input.NombreCompleto" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.Rut" class="form-label">RUT <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Rut" class="form-control rut-input" placeholder="12.345.678-9" />
+                        <span asp-validation-for="Input.Rut" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.Email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Email" type="email" class="form-control" placeholder="nombre@empresa.cl" autocomplete="email" inputmode="email" />
+                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Input.EmpresaId" class="form-label">Empresa <span class="text-danger">*</span></label>
+                        <select asp-for="Input.EmpresaId" class="form-select">
+                            <option value="">Seleccione la empresa…</option>
+                            @foreach (var e in Model.Empresas)
+                            {
+                                <option value="@e.Id">@e.Nombre</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.EmpresaId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.Sucursal" class="form-label">Sucursal / área</label>
+                        <input asp-for="Input.Sucursal" class="form-control" placeholder="Ej: Bellavista 0170" />
+                        <span asp-validation-for="Input.Sucursal" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.Cargo" class="form-label">Cargo</label>
+                        <input asp-for="Input.Cargo" class="form-control" placeholder="Ej: Vendedor" />
+                        <span asp-validation-for="Input.Cargo" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label asp-for="Input.Telefono" class="form-label">Teléfono</label>
+                        <input asp-for="Input.Telefono" type="tel" class="form-control" placeholder="+56 9 1234 5678" autocomplete="tel" inputmode="tel" />
+                        <span asp-validation-for="Input.Telefono" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check asis-acepta rounded border bg-light mb-0">
+                            <input asp-for="Input.AceptaAsistencia" class="form-check-input" />
+                            <label asp-for="Input.AceptaAsistencia" class="form-check-label small">
+                                Declaro que <strong>asistí a la capacitación «@cap.Titulo»</strong> del @cap.Fecha.ToString("dd/MM/yyyy")
+                                y que los datos que entrego son verídicos. <span class="text-danger">*</span>
+                            </label>
+                            <div><span asp-validation-for="Input.AceptaAsistencia" class="text-danger small"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn decl-welcome-btn btn-lg" id="btnRegistrar">
+                            <i class="fa-solid fa-check me-2"></i>Registrar mi asistencia
+                        </button>
+                    </div>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Evita el doble envío (doble clic o conexión lenta). El servidor igual rechaza un RUT repetido.
+        document.querySelector('form')?.addEventListener('submit', function (e) {
+            if (window.jQuery && jQuery(this).valid && !jQuery(this).valid()) return;
+            var b = document.getElementById('btnRegistrar');
+            if (b.disabled) { e.preventDefault(); return; }
+            b.disabled = true;
+            b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando…';
+        });
+    </script>
+}

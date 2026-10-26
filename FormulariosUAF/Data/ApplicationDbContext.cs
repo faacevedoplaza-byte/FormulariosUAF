@@ -34,10 +34,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<GestionOperacion> GestionesOperacion => Set<GestionOperacion>();
     public DbSet<GestionOperacionNota> GestionesOperacionNotas => Set<GestionOperacionNota>();
 
+    // Visualizaciones de los videos de introducción
+    public DbSet<VideoVisualizacion> VideosVisualizacion => Set<VideoVisualizacion>();
+
+    // Capacitaciones y registro de asistencia por enlace público
+    public DbSet<Capacitacion> Capacitaciones => Set<Capacitacion>();
+    public DbSet<CapacitacionAsistencia> CapacitacionesAsistencia => Set<CapacitacionAsistencia>();
+
     // Catálogos de la declaración
     public DbSet<TipoDocumento> TiposDocumento => Set<TipoDocumento>();
     public DbSet<Pais> Paises => Set<Pais>();
     public DbSet<Nacionalidad> Nacionalidades => Set<Nacionalidad>();
+    public DbSet<Empresa> Empresas => Set<Empresa>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -201,6 +209,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(n => n.Nombre).IsUnique();
             e.HasData(CatalogosSeed.Nacionalidades);
         });
+        builder.Entity<Empresa>(e =>
+        {
+            e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.Nombre).HasMaxLength(200);
+            e.HasIndex(x => x.Nombre).IsUnique();
+            e.HasData(CatalogosSeed.Empresas);
+        });
 
         builder.Entity<TaxFolderAnalysis>(e =>
         {
@@ -242,6 +257,53 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(g => g.Notas)
                 .HasForeignKey(n => n.GestionOperacionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<VideoVisualizacion>(e =>
+        {
+            e.HasIndex(v => v.Sesion).IsUnique();
+            e.HasIndex(v => new { v.Video, v.UsuarioId });
+            e.HasIndex(v => v.FechaInicio);
+            e.Property(v => v.Video).HasMaxLength(50);
+            e.Property(v => v.EscenasVistas).HasMaxLength(200);
+            e.Ignore(v => v.CantidadEscenasVistas);
+            e.HasOne(v => v.Usuario)
+                .WithMany()
+                .HasForeignKey(v => v.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Capacitacion>(e =>
+        {
+            e.HasIndex(c => c.Token).IsUnique();
+            e.HasIndex(c => c.Fecha);
+            e.Property(c => c.Titulo).HasMaxLength(200);
+            e.Property(c => c.Descripcion).HasMaxLength(2000);
+            e.Property(c => c.Lugar).HasMaxLength(200);
+            e.Property(c => c.Relator).HasMaxLength(200);
+            e.Property(c => c.Token).HasMaxLength(50);
+            e.Property(c => c.CreadoPor).HasMaxLength(256);
+        });
+
+        builder.Entity<CapacitacionAsistencia>(e =>
+        {
+            // Una persona (RUT) se registra una sola vez por capacitación.
+            e.HasIndex(a => new { a.CapacitacionId, a.Rut }).IsUnique();
+            e.HasIndex(a => a.Rut);
+            e.Property(a => a.NombreCompleto).HasMaxLength(200);
+            e.Property(a => a.Rut).HasMaxLength(20);
+            e.Property(a => a.Email).HasMaxLength(256);
+            e.Property(a => a.Telefono).HasMaxLength(30);
+            e.Property(a => a.Cargo).HasMaxLength(100);
+            e.Property(a => a.Sucursal).HasMaxLength(100);
+            e.Property(a => a.IpAddress).HasMaxLength(50);
+            e.Property(a => a.UserAgent).HasMaxLength(500);
+            e.HasOne(a => a.Capacitacion)
+                .WithMany(c => c.Asistencias)
+                .HasForeignKey(a => a.CapacitacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Empresa).WithMany().HasForeignKey(a => a.EmpresaId).OnDelete(DeleteBehavior.Restrict);
+            e.Navigation(a => a.Empresa).AutoInclude();
         });
 
         // Nombres lógicos de las tablas Identity (DatabaseNaming los traduce a T_*)

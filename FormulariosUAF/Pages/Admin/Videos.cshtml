@@ -1,0 +1,202 @@
+@page
+@model FormulariosUAF.Pages.Admin.VideosModel
+@using FormulariosUAF.Models.Domain
+@using static FormulariosUAF.Pages.Admin.VideosModel
+@{
+    ViewData["Title"] = "Videos de introducción";
+    var pct = (int n, int d) => d == 0 ? 0 : (int)Math.Round(100.0 * n / d);
+    var pendientes = Model.Usuarios.Count(u => u.Estado != EstadoUsuario.Completo);
+}
+
+<style>
+    .vs-escenas { display: inline-flex; gap: 2px; vertical-align: middle; }
+    .vs-escenas span { width: 9px; height: 14px; border-radius: 2px; background: var(--bs-secondary-bg); }
+    .vs-escenas span.vista { background: #16a34a; }
+    .vs-escenas span.paso { background: #93c5fd; }
+</style>
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Videos de introducción</h4>
+        <div class="text-muted small">Quién vio cada video y cómo lo vio. Se registra cada vez que alguien abre la página del video.</div>
+    </div>
+    <a href="@Model.Video.Url" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-circle-play me-1"></i>Abrir el video</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var v in VideosIntroduccion.Todos)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(v.Clave == Model.Video.Clave ? "active" : "")" href="?video=@v.Clave">@v.Titulo</a>
+        </li>
+    }
+</ul>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Reproducciones</div>
+            <div class="fs-3 fw-bold">@Model.Reproducciones</div>
+            <div class="small text-muted">@Model.Visitas visitas a la página</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Usuarios que lo vieron</div>
+            <div class="fs-3 fw-bold">@Model.UsuariosQueLoVieron</div>
+            <div class="small text-muted">@pendientes usuario(s) aún no lo terminan</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Vistas completas</div>
+            <div class="fs-3 fw-bold">@Model.Completas</div>
+            <div class="small text-muted">@pct(Model.Completas, Model.Reproducciones)% de las reproducciones</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body">
+            <div class="text-muted small">Tiempo promedio</div>
+            <div class="fs-3 fw-bold">@(Model.MinutosPromedio is double m ? Duracion((int)Math.Round(m * 60)) : "—")</div>
+            <div class="small text-muted">en reproducción, sin pausas</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-bold"><i class="fa-solid fa-eye me-2 text-primary"></i>Cómo lo vieron</div>
+    <div class="card-body">
+        @if (Model.Reproducciones == 0)
+        {
+            <div class="text-muted small">Todavía nadie ha reproducido este video.</div>
+        }
+        else
+        {
+            <div class="progress mb-3" style="height:22px">
+                @foreach (var (modo, n) in Model.PorModo.Where(x => x.Value > 0))
+                {
+                    <div class="progress-bar bg-@Color(modo)" style="width:@pct(n, Model.Reproducciones)%" title="@Texto(modo): @n">@pct(n, Model.Reproducciones)%</div>
+                }
+            </div>
+            <div class="d-flex flex-wrap gap-3 small">
+                @foreach (var (modo, n) in Model.PorModo)
+                {
+                    <span><i class="fa-solid fa-square text-@Color(modo) me-1"></i>@Texto(modo): <strong>@n</strong></span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-bold d-flex justify-content-between">
+        <span><i class="fa-solid fa-users me-2 text-primary"></i>Por usuario</span>
+        <span class="small text-muted fw-normal">Usuarios activos con rol @string.Join(", ", Model.Video.Roles)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Usuario</th><th>Rol</th><th>Estado</th><th class="text-center">Reproducciones</th>
+                    <th>Mejor visita</th><th class="text-center">Pausas</th><th>Tiempo total</th><th>Última vez</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Usuarios)
+                {
+                    var (estadoTxt, estadoColor) = u.Estado switch
+                    {
+                        EstadoUsuario.Completo => ("Lo vio completo", "success"),
+                        EstadoUsuario.Empezado => ("Lo empezó", "warning"),
+                        EstadoUsuario.SoloAbrio => ("Abrió sin reproducir", "secondary"),
+                        _ => ("No lo ha abierto", "danger"),
+                    };
+                    <tr class="@(u.Id == Model.FiltroUsuario ? "table-primary" : "")">
+                        <td class="fw-semibold">@u.Nombre</td>
+                        <td class="text-muted">@(u.Roles == "" ? "—" : u.Roles)</td>
+                        <td><span class="badge bg-@estadoColor-subtle text-@estadoColor-emphasis border border-@estadoColor-subtle">@estadoTxt</span></td>
+                        <td class="text-center">@u.Reproducciones</td>
+                        <td>
+                            @if (u.MejorModo is ModoVisto mm)
+                            {
+                                <span class="text-@Color(mm)">@Texto(mm)</span>
+                                <span class="text-muted">· @u.MejorEscenas/@u.TotalEscenas escenas</span>
+                            }
+                            else { <span class="text-muted">—</span> }
+                        </td>
+                        <td class="text-center">@(u.Reproducciones > 0 ? u.Pausas.ToString() : "—")</td>
+                        <td>@(u.Reproducciones > 0 ? Duracion(u.Segundos) : "—")</td>
+                        <td class="text-muted">@(u.Ultima?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                        <td class="text-end">
+                            @if (u.Reproducciones > 0)
+                            {
+                                <a href="?video=@Model.Video.Clave&usuario=@u.Id#detalle" class="btn btn-sm btn-outline-secondary py-0">Ver visitas</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Usuarios.Any())
+                {
+                    <tr><td colspan="9" class="text-center text-muted py-3">No hay usuarios con esos roles.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" id="detalle">
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>
+            <i class="fa-solid fa-list me-2 text-primary"></i>Cada reproducción
+            @if (Model.NombreFiltroUsuario is not null) { <span class="fw-normal">de <strong>@Model.NombreFiltroUsuario</strong></span> }
+        </span>
+        <span class="small fw-normal">
+            <span class="vs-escenas"><span class="vista"></span></span> escena vista entera
+            <span class="vs-escenas ms-2"><span class="paso"></span></span> pasó por ella sin terminarla
+            <span class="vs-escenas ms-2"><span></span></span> no llegó
+            @if (Model.FiltroUsuario is not null) { <a href="?video=@Model.Video.Clave#detalle" class="ms-3">Ver todos</a> }
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th><th>Usuario</th><th>Resultado</th><th>Escenas</th><th>Tiempo</th>
+                    <th class="text-center">Pausas</th><th class="text-center">Adelantos</th><th class="text-center">Retrocesos</th>
+                    <th class="text-center" title="Narración con voz">Voz</th><th class="text-center">Pantalla completa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.Detalle)
+                {
+                    var modo = Modo(v);
+                    var vistas = v.EscenasVistas.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+                    <tr>
+                        <td class="text-muted text-nowrap">@v.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(v.Usuario?.FullName ?? v.UsuarioId)</td>
+                        <td><span class="badge bg-@Color(modo)">@Texto(modo)</span></td>
+                        <td class="text-nowrap">
+                            <span class="vs-escenas" title="Vio enteras @vistas.Count de @v.TotalEscenas; llegó hasta la @v.EscenaMaxima">
+                                @for (var i = 1; i <= v.TotalEscenas; i++)
+                                {
+                                    <span class="@(vistas.Contains(i.ToString()) ? "vista" : i <= v.EscenaMaxima ? "paso" : "")"></span>
+                                }
+                            </span>
+                            <span class="text-muted ms-1">@vistas.Count/@v.TotalEscenas</span>
+                        </td>
+                        <td class="text-nowrap">@Duracion(v.SegundosReproducidos)</td>
+                        <td class="text-center">@v.Pausas</td>
+                        <td class="text-center">@v.Adelantos</td>
+                        <td class="text-center">@v.Retrocesos</td>
+                        <td class="text-center">@(v.ConVoz ? "Sí" : "No")</td>
+                        <td class="text-center">@(v.UsoPantallaCompleta ? "Sí" : "No")</td>
+                    </tr>
+                }
+                @if (!Model.Detalle.Any())
+                {
+                    <tr><td colspan="10" class="text-center text-muted py-3">Sin reproducciones.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

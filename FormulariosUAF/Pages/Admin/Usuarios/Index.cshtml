@@ -6,9 +6,14 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="fa-solid fa-users-cog me-2 text-primary"></i>Usuarios del Sistema</h4>
-    <a href="/Admin/Usuarios/Crear" class="btn btn-primary">
-        <i class="fa-solid fa-plus me-1"></i> Nuevo Usuario
-    </a>
+    <div class="d-flex gap-2">
+        <a href="/Admin/Usuarios/ImportarNetcar" class="btn btn-outline-primary">
+            <i class="fa-solid fa-file-import me-1"></i> Importar vendedores de Netcar
+        </a>
+        <a href="/Admin/Usuarios/Crear" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> Nuevo Usuario
+        </a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)
@@ -68,14 +73,12 @@
                                     <a href="/Admin/Usuarios/Editar?id=@u.Id" class="btn btn-outline-primary" title="Editar">
                                         <i class="fa-solid fa-pencil"></i>
                                     </a>
-                                    <form method="post" asp-page-handler="ToggleActive" class="d-inline">
-                                        <input type="hidden" name="userId" value="@u.Id" />
-                                        <button type="submit" class="btn btn-outline-@(u.IsActive ? "warning" : "success")"
-                                                title="@(u.IsActive ? "Desactivar" : "Activar")"
-                                                data-confirm="@(u.IsActive ? "¿Desactivar este usuario?" : "¿Activar este usuario?")">
-                                            <i class="fa-solid fa-@(u.IsActive ? "ban" : "check")"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-outline-@(u.IsActive ? "warning" : "success") btn-toggle-activo"
+                                            title="@(u.IsActive ? "Desactivar" : "Activar")"
+                                            data-id="@u.Id" data-nombre="@u.FullName" data-email="@u.Email"
+                                            data-activo="@(u.IsActive ? "1" : "0")">
+                                        <i class="fa-solid fa-@(u.IsActive ? "ban" : "check")"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -85,3 +88,50 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalToggleActivo" tabindex="-1" aria-labelledby="modalToggleActivoTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-page-handler="ToggleActive" class="modal-content">
+            <input type="hidden" name="userId" id="toggleUserId" />
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalToggleActivoTitulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="toggleTexto"></p>
+                <div class="border rounded p-3 bg-light">
+                    <div class="fw-bold" id="toggleNombre"></div>
+                    <div class="small text-muted" id="toggleEmail"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn" id="toggleBoton"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const modal = document.getElementById('modalToggleActivo');
+            document.querySelectorAll('.btn-toggle-activo').forEach(b => b.addEventListener('click', () => {
+                const activo = b.dataset.activo === '1';
+                document.getElementById('toggleUserId').value = b.dataset.id;
+                document.getElementById('toggleNombre').textContent = b.dataset.nombre;
+                document.getElementById('toggleEmail').textContent = b.dataset.email;
+                document.getElementById('modalToggleActivoTitulo').innerHTML = activo
+                    ? '<i class="fa-solid fa-ban me-2 text-warning"></i>Desactivar usuario'
+                    : '<i class="fa-solid fa-check me-2 text-success"></i>Activar usuario';
+                document.getElementById('toggleTexto').textContent = activo
+                    ? '¿Desactivar este usuario? No podrá iniciar sesión hasta que se vuelva a activar.'
+                    : '¿Activar este usuario? Podrá volver a iniciar sesión.';
+                const boton = document.getElementById('toggleBoton');
+                boton.className = 'btn ' + (activo ? 'btn-warning' : 'btn-success');
+                boton.textContent = activo ? 'Desactivar' : 'Activar';
+                bootstrap.Modal.getOrCreateInstance(modal).show();
+            }));
+        })();
+    </script>
+}

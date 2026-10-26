@@ -34,3 +34,15 @@ public class Nacionalidad
     public int Orden { get; set; }
     public bool Activo { get; set; } = true;
 }
+
+/// <summary>Empresas del grupo (T_EMPRESA): a cuál pertenece quien registra asistencia a una capacitación.</summary>
+public class Empresa
+{
+    public const int IdSiglo21 = 1;
+    public const int IdJorgeValenzuelaDelarze = 2;
+
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public int Orden { get; set; }
+    public bool Activo { get; set; } = true;
+}

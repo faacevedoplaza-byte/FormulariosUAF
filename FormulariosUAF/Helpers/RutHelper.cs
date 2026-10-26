@@ -2,7 +2,7 @@ namespace FormulariosUAF.Helpers;
 
 /// <summary>
 /// Utilidades para RUT chileno. Normaliza (sin puntos ni guión, en mayúscula)
-/// y valida el dígito verificador. El RUT normalizado se usa como UserName.
+/// y valida el dígito verificador. El RUT normalizado se guarda en ApplicationUser.Rut y sirve para iniciar sesión.
 /// </summary>
 public static class RutHelper
 {

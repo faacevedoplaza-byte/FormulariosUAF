@@ -1,5 +1,7 @@
 using FormulariosUAF.Data;
+using FormulariosUAF.Hubs;
 using FormulariosUAF.Models.Domain;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace FormulariosUAF.Services;
@@ -27,12 +29,15 @@ public class GestionSincronizador : IGestionSincronizador
 
     private readonly IRegcheqService _regcheq;
     private readonly ApplicationDbContext _db;
+    private readonly IHubContext<NotificationHub> _hub;
     private readonly ILogger<GestionSincronizador> _logger;
 
-    public GestionSincronizador(IRegcheqService regcheq, ApplicationDbContext db, ILogger<GestionSincronizador> logger)
+    public GestionSincronizador(IRegcheqService regcheq, ApplicationDbContext db, IHubContext<NotificationHub> hub,
+                                ILogger<GestionSincronizador> logger)
     {
         _regcheq = regcheq;
         _db = db;
+        _hub = hub;
         _logger = logger;
     }
 
@@ -78,12 +83,26 @@ public class GestionSincronizador : IGestionSincronizador
             {
                 await _db.SaveChangesAsync(ct);
                 _logger.LogInformation("Gestión RegCheq: {Cerradas} gestiones cerradas y {Reabiertas} reabiertas según firmas", cerradas, reabiertas);
+                await AvisarCambioAsync();
             }
             return new ResultadoSincronizacion(cerradas, reabiertas);
         }
         finally
         {
             Candado.Release();
+        }
+    }
+
+    /// <summary>Avisa a las vistas abiertas; si SignalR falla, la sincronización ya quedó guardada y no se revierte.</summary>
+    private async Task AvisarCambioAsync()
+    {
+        try
+        {
+            await _hub.Clients.All.SendAsync(NotificationHub.GestionRegcheqCambiada);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo avisar por SignalR el cambio en gestiones RegCheq");
         }
     }
 

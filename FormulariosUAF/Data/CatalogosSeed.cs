@@ -17,6 +17,12 @@ public static class CatalogosSeed
         new() { Id = 4, Nombre = "Otro", Orden = 4 },
     ];
 
+    public static readonly Empresa[] Empresas =
+    [
+        new() { Id = Empresa.IdSiglo21, Nombre = "Comercial Automotriz Siglo 21", Orden = 1 },
+        new() { Id = Empresa.IdJorgeValenzuelaDelarze, Nombre = "Jorge Valenzuela Delarze", Orden = 2 },
+    ];
+
     // Id|País|Nacionalidad
     private const string Datos = """
         1|Afganistán|Afgana
