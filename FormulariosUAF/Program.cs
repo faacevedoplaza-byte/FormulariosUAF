@@ -169,6 +169,22 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// ── Importación piloto de vendedores Netcar (temporal, manual, solo Development) ──
+// IMPORTAR_NETCAR_PRUEBA=VERIFICAR (sin escrituras) o CONFIRMAR (crea usuarios). Corre ANTES del
+// Seed para no aplicar migraciones, y termina el proceso sin levantar el sitio.
+var modoImportacion = Environment.GetEnvironmentVariable("IMPORTAR_NETCAR_PRUEBA")?.Trim().ToUpperInvariant();
+if (modoImportacion is "VERIFICAR" or "CONFIRMAR")
+{
+    if (app.Environment.IsDevelopment())
+    {
+        Environment.ExitCode = await ImportarVendedoresNetcar.EjecutarAsync(
+            app.Services, app.Configuration, confirmar: modoImportacion == "CONFIRMAR");
+        Log.CloseAndFlush();
+        return;
+    }
+    Log.Warning("IMPORTAR_NETCAR_PRUEBA ignorada: la importación solo corre en Development");
+}
+
 // ── Seed ───────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {

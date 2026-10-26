@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>FormulariosUAF</RootNamespace>
+    <UserSecretsId>formulariosuaf-6f2c9b1e-4d7a-4c3e-9a51-2b8e7d0f3c64</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
