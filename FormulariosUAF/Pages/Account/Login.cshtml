@@ -128,6 +128,26 @@
         input.type = show ? 'text' : 'password';
         icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
     });
+
+    // Si lo escrito parece RUT (solo dígitos, puntos, guion y K final) se formatea a 12.345.678-9
+    // mientras se escribe. Un nickname (SLARA) o un correo no se tocan. El backend acepta cualquier formato.
+    (function () {
+        const input = document.getElementById('Input_Login');
+        if (!input) return;
+        const pareceRut = v => /^\d[\d.\-\s]*[kK]?$/.test(v);
+        const formatear = v => {
+            const limpio = v.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+            if (limpio.length < 2) return limpio;
+            const cuerpo = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return cuerpo + '-' + limpio.slice(-1);
+        };
+        input.addEventListener('input', function () {
+            const v = input.value.trim();
+            if (!pareceRut(v)) return;
+            const f = formatear(v);
+            if (f !== input.value) input.value = f;
+        });
+    })();
 </script>
 </body>
 </html>
