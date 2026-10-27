@@ -29,6 +29,55 @@
     </div>
 }
 
+<form method="get" id="filtrosUsuarios" class="card border-0 shadow-sm mb-3" onsubmit="return false;">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-5">
+                <label for="fQ" class="form-label small text-muted mb-1">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="search" id="fQ" name="q" value="@Model.Q" class="form-control" autocomplete="off"
+                           placeholder="Nombre, correo, usuario, RUT, código vendedor, teléfono..." />
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="fRol" class="form-label small text-muted mb-1">Rol</label>
+                <select id="fRol" name="rol" class="form-select">
+                    <option value="">Todos</option>
+                    @foreach (var r in FormulariosUAF.Data.SeedData.Roles)
+                    {
+                        <option value="@r" selected="@(string.Equals(Model.Rol, r, StringComparison.OrdinalIgnoreCase))">@r</option>
+                    }
+                    <option value="__sin" selected="@(Model.Rol == "__sin")">Sin rol</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="fEstado" class="form-label small text-muted mb-1">Estado</label>
+                <select id="fEstado" name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="activo" selected="@(Model.Estado == "activo")">Activos</option>
+                    <option value="inactivo" selected="@(Model.Estado == "inactivo")">Inactivos</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <label for="fAcceso" class="form-label small text-muted mb-1">Último acceso</label>
+                <select id="fAcceso" name="acceso" class="form-select">
+                    <option value="">Cualquiera</option>
+                    <option value="30" selected="@(Model.Acceso == "30")">Últimos 30 días</option>
+                    <option value="mas30" selected="@(Model.Acceso == "mas30")">Hace más de 30 días</option>
+                    <option value="nunca" selected="@(Model.Acceso == "nunca")">Nunca</option>
+                </select>
+            </div>
+            <div class="col-6 col-lg-1 d-grid">
+                <button type="button" id="fLimpiar" class="btn btn-outline-secondary" title="Limpiar filtros">
+                    <i class="fa-solid fa-eraser"></i><span class="d-lg-none ms-1">Limpiar</span>
+                </button>
+            </div>
+        </div>
+        <div class="small text-muted mt-2" id="fContador"></div>
+    </div>
+</form>
+
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -43,11 +92,28 @@
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tablaUsuarios">
                     @foreach (var u in Model.Users)
                     {
-                        <tr class="@(u.IsActive ? "" : "table-secondary opacity-75")">
-                            <td><strong>@u.FullName</strong></td>
+                        <tr class="fila-usuario @(u.IsActive ? "" : "table-secondary opacity-75")"
+                            data-buscar="@(string.Join(" ", new[] { u.FullName, u.Email, u.UserName, u.Rut, u.VendorCode, u.Phone }.Concat(u.Roles)))"
+                            data-roles="@string.Join("|", u.Roles)"
+                            data-activo="@(u.IsActive ? "1" : "0")"
+                            data-ultimo="@(u.LastLoginAt?.ToString("o") ?? "")">
+                            <td>
+                                <strong>@u.FullName</strong>
+                                <div class="small text-muted">
+                                    @u.UserName
+                                    @if (!string.IsNullOrEmpty(u.Rut))
+                                    {
+                                        <span> · RUT @u.Rut</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(u.VendorCode))
+                                    {
+                                        <span> · Cód. @u.VendorCode</span>
+                                    }
+                                </div>
+                            </td>
                             <td><small class="text-muted">@u.Email</small></td>
                             <td>
                                 @foreach (var r in u.Roles)
@@ -83,6 +149,11 @@
                             </td>
                         </tr>
                     }
+                    <tr id="filaSinResultados" class="d-none">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fa-solid fa-user-slash me-1"></i> No hay usuarios que coincidan con los filtros.
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -93,6 +164,11 @@
     <div class="modal-dialog modal-dialog-centered">
         <form method="post" asp-page-handler="ToggleActive" class="modal-content">
             <input type="hidden" name="userId" id="toggleUserId" />
+            @* Filtros actuales, para volver a la misma vista filtrada después del cambio *@
+            <input type="hidden" name="q" id="toggleQ" />
+            <input type="hidden" name="rol" id="toggleRol" />
+            <input type="hidden" name="estado" id="toggleEstado" />
+            <input type="hidden" name="acceso" id="toggleAcceso" />
             <div class="modal-header">
                 <h5 class="modal-title" id="modalToggleActivoTitulo"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -130,8 +206,81 @@
                 const boton = document.getElementById('toggleBoton');
                 boton.className = 'btn ' + (activo ? 'btn-warning' : 'btn-success');
                 boton.textContent = activo ? 'Desactivar' : 'Activar';
+                document.getElementById('toggleQ').value = fQ.value.trim();
+                document.getElementById('toggleRol').value = fRol.value;
+                document.getElementById('toggleEstado').value = fEstado.value;
+                document.getElementById('toggleAcceso').value = fAcceso.value;
                 bootstrap.Modal.getOrCreateInstance(modal).show();
             }));
+
+            // ---- Buscador y filtros (en el navegador, sin recargar) ----
+            const fQ = document.getElementById('fQ');
+            const fRol = document.getElementById('fRol');
+            const fEstado = document.getElementById('fEstado');
+            const fAcceso = document.getElementById('fAcceso');
+            const contador = document.getElementById('fContador');
+            const sinResultados = document.getElementById('filaSinResultados');
+            const filas = [...document.querySelectorAll('.fila-usuario')];
+            const DIA = 24 * 60 * 60 * 1000;
+
+            // Sin tildes y en minúscula, para que "jose" encuentre "José"
+            const normalizar = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+            filas.forEach(f => {
+                const texto = normalizar(f.dataset.buscar);
+                // También sin puntos ni guiones, para buscar el RUT en cualquier formato (12.345.678-9 / 123456789)
+                f._texto = texto + ' ' + texto.replace(/[.\-]/g, '');
+                f._roles = f.dataset.roles ? f.dataset.roles.split('|') : [];
+                f._ultimo = f.dataset.ultimo ? Date.parse(f.dataset.ultimo) : null;
+            });
+
+            function coincide(f, palabras) {
+                if (!palabras.every(p => f._texto.includes(p) || f._texto.includes(p.replace(/[.\-]/g, '')))) return false;
+                if (fRol.value === '__sin' ? f._roles.length > 0 : fRol.value && !f._roles.includes(fRol.value)) return false;
+                if (fEstado.value === 'activo' && f.dataset.activo !== '1') return false;
+                if (fEstado.value === 'inactivo' && f.dataset.activo !== '0') return false;
+                if (fAcceso.value) {
+                    const dias = f._ultimo === null ? null : (Date.now() - f._ultimo) / DIA;
+                    if (fAcceso.value === 'nunca' && dias !== null) return false;
+                    if (fAcceso.value === '30' && (dias === null || dias > 30)) return false;
+                    if (fAcceso.value === 'mas30' && (dias === null || dias <= 30)) return false;
+                }
+                return true;
+            }
+
+            function aplicar() {
+                const palabras = normalizar(fQ.value).split(/\s+/).filter(Boolean);
+                let visibles = 0;
+                filas.forEach(f => {
+                    const ok = coincide(f, palabras);
+                    f.classList.toggle('d-none', !ok);
+                    if (ok) visibles++;
+                });
+                sinResultados.classList.toggle('d-none', visibles > 0 || filas.length === 0);
+                contador.textContent = visibles === filas.length
+                    ? `${filas.length} usuario(s)`
+                    : `Mostrando ${visibles} de ${filas.length} usuario(s)`;
+
+                // Deja los filtros en la URL (se pueden compartir y sobreviven a recargar)
+                const params = new URLSearchParams();
+                if (fQ.value.trim()) params.set('q', fQ.value.trim());
+                if (fRol.value) params.set('rol', fRol.value);
+                if (fEstado.value) params.set('estado', fEstado.value);
+                if (fAcceso.value) params.set('acceso', fAcceso.value);
+                const qs = params.toString();
+                history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+            }
+
+            fQ.addEventListener('input', aplicar);
+            [fRol, fEstado, fAcceso].forEach(s => s.addEventListener('change', aplicar));
+            fQ.addEventListener('keydown', e => { if (e.key === 'Escape') { fQ.value = ''; aplicar(); } });
+            document.getElementById('fLimpiar').addEventListener('click', () => {
+                fQ.value = ''; fRol.value = ''; fEstado.value = ''; fAcceso.value = '';
+                aplicar();
+                fQ.focus();
+            });
+
+            aplicar();
         })();
     </script>
 }
